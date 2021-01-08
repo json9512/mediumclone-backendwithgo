@@ -1,0 +1,59 @@
+package main
+
+import (
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
+	. "github.com/franela/goblin"
+	"github.com/gin-gonic/gin"
+)
+
+func MakeRequest(r http.Handler, method, path string) *httptest.ResponseRecorder {
+	req, _ := http.NewRequest(method, path, nil)
+
+	w := httptest.NewRecorder()
+
+	r.ServeHTTP(w, req)
+
+	return w
+}
+
+func Test(t *testing.T) {
+	// Setup router
+	router := SetupRouter("test")
+
+	// create goblin
+	g := Goblin(t)
+	g.Describe("Server Test", func() {
+		// Passing test
+		g.It("GET /ping should return JSON {message: pong}", func() {
+			// Build expected body
+			body := gin.H{
+				"message": "pong",
+			}
+
+			// Perform GET request with the handler
+			w := MakeRequest(router, "GET", "/ping")
+
+			// Assert we encoded correctly
+			// and the request gives 200
+			g.Assert(w.Code).Equal(http.StatusOK)
+
+			// Convert JSON response to a map
+			var response map[string]string
+
+			err := json.Unmarshal([]byte(w.Body.String()), &response)
+
+			// grab the value
+			value, exists := response["message"]
+
+			// make some assertions
+			g.Assert(err).IsNil()
+			g.Assert(exists).IsTrue()
+			g.Assert(body["message"]).Equal(value)
+		})
+	})
+
+}
