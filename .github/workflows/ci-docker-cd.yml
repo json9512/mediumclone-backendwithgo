@@ -29,7 +29,7 @@ jobs:
 
   push-docker-image:
     # run when build is successful
-    needs: [build]
+    needs: [build-and-test]
     runs-on: ['ubuntu-latest']
     name: Push Docker image to Hub
     steps:
