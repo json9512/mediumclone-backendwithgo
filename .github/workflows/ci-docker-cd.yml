@@ -1,0 +1,54 @@
+name: CI/Docker/CD
+on:
+  push:
+    branches: ['main', 'develop']
+  pull_request:
+    branches: ['main', 'develop']
+
+jobs:
+  build-and-test:
+    strategy:
+      matrix:
+        os: ['ubuntu-latest', 'macos-latest', 'windows-latest']
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - name: Testing on (${{ matrix.os }})
+      uses: actions/checkout@v2
+    
+    - name: Setup Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.15
+    
+    - name: Build
+      run: go build -v ./...
+    
+    - name: Test
+      run: go test -v ./...
+
+  push-docker-image:
+    # run when build is successful
+    needs: [build]
+    runs-on: ['ubuntu-latest']
+    name: Push Docker image to Hub
+    steps:
+    - name: Login to Docker
+      uses: docker/login-action@v1
+      with:
+        username: ${{ secrets.DOCKER_HUB_USERNAME }}
+        password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+    
+    - name: Build and push
+      id: docker_build
+      uses: docker/build-push-action@v2
+      with:
+        context: ./
+        file: ./Dockerfile
+        push: true
+        tags: json9512/mediumclone-go:latest
+    
+    - name: Image digest
+      run: echo ${{ steps.docker_build.outputs.digest }}
+
+  
