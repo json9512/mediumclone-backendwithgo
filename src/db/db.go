@@ -15,7 +15,7 @@ func ConnectDB() (*gorm.DB, string, error) {
 	// Load configuration from util
 	config, err := util.LoadConfig(".")
 	if err != nil {
-		fmt.Println("[ERROR] Failed to config")
+		return nil, "Viper failed to load environment variables", err
 	}
 
 	// Construct rdsConnectionString with Database configuration

@@ -18,6 +18,7 @@ RUN go mod download
 COPY . .
 
 # Build the app in Docker
+WORKDIR /app/server/src
 RUN go build
 
 EXPOSE 8080

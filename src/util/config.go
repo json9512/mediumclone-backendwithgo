@@ -23,7 +23,7 @@ type DatabaseConfig struct {
 
 // LoadConfig ...
 // Loads the configuration for the app
-func LoadConfig(path string) (config Config, err error) {
+func LoadConfig(path string) (config *Config, err error) {
 	viper.AddConfigPath(path)
 	viper.SetConfigName("viper")
 	viper.SetConfigType("yml")
@@ -34,7 +34,7 @@ func LoadConfig(path string) (config Config, err error) {
 
 	if err != nil {
 		fmt.Println("[ERROR] Viper failed to load environment variables")
-		return
+		return nil, err
 	}
 
 	err = viper.Unmarshal(&config)
