@@ -15,6 +15,6 @@ require (
 )
 
 replace (
-	json9512/mediumclone-go/db => ./server/db
-	json9512/mediumclone-go/util => ./server/util
+	json9512/mediumclone-go/db => ./src/db
+	json9512/mediumclone-go/util => ./src/util
 )
