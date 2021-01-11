@@ -19,8 +19,8 @@ COPY . .
 
 # Build the app in Docker
 WORKDIR /app/server/src
-RUN go build
+RUN go build -o server
 
 EXPOSE 8080
 
-CMD [ "./mediumclone-go" ]
+CMD [ "./server" ]
