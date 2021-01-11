@@ -1,8 +1,6 @@
 package util
 
 import (
-	"fmt"
-
 	"github.com/spf13/viper"
 )
 
@@ -33,7 +31,6 @@ func LoadConfig(path string) (config *Config, err error) {
 	err = viper.ReadInConfig()
 
 	if err != nil {
-		fmt.Println("[ERROR] Viper failed to load environment variables")
 		return nil, err
 	}
 

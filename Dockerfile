@@ -11,11 +11,11 @@ WORKDIR /app/server
 COPY go.mod .
 COPY go.sum .
 
-# Install dependencies
-RUN go mod download
-
 # Copy rest of the file
 COPY . .
+
+# Install dependencies
+RUN go mod download
 
 # Build the app in Docker
 WORKDIR /app/server/src
