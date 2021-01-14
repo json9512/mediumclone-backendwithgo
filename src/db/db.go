@@ -11,7 +11,7 @@ import (
 
 func CheckErr(err error) {
 	if err != nil {
-		log.Fatal("godotenv failed to load variable")
+		log.Fatal("godotenv failed to load variable", err)
 	}
 }
 

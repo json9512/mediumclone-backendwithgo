@@ -5,6 +5,13 @@ on:
   pull_request:
     branches: ['main', 'develop']
 
+env:
+  DB_USERNAME: ${{ secrets.DB_USERNAME }}
+  DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+  DB_HOST: ${{ secrets.DB_HOST }}
+  DB_PORT: ${{ secrets.DB_PORT }}
+  DB_NAME: ${{ secrets.DB_NAME }}
+
 jobs:
   build-and-test:
     strategy:
@@ -28,12 +35,7 @@ jobs:
     - name: Test
       working-directory: ./src
       run: go test -v ./...
-      env:
-        DB_USERNAME: ${{ secrets.DB_USERNAME }}
-        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-        DB_HOST: ${{ secrets.DB_HOST }}
-        DB_PORT: ${{ secrets.DB_PORT }}
-        DB_NAME: ${{ secrets.DB_NAME }}
+
 
   push-docker-image:
     # run when build is successful
