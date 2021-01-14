@@ -2,6 +2,7 @@
 package main
 
 import (
+	"fmt"
 	dbManager "json9512/mediumclone-go/db"
 
 	nested "github.com/antonfisher/nested-logrus-formatter"
@@ -55,4 +56,5 @@ func SetupRouter(mode string) *gin.Engine {
 func main() {
 	r := SetupRouter("debug")
 	r.Run() // Port 8080
+	fmt.Println("Test CODEOWNERS")
 }
