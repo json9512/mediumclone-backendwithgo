@@ -13,7 +13,7 @@ require (
 	github.com/toorop/gin-logrus v0.0.0-20200831135515-d2ee50d38dae
 	gorm.io/gorm v1.20.11 // indirect
 	json9512/mediumclone-go/db v0.0.0-00010101000000-000000000000
-	json9512/mediumclone-go/util v0.0.0-00010101000000-000000000000 // indirect
+	json9512/mediumclone-go/util v0.0.0-00010101000000-000000000000
 )
 
 replace (
