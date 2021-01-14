@@ -1,39 +1,19 @@
 package util
 
 import (
-	"github.com/spf13/viper"
+	"os"
+
+	"github.com/joho/godotenv"
 )
-
-// Config ...
-// holds configuration for the app
-type Config struct {
-	Database DatabaseConfig
-}
-
-// DatabaseConfig ...
-type DatabaseConfig struct {
-	DBUsername string
-	DBPassword string
-	DBPort     string
-	DBHost     string
-	DBName     string
-}
 
 // LoadConfig ...
 // Loads the configuration for the app
-func LoadConfig(path string) (config *Config, err error) {
-	viper.AddConfigPath(path)
-	viper.SetConfigName("viper")
-	viper.SetConfigType("yml")
-
-	viper.AutomaticEnv()
-
-	err = viper.ReadInConfig()
+func LoadConfig(key string) (string, error) {
+	err := godotenv.Load()
 
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	err = viper.Unmarshal(&config)
-	return config, err
+	return os.Getenv(key), nil
 }

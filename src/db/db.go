@@ -2,30 +2,42 @@ package db
 
 import (
 	"fmt"
-
-	util "json9512/mediumclone-go/util"
+	"json9512/mediumclone-go/util"
+	"log"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/lib/pq"
 )
 
+func CheckErr(err error) {
+	if err != nil {
+		log.Fatal("godotenv failed to load variable")
+	}
+}
+
 // ConnectDB ...
 // Returns the AwS RDS postgresql database
 func ConnectDB() (*gorm.DB, string, error) {
 	// Load configuration from util
-	config, err := util.LoadConfig(".")
-	if err != nil {
-		return nil, "Viper failed to load environment variables", err
-	}
+	DBHost, err := util.LoadConfig("DB_HOST")
+	CheckErr(err)
+	DBPort, err := util.LoadConfig("DB_PORT")
+	CheckErr(err)
+	DBName, err := util.LoadConfig("DB_NAME")
+	CheckErr(err)
+	DBUsername, err := util.LoadConfig("DB_USERNAME")
+	CheckErr(err)
+	DBPassword, err := util.LoadConfig("DB_PASSWORD")
+	CheckErr(err)
 
 	// Construct rdsConnectionString with Database configuration
 	rdsConnectionString := fmt.Sprintf(
 		"host=%s port=%s dbname=%s user=%s password=%s",
-		config.Database.DBHost,
-		config.Database.DBPort,
-		config.Database.DBName,
-		config.Database.DBUsername,
-		config.Database.DBPassword,
+		DBHost,
+		DBPort,
+		DBName,
+		DBUsername,
+		DBPassword,
 	)
 
 	db, err := gorm.Open("postgres", rdsConnectionString)

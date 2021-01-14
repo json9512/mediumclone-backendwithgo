@@ -24,6 +24,12 @@ jobs:
     - name: Build
       working-directory: ./src
       run: go build -v ./...
+      env:
+        DB_USERNAME: ${{ secrets.DB_USERNAME }}
+        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        DB_HOST: ${{ secrets.DB_HOST }}
+        DB_PORT: ${{ secrets.DB_PORT }}
+        DB_NAME: ${{ secrets.DB_NAME }}
     
     - name: Test
       working-directory: ./src
@@ -57,6 +63,13 @@ jobs:
         file: ./Dockerfile
         load: true
         tags: json9512/mediumclone-go:latest
+        build-args: |
+          DBUsername=${{ secrets.DB_USERNAME }}
+          DBHost=${{ secrets.DB_HOST }}
+          DBPort=${{ secrets.DB_PORT }}
+          DBName=${{ secrets.DB_NAME }}
+          DBPassword=${{ secrets.DB_PASSWORD }}
+
     - name: Push
       run: docker push json9512/mediumclone-go:latest
     
