@@ -11,17 +11,31 @@ WORKDIR /app/server
 COPY go.mod .
 COPY go.sum .
 
-# Install dependencies
-RUN go mod download
-
 # Copy rest of the file
 COPY . .
 
+# Install dependencies
+RUN go mod download
+
 # Build the app in Docker
-RUN go build
+WORKDIR /app/server/src
+
+# receive env variabes
+ARG DBUsername
+ARG DBHost
+ARG DBPort
+ARG DBName
+ARG DBPassword
+
+# Set env variables
+ENV DB_USERNAME=${DBUsername}
+ENV DB_HOST ${DBHost}
+ENV DB_PORT ${DBPort}
+ENV DB_NAME ${DBName}
+ENV DB_PASSWORD ${DBPassword}
+
+RUN go build -o server
 
 EXPOSE 8080
 
-CMD [ "./mediumclone-go" ]
-
-
+CMD [ "./server" ]

@@ -6,6 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"json9512/mediumclone-go/util"
+
 	. "github.com/franela/goblin"
 	"github.com/gin-gonic/gin"
 )
@@ -53,6 +55,13 @@ func Test(t *testing.T) {
 			g.Assert(err).IsNil()
 			g.Assert(exists).IsTrue()
 			g.Assert(body["message"]).Equal(value)
+		})
+	})
+
+	g.Describe("EnvVar Test", func() {
+		g.It("os.Getenv('DB_NAME') should return $DB_NAME", func() {
+			env, _ := util.LoadConfig("DB_NAME")
+			g.Assert(env).Equal("mediumclone")
 		})
 	})
 
