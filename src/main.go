@@ -32,16 +32,16 @@ func SetupRouter(mode string) *gin.Engine {
 
 		router.Use(ginlogrus.Logger(log))
 		router.Use(gin.Recovery())
-	}
 
-	// Check for db
-	db, msg, err := dbManager.ConnectDB()
-	if db == nil || err != nil {
-		log.WithField("Error", err).Fatal(msg)
-	} else {
-		log.Info(msg)
+		// Check for db
+		db, msg, err := dbManager.ConnectDB()
+		if db == nil || err != nil {
+			log.WithField("Error", err).Fatal(msg)
+		} else {
+			log.Info(msg)
+		}
+		defer db.Close()
 	}
-	defer db.Close()
 
 	router.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{
