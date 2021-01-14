@@ -15,7 +15,7 @@ func LoadConfig(key string) (string, error) {
 		// Check if os.Getenv(key) works
 		temp := os.Getenv(key)
 
-		if temp {
+		if temp != "" {
 			return temp, nil
 		}
 
