@@ -12,6 +12,13 @@ func LoadConfig(key string) (string, error) {
 	err := godotenv.Load()
 
 	if err != nil {
+		// Check if os.Getenv(key) works
+		temp := os.Getenv(key)
+
+		if temp {
+			return temp, nil
+		}
+
 		return "", err
 	}
 
