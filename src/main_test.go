@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"json9512/mediumclone-go/util"
+	"github.com/json9512/mediumclone-backendwithgo/src/util"
 
 	. "github.com/franela/goblin"
 	"github.com/gin-gonic/gin"

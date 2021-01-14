@@ -2,8 +2,9 @@ package db
 
 import (
 	"fmt"
-	"json9512/mediumclone-go/util"
 	"log"
+
+	"github.com/json9512/mediumclone-backendwithgo/src/util"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/lib/pq"
