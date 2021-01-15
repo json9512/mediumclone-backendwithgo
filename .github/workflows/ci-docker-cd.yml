@@ -73,49 +73,50 @@ jobs:
     
     - name: Image digest
       run: echo ${{ steps.docker_build.outputs.digest }}
+  
+  # 도커 이미지 내에서 제대로 구동하는 방법 해결까지 구동하지 않음
+  # deploy-container-on-aws:
+  #   needs: [build-and-test]
+  #   runs-on: ['ubuntu-latest']
+  #   name: Push Docker image to ECR
+  #   steps:
+  #   - name: Checkout
+  #     uses: actions/checkout@v2
+    
+  #   - name: Configure AWS Credentials
+  #     uses: aws-actions/configure-aws-credentials@v1
+  #     with:
+  #       aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #       aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  #       aws-region: ap-northeast-2
+    
+  #   - name: Login to Amazon ECR
+  #     id: login-ecr
+  #     uses: aws-actions/amazon-ecr-login@v1
 
-  deploy-container-on-aws:
-    needs: [build-and-test]
-    runs-on: ['ubuntu-latest']
-    name: Push Docker image to ECR
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v2
+  #   - name: Build, tag, and push image to AWS ECR
+  #     id: build-image
+  #     env:
+  #       ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+  #       ECR_REPOSITORY: mediumclone-go-ecr
+  #       IMAGE_TAG: ${{ github.sha }}
+  #     run: |
+  #       docker build --build-arg DBUsername=$DB_USERNAME --build-arg DBHost=$DB_HOST --build-arg DBPort=$DB_PORT --build-arg DBName=$DB_NAME --build-arg DBPassword=$DB_PASSWORD -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+  #       docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+  #       echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
     
-    - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ap-northeast-2
+  #   - name: Fill in the new Image ID in the AWS ECS task definition
+  #     id: task-def
+  #     uses: aws-actions/amazon-ecs-render-task-definition@v1
+  #     with:
+  #       task-definition: task-def.json
+  #       container-name: mediumclone-go-container
+  #       image: ${{ steps.build-image.outputs.image }}
     
-    - name: Login to Amazon ECR
-      id: login-ecr
-      uses: aws-actions/amazon-ecr-login@v1
-
-    - name: Build, tag, and push image to AWS ECR
-      id: build-image
-      env:
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY: mediumclone-go-ecr
-        IMAGE_TAG: ${{ github.sha }}
-      run: |
-        docker build --build-arg DBUsername=$DB_USERNAME --build-arg DBHost=$DB_HOST --build-arg DBPort=$DB_PORT --build-arg DBName=$DB_NAME --build-arg DBPassword=$DB_PASSWORD -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-        echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
-    
-    - name: Fill in the new Image ID in the AWS ECS task definition
-      id: task-def
-      uses: aws-actions/amazon-ecs-render-task-definition@v1
-      with:
-        task-definition: task-def.json
-        container-name: mediumclone-go-container
-        image: ${{ steps.build-image.outputs.image }}
-    
-    - name: Deploy Amazon ECS task definition
-      uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-      with:
-        task-definition: ${{ steps.task-def.outputs.task-definition }}
-        service: mediumclone-go-service
-        cluster: mediumclone-go-cluster
-        wait-for-service-stability: true
+  #   - name: Deploy Amazon ECS task definition
+  #     uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+  #     with:
+  #       task-definition: ${{ steps.task-def.outputs.task-definition }}
+  #       service: mediumclone-go-service
+  #       cluster: mediumclone-go-cluster
+  #       wait-for-service-stability: true
