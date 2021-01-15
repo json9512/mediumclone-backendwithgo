@@ -11,7 +11,7 @@ import (
 	"github.com/json9512/mediumclone-backendwithgo/src/config"
 )
 
-func CheckErr(err error) {
+func checkErr(err error) {
 	if err != nil {
 		log.Fatal("godotenv failed to load variable", err)
 	}
@@ -22,15 +22,15 @@ func CheckErr(err error) {
 func ConnectDB() (*gorm.DB, string, error) {
 	// Load configuration from util
 	DBHost, err := config.LoadConfig("DB_HOST")
-	CheckErr(err)
+	checkErr(err)
 	DBPort, err := config.LoadConfig("DB_PORT")
-	CheckErr(err)
+	checkErr(err)
 	DBName, err := config.LoadConfig("DB_NAME")
-	CheckErr(err)
+	checkErr(err)
 	DBUsername, err := config.LoadConfig("DB_USERNAME")
-	CheckErr(err)
+	checkErr(err)
 	DBPassword, err := config.LoadConfig("DB_PASSWORD")
-	CheckErr(err)
+	checkErr(err)
 
 	// Construct rdsConnectionString with Database configuration
 	rdsConnectionString := fmt.Sprintf(
