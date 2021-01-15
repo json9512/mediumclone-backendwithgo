@@ -28,7 +28,7 @@ ARG DBName
 ARG DBPassword
 
 # Set env variables
-ENV DB_USERNAME=${DBUsername}
+ENV DB_USERNAME ${DBUsername}
 ENV DB_HOST ${DBHost}
 ENV DB_PORT ${DBPort}
 ENV DB_NAME ${DBName}
