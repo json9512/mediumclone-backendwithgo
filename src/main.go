@@ -2,12 +2,12 @@
 package main
 
 import (
-	dbManager "github.com/json9512/mediumclone-backendwithgo/src/db"
-
-	nested "github.com/antonfisher/nested-logrus-formatter"
+	formatter "github.com/antonfisher/nested-logrus-formatter"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	"github.com/toorop/gin-logrus"
+	ginlogrus "github.com/toorop/gin-logrus"
+
+	"github.com/json9512/mediumclone-backendwithgo/src/internal/db"
 )
 
 // SetupRouter ...
@@ -25,7 +25,7 @@ func SetupRouter(mode string) *gin.Engine {
 		// Append logger and recovery middleware if debug mode
 		router = gin.New()
 
-		log.SetFormatter(&nested.Formatter{
+		log.SetFormatter(&formatter.Formatter{
 			HideKeys:    true,
 			FieldsOrder: []string{"component", "category"},
 		})
@@ -34,7 +34,7 @@ func SetupRouter(mode string) *gin.Engine {
 		router.Use(gin.Recovery())
 
 		// Check for db
-		db, msg, err := dbManager.ConnectDB()
+		db, msg, err := db.ConnectDB()
 		if db == nil || err != nil {
 			log.WithField("Error", err).Fatal(msg)
 		} else {

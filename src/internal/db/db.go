@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/json9512/mediumclone-backendwithgo/src/util"
-
 	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/now"
 	_ "github.com/lib/pq"
+
+	"github.com/json9512/mediumclone-backendwithgo/src/internal/config"
 )
 
 func CheckErr(err error) {
@@ -20,15 +21,15 @@ func CheckErr(err error) {
 // Returns the AwS RDS postgresql database
 func ConnectDB() (*gorm.DB, string, error) {
 	// Load configuration from util
-	DBHost, err := util.LoadConfig("DB_HOST")
+	DBHost, err := config.LoadConfig("DB_HOST")
 	CheckErr(err)
-	DBPort, err := util.LoadConfig("DB_PORT")
+	DBPort, err := config.LoadConfig("DB_PORT")
 	CheckErr(err)
-	DBName, err := util.LoadConfig("DB_NAME")
+	DBName, err := config.LoadConfig("DB_NAME")
 	CheckErr(err)
-	DBUsername, err := util.LoadConfig("DB_USERNAME")
+	DBUsername, err := config.LoadConfig("DB_USERNAME")
 	CheckErr(err)
-	DBPassword, err := util.LoadConfig("DB_PASSWORD")
+	DBPassword, err := config.LoadConfig("DB_PASSWORD")
 	CheckErr(err)
 
 	// Construct rdsConnectionString with Database configuration

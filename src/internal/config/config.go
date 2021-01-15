@@ -1,4 +1,4 @@
-package util
+package config
 
 import (
 	"os"
@@ -18,9 +18,7 @@ func LoadConfig(key string) (string, error) {
 		if temp != "" {
 			return temp, nil
 		}
-
 		return "", err
 	}
-
 	return os.Getenv(key), nil
 }

@@ -6,17 +6,15 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/json9512/mediumclone-backendwithgo/src/util"
-
 	. "github.com/franela/goblin"
 	"github.com/gin-gonic/gin"
+
+	"github.com/json9512/mediumclone-backendwithgo/src/internal/config"
 )
 
 func MakeRequest(r http.Handler, method, path string) *httptest.ResponseRecorder {
 	req, _ := http.NewRequest(method, path, nil)
-
 	w := httptest.NewRecorder()
-
 	r.ServeHTTP(w, req)
 
 	return w
@@ -60,7 +58,7 @@ func Test(t *testing.T) {
 
 	g.Describe("EnvVar Test", func() {
 		g.It("os.Getenv('DB_NAME') should return $DB_NAME", func() {
-			env, _ := util.LoadConfig("DB_NAME")
+			env, _ := config.LoadConfig("DB_NAME")
 			g.Assert(env).Equal("mediumclone")
 		})
 	})
