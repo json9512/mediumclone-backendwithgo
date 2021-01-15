@@ -1,0 +1,2 @@
+clean:
+	go mod tidy

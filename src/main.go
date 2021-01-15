@@ -7,7 +7,7 @@ import (
 	"github.com/sirupsen/logrus"
 	ginlogrus "github.com/toorop/gin-logrus"
 
-	"github.com/json9512/mediumclone-backendwithgo/src/internal/db"
+	"github.com/json9512/mediumclone-backendwithgo/src/db"
 )
 
 // SetupRouter ...

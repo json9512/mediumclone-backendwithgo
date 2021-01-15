@@ -8,7 +8,7 @@ import (
 	_ "github.com/jinzhu/now"
 	_ "github.com/lib/pq"
 
-	"github.com/json9512/mediumclone-backendwithgo/src/internal/config"
+	"github.com/json9512/mediumclone-backendwithgo/src/config"
 )
 
 func CheckErr(err error) {

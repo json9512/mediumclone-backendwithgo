@@ -9,7 +9,7 @@ import (
 	. "github.com/franela/goblin"
 	"github.com/gin-gonic/gin"
 
-	"github.com/json9512/mediumclone-backendwithgo/src/internal/config"
+	"github.com/json9512/mediumclone-backendwithgo/src/config"
 )
 
 func MakeRequest(r http.Handler, method, path string) *httptest.ResponseRecorder {
