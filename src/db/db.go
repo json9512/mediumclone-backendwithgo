@@ -45,6 +45,7 @@ func ConnectDB() (*gorm.DB, string, error) {
 	db, err := gorm.Open("postgres", rdsConnectionString)
 
 	if err != nil {
+		log.Println(rdsConnectionString) // TODO: delete; show connection variables for testing
 		return nil, "Connection to AWS RDS DB Failed", err
 	}
 
