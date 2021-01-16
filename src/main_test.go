@@ -54,6 +54,27 @@ func Test(t *testing.T) {
 			g.Assert(exists).IsTrue()
 			g.Assert(body["message"]).Equal(value)
 		})
+
+		g.It("GET /posts should return list of all posts", func() {
+			// build expected body
+			body := gin.H{
+				"result": []string{"test", "sample", "post"},
+			}
+
+			w := MakeRequest(router, "GET", "/posts")
+
+			g.Assert(w.Code).Eql(http.StatusOK)
+
+			var response map[string][]string
+			err := json.Unmarshal([]byte(w.Body.String()), &response)
+
+			// grab the values
+			value, exists := response["result"]
+
+			g.Assert(err).IsNil()
+			g.Assert(exists).IsTrue()
+			g.Assert(body["result"]).Eql(value)
+		})
 	})
 
 	g.Describe("EnvVar Test", func() {
