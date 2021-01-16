@@ -8,11 +8,12 @@ import (
 	ginlogrus "github.com/toorop/gin-logrus"
 
 	"github.com/json9512/mediumclone-backendwithgo/src/db"
+	"github.com/json9512/mediumclone-backendwithgo/src/posts"
 )
 
 // SetupRouter ...
 // returns a *gin.Engine
-func SetupRouter(mode string) *gin.Engine {
+func SetupRouter(mode string) (*gin.Engine, *logrus.Logger) {
 	var router *gin.Engine
 	log := logrus.New()
 
@@ -32,27 +33,30 @@ func SetupRouter(mode string) *gin.Engine {
 
 		router.Use(ginlogrus.Logger(log))
 		router.Use(gin.Recovery())
-
-		// Check for db
-		db, msg, err := db.ConnectDB()
-		if db == nil || err != nil {
-			log.WithField("Error", err).Fatal(msg)
-		} else {
-			log.Info(msg)
-		}
-		defer db.Close()
 	}
 
+	// For test only
 	router.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"message": "pong",
 		})
 	})
 
-	return router
+	// Add routes
+	posts.PostsRouter(router)
+
+	return router, log
 }
 
 func main() {
-	r := SetupRouter("debug")
+
+	r, logger := SetupRouter("debug")
+
+	// db connection
+	db := db.Init()
+	defer db.Close()
+
+	logger.Info("DB connection successful")
+
 	r.Run() // Port 8080
 }

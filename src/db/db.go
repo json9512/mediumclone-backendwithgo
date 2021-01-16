@@ -4,16 +4,27 @@ import (
 	"fmt"
 
 	"github.com/jinzhu/gorm"
-	// dependency for above package
+	// dependencies for above package
 	_ "github.com/jinzhu/now"
 	_ "github.com/lib/pq"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/json9512/mediumclone-backendwithgo/src/config"
 )
 
-// ConnectDB ...
+// Database ...
+// holds reference to gorm.DB object
+type Database struct {
+	*gorm.DB
+}
+
+// DB ...
+// global DB variable for export
+var DB *gorm.DB
+
+// Init ...
 // Returns the AwS RDS postgresql database
-func ConnectDB() (*gorm.DB, string, error) {
+func Init() *gorm.DB {
 	// Load configuration from util
 	DBHost := config.LoadConfig("DB_HOST")
 	DBPort := config.LoadConfig("DB_PORT")
@@ -34,8 +45,30 @@ func ConnectDB() (*gorm.DB, string, error) {
 	db, err := gorm.Open("postgres", rdsConnectionString)
 
 	if err != nil {
-		return nil, "Connection to AWS RDS DB Failed", err
+		log.Fatalln("Connection to AWS RDS DB failed", err)
 	}
 
-	return db, "Connection to AWS RDS DB Successful", nil
+	DB = db
+	return DB
+}
+
+// TestDBInit ...
+// returns a DB instance for testing
+func TestDBInit() *gorm.DB {
+	dsn := "host=localhost user=postgres password=postgres dbname=mediumclone port=5432 sslmode=disable"
+	testDB, err := gorm.Open("postgres", dsn)
+
+	if err != nil {
+		log.Fatalln("Connection to Test DB failed", err)
+	}
+
+	testDB.LogMode(true)
+	DB = testDB
+	return DB
+}
+
+// GetDB ...
+// Use this function to get connected and serve a pool
+func GetDB() *gorm.DB {
+	return DB
 }

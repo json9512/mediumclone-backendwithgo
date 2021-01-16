@@ -9,7 +9,7 @@ require (
 	github.com/jinzhu/gorm v1.9.16
 	github.com/jinzhu/now v1.1.1
 	github.com/joho/godotenv v1.3.0
-	github.com/lib/pq v1.1.1
+	github.com/lib/pq v1.3.0
 	github.com/sirupsen/logrus v1.7.0
 	github.com/toorop/gin-logrus v0.0.0-20200831135515-d2ee50d38dae
 )

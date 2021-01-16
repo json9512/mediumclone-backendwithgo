@@ -22,7 +22,7 @@ func MakeRequest(r http.Handler, method, path string) *httptest.ResponseRecorder
 
 func Test(t *testing.T) {
 	// Setup router
-	router := SetupRouter("test")
+	router, _ := SetupRouter("test")
 
 	// create goblin
 	g := Goblin(t)
@@ -66,6 +66,27 @@ func Test(t *testing.T) {
 			g.Assert(w.Code).Eql(http.StatusOK)
 
 			var response map[string][]string
+			err := json.Unmarshal([]byte(w.Body.String()), &response)
+
+			// grab the values
+			value, exists := response["result"]
+
+			g.Assert(err).IsNil()
+			g.Assert(exists).IsTrue()
+			g.Assert(body["result"]).Eql(value)
+		})
+
+		g.It("GET /posts/:id should return post with given id", func() {
+			// build expected body
+			body := gin.H{
+				"result": "5",
+			}
+
+			w := MakeRequest(router, "GET", "/posts/5")
+
+			g.Assert(w.Code).Eql(http.StatusOK)
+
+			var response map[string]string
 			err := json.Unmarshal([]byte(w.Body.String()), &response)
 
 			// grab the values
