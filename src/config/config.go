@@ -1,6 +1,7 @@
 package config
 
 import (
+	"log"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -8,17 +9,18 @@ import (
 
 // LoadConfig ...
 // Loads the configuration for the app
-func LoadConfig(key string) (string, error) {
+func LoadConfig(key string) string {
 	err := godotenv.Load()
 
 	if err != nil {
-		// Check if os.Getenv(key) works
+		// Check if os.Getenv(key) has value
 		temp := os.Getenv(key)
 
 		if temp != "" {
-			return temp, nil
+			return temp
 		}
-		return "", err
+
+		log.Fatal("godotenv failed to load variable", err)
 	}
-	return os.Getenv(key), nil
+	return os.Getenv(key)
 }

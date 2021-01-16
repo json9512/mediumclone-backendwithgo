@@ -2,35 +2,24 @@ package db
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/jinzhu/gorm"
+	// dependency for above package
 	_ "github.com/jinzhu/now"
 	_ "github.com/lib/pq"
 
 	"github.com/json9512/mediumclone-backendwithgo/src/config"
 )
 
-func checkErr(err error) {
-	if err != nil {
-		log.Fatal("godotenv failed to load variable", err)
-	}
-}
-
 // ConnectDB ...
 // Returns the AwS RDS postgresql database
 func ConnectDB() (*gorm.DB, string, error) {
 	// Load configuration from util
-	DBHost, err := config.LoadConfig("DB_HOST")
-	checkErr(err)
-	DBPort, err := config.LoadConfig("DB_PORT")
-	checkErr(err)
-	DBName, err := config.LoadConfig("DB_NAME")
-	checkErr(err)
-	DBUsername, err := config.LoadConfig("DB_USERNAME")
-	checkErr(err)
-	DBPassword, err := config.LoadConfig("DB_PASSWORD")
-	checkErr(err)
+	DBHost := config.LoadConfig("DB_HOST")
+	DBPort := config.LoadConfig("DB_PORT")
+	DBName := config.LoadConfig("DB_NAME")
+	DBUsername := config.LoadConfig("DB_USERNAME")
+	DBPassword := config.LoadConfig("DB_PASSWORD")
 
 	// Construct rdsConnectionString with Database configuration
 	rdsConnectionString := fmt.Sprintf(
@@ -45,7 +34,6 @@ func ConnectDB() (*gorm.DB, string, error) {
 	db, err := gorm.Open("postgres", rdsConnectionString)
 
 	if err != nil {
-		log.Println(rdsConnectionString) // TODO: delete; show connection variables for testing
 		return nil, "Connection to AWS RDS DB Failed", err
 	}
 
