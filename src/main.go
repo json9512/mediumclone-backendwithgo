@@ -43,7 +43,7 @@ func SetupRouter(mode string) (*gin.Engine, *logrus.Logger) {
 	})
 
 	// Add routes
-	posts.PostsRouter(router)
+	posts.AddRoutes(router)
 
 	return router, log
 }
