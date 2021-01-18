@@ -9,6 +9,7 @@ import (
 	"github.com/json9512/mediumclone-backendwithgo/src/db"
 	"github.com/json9512/mediumclone-backendwithgo/src/logger"
 	"github.com/json9512/mediumclone-backendwithgo/src/posts"
+	"github.com/json9512/mediumclone-backendwithgo/src/users"
 )
 
 // SetupRouter ...
@@ -39,6 +40,7 @@ func SetupRouter(mode string) *gin.Engine {
 
 	// Add routes
 	posts.AddRoutes(router)
+	users.AddRoutes(router)
 	return router
 }
 

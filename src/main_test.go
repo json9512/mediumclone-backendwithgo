@@ -45,6 +45,12 @@ func Test(t *testing.T) {
 
 		// GET /post?tag=rabbit
 		testGetPostWithQuery(g, router)
+
+		// GET /users
+		testGetUsers(g, router)
+
+		// GET /users/:id
+		testGetUsersWithID(g, router)
 	})
 
 	// Environment setup test
@@ -161,6 +167,48 @@ func testGetPostWithQuery(g *G, router *gin.Engine) {
 		err := json.Unmarshal([]byte(w.Body.String()), &response)
 
 		// grab the values
+		value, exists := response["result"]
+
+		g.Assert(err).IsNil()
+		g.Assert(exists).IsTrue()
+		g.Assert(body["result"]).Eql(value)
+	})
+}
+
+func testGetUsers(g *G, router *gin.Engine) {
+	g.It("GET /users should return list of all users", func() {
+		body := gin.H{
+			"result": []string{"test", "sample", "users"},
+		}
+
+		w := MakeRequest(router, "GET", "/users")
+
+		g.Assert(w.Code).Eql(http.StatusOK)
+
+		var response map[string][]string
+		err := json.Unmarshal([]byte(w.Body.String()), &response)
+
+		value, exists := response["result"]
+
+		g.Assert(err).IsNil()
+		g.Assert(exists).IsTrue()
+		g.Assert(body["result"]).Eql(value)
+	})
+}
+
+func testGetUsersWithID(g *G, router *gin.Engine) {
+	g.It("GET /users/:id should return user with given id", func() {
+		body := gin.H{
+			"result": "5",
+		}
+
+		w := MakeRequest(router, "GET", "/users/5")
+
+		g.Assert(w.Code).Eql(http.StatusOK)
+
+		var response map[string]string
+		err := json.Unmarshal([]byte(w.Body.String()), &response)
+
 		value, exists := response["result"]
 
 		g.Assert(err).IsNil()

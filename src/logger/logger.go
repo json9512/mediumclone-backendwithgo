@@ -8,11 +8,11 @@ import (
 // InitLogger ...
 // Returns a formatted logger
 func InitLogger() *logrus.Logger {
-	log := logrus.New()
+	log := logrus.StandardLogger()
 
 	log.SetFormatter(&formatter.Formatter{
 		HideKeys:    true,
-		FieldsOrder: []string{"component", "category"},
+		FieldsOrder: []string{"category"},
 	})
 	return log
 }
