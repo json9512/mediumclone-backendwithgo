@@ -2,16 +2,16 @@ package config
 
 import (
 	"bufio"
-	"log"
 	"os"
 	"strings"
+
+	"github.com/json9512/mediumclone-backendwithgo/src/logger"
 )
 
 // LoadConfig ...
 // Loads the configuration for the app
 func LoadConfig(key string) string {
-
-	readVariablesFromFile(".env")
+	log := logger.InitLogger()
 
 	// Check if os.Getenv(key) has value
 	temp := os.Getenv(key)
@@ -23,10 +23,16 @@ func LoadConfig(key string) string {
 	return os.Getenv(key)
 }
 
-func readVariablesFromFile(filename string) {
+// ReadVariablesFromFile ...
+// reads environment variables from given filename
+func ReadVariablesFromFile(filename string) {
+	log := logger.InitLogger()
+
+	// Github Actions 테스트 환경에서는 .env파일이 없다
 	envFile, err := os.Open(filename)
 	if err != nil {
-		log.Fatal(err)
+		log.Info(err)
+		return
 	}
 
 	reader := bufio.NewReader(envFile)

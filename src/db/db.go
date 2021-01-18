@@ -25,7 +25,6 @@ var DB *gorm.DB
 // Init ...
 // Returns the AwS RDS postgresql database
 func Init() *gorm.DB {
-	// init logger
 	log := logger.InitLogger()
 
 	// Load configuration from util
@@ -60,7 +59,6 @@ func Init() *gorm.DB {
 // TestDBInit ...
 // returns a DB instance for testing
 func TestDBInit() *gorm.DB {
-	// init logger
 	log := logger.InitLogger()
 
 	dsn := "host=localhost user=postgres password=postgres dbname=mediumclone port=5432 sslmode=disable"

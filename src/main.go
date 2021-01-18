@@ -5,6 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	ginlogrus "github.com/toorop/gin-logrus"
 
+	"github.com/json9512/mediumclone-backendwithgo/src/config"
 	"github.com/json9512/mediumclone-backendwithgo/src/db"
 	"github.com/json9512/mediumclone-backendwithgo/src/logger"
 	"github.com/json9512/mediumclone-backendwithgo/src/posts"
@@ -15,6 +16,7 @@ import (
 func SetupRouter(mode string) *gin.Engine {
 	var router *gin.Engine
 	log := logger.InitLogger()
+	config.ReadVariablesFromFile(".env")
 
 	// Set gin mode and create router
 	if mode != "debug" {
