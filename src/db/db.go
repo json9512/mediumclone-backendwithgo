@@ -18,10 +18,6 @@ type Database struct {
 	*gorm.DB
 }
 
-// DB ...
-// global DB variable for export
-var DB *gorm.DB
-
 // Init ...
 // Returns the AwS RDS postgresql database
 func Init() *gorm.DB {
@@ -45,8 +41,7 @@ func Init() *gorm.DB {
 		log.Info("DB connection successful")
 	}
 
-	DB = db
-	return DB
+	return db
 }
 
 // TestDBInit ...
@@ -59,14 +54,10 @@ func TestDBInit() *gorm.DB {
 
 	if err != nil {
 		log.Fatal("Connection to Test DB failed", err)
+	} else {
+		log.Info("DB connection successful")
 	}
 
 	testDB.LogMode(true)
 	return testDB
-}
-
-// GetDB ...
-// Use this function to get connected and serve a pool
-func GetDB() *gorm.DB {
-	return DB
 }

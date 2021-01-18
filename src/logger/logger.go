@@ -17,6 +17,7 @@ func InitLogger() *logrus.Logger {
 		HideKeys:    true,
 		FieldsOrder: []string{"category"},
 	})
+
 	return log
 }
 
