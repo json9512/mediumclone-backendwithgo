@@ -7,9 +7,9 @@ import (
 	// dependencies for above package
 	_ "github.com/jinzhu/now"
 	_ "github.com/lib/pq"
-	log "github.com/sirupsen/logrus"
 
 	"github.com/json9512/mediumclone-backendwithgo/src/config"
+	"github.com/json9512/mediumclone-backendwithgo/src/logger"
 )
 
 // Database ...
@@ -25,6 +25,9 @@ var DB *gorm.DB
 // Init ...
 // Returns the AwS RDS postgresql database
 func Init() *gorm.DB {
+	// init logger
+	log := logger.InitLogger()
+
 	// Load configuration from util
 	DBHost := config.LoadConfig("DB_HOST")
 	DBPort := config.LoadConfig("DB_PORT")
@@ -45,7 +48,9 @@ func Init() *gorm.DB {
 	db, err := gorm.Open("postgres", rdsConnectionString)
 
 	if err != nil {
-		log.Fatalln("Connection to AWS RDS DB failed", err)
+		log.Fatal("Connection to AWS RDS DB failed", err)
+	} else {
+		log.Info("DB connection successful")
 	}
 
 	DB = db
@@ -55,16 +60,18 @@ func Init() *gorm.DB {
 // TestDBInit ...
 // returns a DB instance for testing
 func TestDBInit() *gorm.DB {
+	// init logger
+	log := logger.InitLogger()
+
 	dsn := "host=localhost user=postgres password=postgres dbname=mediumclone port=5432 sslmode=disable"
 	testDB, err := gorm.Open("postgres", dsn)
 
 	if err != nil {
-		log.Fatalln("Connection to Test DB failed", err)
+		log.Fatal("Connection to Test DB failed", err)
 	}
 
 	testDB.LogMode(true)
-	DB = testDB
-	return DB
+	return testDB
 }
 
 // GetDB ...

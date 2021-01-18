@@ -14,7 +14,7 @@ func AddRoutes(router *gin.Engine) {
 		// Check queries
 		queries := c.Request.URL.Query()
 
-		if checkIfExist(queries) {
+		if checkIfQueryExist(queries) {
 			c.JSON(200, gin.H{
 				"result": queries,
 			})
@@ -41,7 +41,7 @@ func AddRoutes(router *gin.Engine) {
 	})
 }
 
-func checkIfExist(values url.Values) bool {
+func checkIfQueryExist(values url.Values) bool {
 	if len(values) > 0 {
 		return true
 	}

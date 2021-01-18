@@ -22,7 +22,10 @@ func MakeRequest(r http.Handler, method, path string) *httptest.ResponseRecorder
 
 func Test(t *testing.T) {
 	// Setup router
-	router, _ := SetupRouter("test")
+	router := SetupRouter("test")
+
+	// Setup test_db for local use only
+	// db := db.TestDBInit()
 
 	// create goblin
 	g := Goblin(t)
@@ -61,22 +64,16 @@ func testGetPing(g *G, router *gin.Engine) {
 			"message": "pong",
 		}
 
-		// Perform GET request with the handler
 		w := MakeRequest(router, "GET", "/ping")
 
-		// Assert we encoded correctly
-		// and the request gives 200
 		g.Assert(w.Code).Equal(http.StatusOK)
 
-		// Convert JSON response to a map
 		var response map[string]string
 
 		err := json.Unmarshal([]byte(w.Body.String()), &response)
 
-		// grab the value
 		value, exists := response["message"]
 
-		// make some assertions
 		g.Assert(err).IsNil()
 		g.Assert(exists).IsTrue()
 		g.Assert(body["message"]).Equal(value)
@@ -85,7 +82,6 @@ func testGetPing(g *G, router *gin.Engine) {
 
 func testGetPost(g *G, router *gin.Engine) {
 	g.It("GET /posts should return list of all posts", func() {
-		// build expected body
 		body := gin.H{
 			"result": []string{"test", "sample", "post"},
 		}
@@ -97,7 +93,6 @@ func testGetPost(g *G, router *gin.Engine) {
 		var response map[string][]string
 		err := json.Unmarshal([]byte(w.Body.String()), &response)
 
-		// grab the values
 		value, exists := response["result"]
 
 		g.Assert(err).IsNil()
@@ -108,7 +103,6 @@ func testGetPost(g *G, router *gin.Engine) {
 
 func testGetPostWithID(g *G, router *gin.Engine) {
 	g.It("GET /posts/:id should return post with given id", func() {
-		// build expected body
 		body := gin.H{
 			"result": "5",
 		}
@@ -120,7 +114,6 @@ func testGetPostWithID(g *G, router *gin.Engine) {
 		var response map[string]string
 		err := json.Unmarshal([]byte(w.Body.String()), &response)
 
-		// grab the values
 		value, exists := response["result"]
 
 		g.Assert(err).IsNil()
@@ -131,7 +124,6 @@ func testGetPostWithID(g *G, router *gin.Engine) {
 
 func testGetLikesOfPost(g *G, router *gin.Engine) {
 	g.It("GET /posts/:id/like should return like count of post with given id", func() {
-		// build expected body
 		body := gin.H{
 			"result": 10,
 		}
@@ -143,7 +135,6 @@ func testGetLikesOfPost(g *G, router *gin.Engine) {
 		var response map[string]int
 		err := json.Unmarshal([]byte(w.Body.String()), &response)
 
-		// grab the values
 		value, exists := response["result"]
 
 		g.Assert(err).IsNil()
