@@ -1,79 +1,51 @@
 {
-    "ipcMode": null,
-    "executionRoleArn": null,
-    "containerDefinitions": [
+  "requiresCompatibilities": [
+      "EC2"
+  ],
+  "inferenceAccelerators": [],
+  "containerDefinitions": [
       {
-        "dnsSearchDomains": null,
-        "environmentFiles": null,
-        "logConfiguration": null,
-        "entryPoint": null,
-        "portMappings": [
-          {
-            "hostPort": 3001,
-            "protocol": "tcp",
-            "containerPort": 8080
+          "name": "mediumclone-go-container",
+          "image": "043797856377.dkr.ecr.ap-northeast-2.amazonaws.com/mediumclone-go-ecr:latest",
+          "memory": "128",
+          "resourceRequirements": null,
+          "essential": true,
+          "portMappings": [
+              {
+                  "hostPort": "3005",
+                  "containerPort": "8080",
+                  "protocol": "tcp"
+              },
+              {
+                  "hostPort": "5432",
+                  "containerPort": "5432",
+                  "protocol": "tcp"
+              }
+          ],
+          "environment": null,
+          "environmentFiles": [],
+          "secrets": null,
+          "mountPoints": null,
+          "volumesFrom": null,
+          "hostname": null,
+          "user": null,
+          "workingDirectory": null,
+          "extraHosts": null,
+          "logConfiguration": null,
+          "ulimits": null,
+          "dockerLabels": null,
+          "dependsOn": null,
+          "repositoryCredentials": {
+              "credentialsParameter": ""
           }
-        ],
-        "command": null,
-        "linuxParameters": null,
-        "cpu": 0,
-        "environment": [],
-        "resourceRequirements": null,
-        "ulimits": null,
-        "dnsServers": null,
-        "mountPoints": [],
-        "workingDirectory": null,
-        "secrets": null,
-        "dockerSecurityOptions": null,
-        "memory": 128,
-        "memoryReservation": null,
-        "volumesFrom": [],
-        "stopTimeout": null,
-        "image": "043797856377.dkr.ecr.ap-northeast-2.amazonaws.com/mediumclone-go-ecr:latest",
-        "startTimeout": null,
-        "firelensConfiguration": null,
-        "dependsOn": null,
-        "disableNetworking": null,
-        "interactive": null,
-        "healthCheck": null,
-        "essential": true,
-        "links": null,
-        "hostname": null,
-        "extraHosts": null,
-        "pseudoTerminal": null,
-        "user": null,
-        "readonlyRootFilesystem": null,
-        "dockerLabels": null,
-        "systemControls": null,
-        "privileged": null,
-        "name": "mediumclone-go-container"
       }
-    ],
-    "placementConstraints": [],
-    "memory": null,
-    "taskRoleArn": null,
-    "compatibilities": [
-      "EC2"
-    ],
-    "taskDefinitionArn": "arn:aws:ecs:ap-northeast-2:043797856377:task-definition/mediumclone-go-task:1",
-    "family": "mediumclone-go-task",
-    "requiresAttributes": [
-      {
-        "targetId": null,
-        "targetType": null,
-        "value": null,
-        "name": "com.amazonaws.ecs.capability.ecr-auth"
-      }
-    ],
-    "pidMode": null,
-    "requiresCompatibilities": [
-      "EC2"
-    ],
-    "networkMode": null,
-    "cpu": null,
-    "revision": 1,
-    "status": "ACTIVE",
-    "inferenceAccelerators": null,
-    "proxyConfiguration": null,
-    "volumes": []
+  ],
+  "volumes": [],
+  "networkMode": null,
+  "memory": null,
+  "cpu": null,
+  "placementConstraints": [],
+  "family": "mediumclone-go-task",
+  "taskRoleArn": "",
+  "tags": []
 }

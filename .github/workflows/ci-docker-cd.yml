@@ -73,11 +73,11 @@ jobs:
     
     - name: Image digest
       run: echo ${{ steps.docker_build.outputs.digest }}
-
+  
   deploy-container-on-aws:
     needs: [build-and-test]
-    runs-on: ['ubuntu-latest']
-    name: Push Docker image to ECR
+    runs-on: 'ubuntu-latest'
+    name: Push image to ECR and deploy with ECS
     steps:
     - name: Checkout
       uses: actions/checkout@v2

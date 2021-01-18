@@ -36,6 +36,6 @@ ENV DB_PASSWORD ${DBPassword}
 
 RUN go build -o server
 
-EXPOSE 8080
+EXPOSE 8080 ${DB_PORT}
 
 CMD [ "./server" ]
