@@ -3,7 +3,6 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
-	ginlogrus "github.com/toorop/gin-logrus"
 
 	"github.com/json9512/mediumclone-backendwithgo/src/config"
 	"github.com/json9512/mediumclone-backendwithgo/src/db"
@@ -27,7 +26,7 @@ func SetupRouter(mode string) *gin.Engine {
 	} else {
 		// Append logger and recovery middleware if debug mode
 		router = gin.New()
-		router.Use(ginlogrus.Logger(log))
+		router.Use(logger.MiddleWare(log))
 		router.Use(gin.Recovery())
 	}
 
