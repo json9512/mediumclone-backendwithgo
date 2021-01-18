@@ -4,12 +4,11 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	. "github.com/franela/goblin"
 	"github.com/gin-gonic/gin"
-
-	"github.com/json9512/mediumclone-backendwithgo/src/config"
 )
 
 func MakeRequest(r http.Handler, method, path string) *httptest.ResponseRecorder {
@@ -56,7 +55,7 @@ func Test(t *testing.T) {
 	// Environment setup test
 	g.Describe("Environment variables test", func() {
 		g.It("os.Getenv('DB_NAME') should return $DB_NAME", func() {
-			env := config.LoadConfig("DB_NAME")
+			env := os.Getenv("DB_NAME")
 			g.Assert(env).Equal("mediumclone")
 		})
 	})

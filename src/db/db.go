@@ -2,13 +2,13 @@ package db
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/jinzhu/gorm"
 	// dependencies for above package
 	_ "github.com/jinzhu/now"
 	_ "github.com/lib/pq"
 
-	"github.com/json9512/mediumclone-backendwithgo/src/config"
 	"github.com/json9512/mediumclone-backendwithgo/src/logger"
 )
 
@@ -27,21 +27,14 @@ var DB *gorm.DB
 func Init() *gorm.DB {
 	log := logger.InitLogger()
 
-	// Load configuration from util
-	DBHost := config.LoadConfig("DB_HOST")
-	DBPort := config.LoadConfig("DB_PORT")
-	DBName := config.LoadConfig("DB_NAME")
-	DBUsername := config.LoadConfig("DB_USERNAME")
-	DBPassword := config.LoadConfig("DB_PASSWORD")
-
 	// Construct rdsConnectionString with Database configuration
 	rdsConnectionString := fmt.Sprintf(
 		"host=%s port=%s dbname=%s user=%s password=%s",
-		DBHost,
-		DBPort,
-		DBName,
-		DBUsername,
-		DBPassword,
+		os.Getenv("DB_HOST"),
+		os.Getenv("DB_PORT"),
+		os.Getenv("DB_NAME"),
+		os.Getenv("DB_USERNAME"),
+		os.Getenv("DB_PASSWORD"),
 	)
 
 	db, err := gorm.Open("postgres", rdsConnectionString)

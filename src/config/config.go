@@ -8,21 +8,6 @@ import (
 	"github.com/json9512/mediumclone-backendwithgo/src/logger"
 )
 
-// LoadConfig ...
-// Loads the configuration for the app
-func LoadConfig(key string) string {
-	log := logger.InitLogger()
-
-	// Check if os.Getenv(key) has value
-	temp := os.Getenv(key)
-	if temp != "" {
-		return temp
-	}
-
-	log.Fatal("Failed to load variable")
-	return os.Getenv(key)
-}
-
 // ReadVariablesFromFile ...
 // reads environment variables from given filename
 func ReadVariablesFromFile(filename string) {
