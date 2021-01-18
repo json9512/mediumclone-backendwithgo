@@ -1,10 +1,15 @@
 package posts
 
 import (
+	"net/http"
 	"net/url"
 
 	"github.com/gin-gonic/gin"
 )
+
+type POSTdata struct {
+	PostID string `json:"postid"`
+}
 
 // AddRoutes ...
 // Adds HTTP Methods for the /posts endpoint
@@ -38,6 +43,12 @@ func AddRoutes(router *gin.Engine) {
 		c.JSON(200, gin.H{
 			"result": 10,
 		})
+	})
+
+	router.POST("/posts", func(c *gin.Context) {
+		var postData POSTdata
+		c.BindJSON(&postData)
+		c.JSON(http.StatusOK, gin.H{"postid": postData.PostID})
 	})
 }
 

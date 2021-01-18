@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -11,8 +12,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func MakeRequest(r http.Handler, method, path string) *httptest.ResponseRecorder {
-	req, _ := http.NewRequest(method, path, nil)
+func MakeRequest(r http.Handler, method, path string, body []byte) *httptest.ResponseRecorder {
+	req, _ := http.NewRequest(method, path, bytes.NewBuffer(body))
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 
@@ -28,28 +29,33 @@ func Test(t *testing.T) {
 
 	// create goblin
 	g := Goblin(t)
-	g.Describe("Server setup test", func() {
+	g.Describe("/posts endpoint tests", func() {
 		// Passing test
 		// GET /ping
-		testGetPing(g, router)
+		GETPing(g, router)
 
-		// GET /post
-		testGetPost(g, router)
+		// GET /posts
+		GETPost(g, router)
 
-		// GET /post/:id
-		testGetPostWithID(g, router)
+		// GET /posts/:id
+		GETPostWithID(g, router)
 
-		// GET /post/:id/like
-		testGetLikesOfPost(g, router)
+		// GET /posts/:id/like
+		GETLikesOfPost(g, router)
 
-		// GET /post?tag=rabbit
-		testGetPostWithQuery(g, router)
+		// GET /posts?tag=rabbit
+		GETPostWithQuery(g, router)
 
+		// POST /posts with json {postid: 5}
+		POSTpostsWithID(g, router)
+	})
+
+	g.Describe("/users endpoint test", func() {
 		// GET /users
-		testGetUsers(g, router)
+		GETUsers(g, router)
 
 		// GET /users/:id
-		testGetUsersWithID(g, router)
+		GETUsersWithID(g, router)
 	})
 
 	// Environment setup test
@@ -62,14 +68,14 @@ func Test(t *testing.T) {
 
 }
 
-func testGetPing(g *G, router *gin.Engine) {
+func GETPing(g *G, router *gin.Engine) {
 	g.It("GET /ping should return JSON {message: pong}", func() {
 		// Build expected body
 		body := gin.H{
 			"message": "pong",
 		}
 
-		w := MakeRequest(router, "GET", "/ping")
+		w := MakeRequest(router, "GET", "/ping", nil)
 
 		g.Assert(w.Code).Equal(http.StatusOK)
 
@@ -85,13 +91,13 @@ func testGetPing(g *G, router *gin.Engine) {
 	})
 }
 
-func testGetPost(g *G, router *gin.Engine) {
+func GETPost(g *G, router *gin.Engine) {
 	g.It("GET /posts should return list of all posts", func() {
 		body := gin.H{
 			"result": []string{"test", "sample", "post"},
 		}
 
-		w := MakeRequest(router, "GET", "/posts")
+		w := MakeRequest(router, "GET", "/posts", nil)
 
 		g.Assert(w.Code).Eql(http.StatusOK)
 
@@ -106,13 +112,13 @@ func testGetPost(g *G, router *gin.Engine) {
 	})
 }
 
-func testGetPostWithID(g *G, router *gin.Engine) {
+func GETPostWithID(g *G, router *gin.Engine) {
 	g.It("GET /posts/:id should return post with given id", func() {
 		body := gin.H{
 			"result": "5",
 		}
 
-		w := MakeRequest(router, "GET", "/posts/5")
+		w := MakeRequest(router, "GET", "/posts/5", nil)
 
 		g.Assert(w.Code).Eql(http.StatusOK)
 
@@ -127,13 +133,13 @@ func testGetPostWithID(g *G, router *gin.Engine) {
 	})
 }
 
-func testGetLikesOfPost(g *G, router *gin.Engine) {
+func GETLikesOfPost(g *G, router *gin.Engine) {
 	g.It("GET /posts/:id/like should return like count of post with given id", func() {
 		body := gin.H{
 			"result": 10,
 		}
 
-		w := MakeRequest(router, "GET", "/posts/5/like")
+		w := MakeRequest(router, "GET", "/posts/5/like", nil)
 
 		g.Assert(w.Code).Eql(http.StatusOK)
 
@@ -148,7 +154,7 @@ func testGetLikesOfPost(g *G, router *gin.Engine) {
 	})
 }
 
-func testGetPostWithQuery(g *G, router *gin.Engine) {
+func GETPostWithQuery(g *G, router *gin.Engine) {
 	g.It("GET /posts?tag=rabbit should return tags: [rabbit]", func() {
 		tag := make(map[string][]string)
 		tag["tags"] = []string{"rabbit"}
@@ -158,7 +164,7 @@ func testGetPostWithQuery(g *G, router *gin.Engine) {
 			"result": tag,
 		}
 
-		w := MakeRequest(router, "GET", "/posts?tags=rabbit")
+		w := MakeRequest(router, "GET", "/posts?tags=rabbit", nil)
 
 		g.Assert(w.Code).Eql(http.StatusOK)
 
@@ -174,13 +180,13 @@ func testGetPostWithQuery(g *G, router *gin.Engine) {
 	})
 }
 
-func testGetUsers(g *G, router *gin.Engine) {
+func GETUsers(g *G, router *gin.Engine) {
 	g.It("GET /users should return list of all users", func() {
 		body := gin.H{
 			"result": []string{"test", "sample", "users"},
 		}
 
-		w := MakeRequest(router, "GET", "/users")
+		w := MakeRequest(router, "GET", "/users", nil)
 
 		g.Assert(w.Code).Eql(http.StatusOK)
 
@@ -195,13 +201,13 @@ func testGetUsers(g *G, router *gin.Engine) {
 	})
 }
 
-func testGetUsersWithID(g *G, router *gin.Engine) {
+func GETUsersWithID(g *G, router *gin.Engine) {
 	g.It("GET /users/:id should return user with given id", func() {
 		body := gin.H{
 			"result": "5",
 		}
 
-		w := MakeRequest(router, "GET", "/users/5")
+		w := MakeRequest(router, "GET", "/users/5", nil)
 
 		g.Assert(w.Code).Eql(http.StatusOK)
 
@@ -213,5 +219,25 @@ func testGetUsersWithID(g *G, router *gin.Engine) {
 		g.Assert(err).IsNil()
 		g.Assert(exists).IsTrue()
 		g.Assert(body["result"]).Eql(value)
+	})
+}
+
+func POSTpostsWithID(g *G, router *gin.Engine) {
+	g.It("POST /posts should create a new post in database", func() {
+		values := map[string]string{"postid": "5"}
+		jsonValue, _ := json.Marshal(values)
+
+		w := MakeRequest(router, "POST", "/posts", jsonValue)
+
+		g.Assert(w.Code).Eql(http.StatusOK)
+
+		var response map[string]string
+		err := json.Unmarshal([]byte(w.Body.String()), &response)
+
+		value, exists := response["postid"]
+
+		g.Assert(err).IsNil()
+		g.Assert(exists).IsTrue()
+		g.Assert(values["postid"]).Eql(value)
 	})
 }
