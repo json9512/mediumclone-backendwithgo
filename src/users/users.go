@@ -6,8 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// AddRoutes ...
-// Adds HTTP Methods for the /users endpoint
+// AddRoutes adds HTTP Methods for the /users endpoint
 func AddRoutes(router *gin.Engine) {
 	router.GET("/users", func(c *gin.Context) {
 

@@ -11,8 +11,7 @@ import (
 	"github.com/json9512/mediumclone-backendwithgo/src/users"
 )
 
-// SetupRouter ...
-// returns a *gin.Engine
+// SetupRouter returns a *gin.Engine
 func SetupRouter(mode string) *gin.Engine {
 	var router *gin.Engine
 	log := logger.InitLogger()
@@ -26,7 +25,7 @@ func SetupRouter(mode string) *gin.Engine {
 	} else {
 		// Append logger and recovery middleware if debug mode
 		router = gin.New()
-		router.Use(logger.MiddleWare(log))
+		router.Use(logger.Middleware(log))
 		router.Use(gin.Recovery())
 	}
 

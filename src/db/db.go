@@ -12,52 +12,57 @@ import (
 	"github.com/json9512/mediumclone-backendwithgo/src/logger"
 )
 
-// Database ...
-// holds reference to gorm.DB object
-type Database struct {
-	*gorm.DB
+// Config holds configuration for DB connection
+type Config struct {
+	DBHost     string
+	DBPort     string
+	DBName     string
+	DBUsername string
+	DBPassword string
 }
 
-// Init ...
-// Returns the AwS RDS postgresql database
+func getEnv(n string, dVal string) string {
+	if os.Getenv(n) != "" {
+		return os.Getenv(n)
+	}
+	return dVal
+}
+
+func createConfig() *Config {
+	return &Config{
+		DBHost:     getEnv("DB_HOST", "localhost"),
+		DBPort:     getEnv("DB_PORT", "5432"),
+		DBName:     getEnv("DB_NAME", "mediumclone"),
+		DBUsername: getEnv("DB_USERNAME", "postgres"),
+		DBPassword: getEnv("DB_PASSWORD", "postgres"),
+	}
+}
+
+// Init returns the db when connected gracefully
 func Init() *gorm.DB {
 	log := logger.InitLogger()
+	config := createConfig()
 
-	// Construct rdsConnectionString with Database configuration
-	rdsConnectionString := fmt.Sprintf(
+	// Construct configString for database connection
+	configString := fmt.Sprintf(
 		"host=%s port=%s dbname=%s user=%s password=%s",
-		os.Getenv("DB_HOST"),
-		os.Getenv("DB_PORT"),
-		os.Getenv("DB_NAME"),
-		os.Getenv("DB_USERNAME"),
-		os.Getenv("DB_PASSWORD"),
+		config.DBHost,
+		config.DBPort,
+		config.DBName,
+		config.DBUsername,
+		config.DBPassword,
 	)
 
-	db, err := gorm.Open("postgres", rdsConnectionString)
+	db, err := gorm.Open("postgres", configString)
 
 	if err != nil {
-		log.Fatal("Connection to AWS RDS DB failed", err)
-	} else {
-		log.Info("DB connection successful")
-	}
-
-	return db
-}
-
-// TestDBInit ...
-// returns a DB instance for testing
-func TestDBInit() *gorm.DB {
-	log := logger.InitLogger()
-
-	dsn := "host=localhost user=postgres password=postgres dbname=mediumclone port=5432 sslmode=disable"
-	testDB, err := gorm.Open("postgres", dsn)
-
-	if err != nil {
+		if config.DBHost != "localhost" {
+			log.Fatal("Connection to AWS RDS DB failed", err)
+		}
 		log.Fatal("Connection to Test DB failed", err)
 	} else {
 		log.Info("DB connection successful")
 	}
 
-	testDB.LogMode(true)
-	return testDB
+	return db
 }

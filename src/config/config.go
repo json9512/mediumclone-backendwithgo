@@ -8,8 +8,7 @@ import (
 	"github.com/json9512/mediumclone-backendwithgo/src/logger"
 )
 
-// ReadVariablesFromFile ...
-// reads environment variables from given filename
+// ReadVariablesFromFile reads environment variables from given filename
 func ReadVariablesFromFile(filename string) {
 	log := logger.InitLogger()
 

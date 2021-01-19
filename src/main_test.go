@@ -12,6 +12,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type data map[string]interface{}
+
 func MakeRequest(r http.Handler, method, path string, body []byte) *httptest.ResponseRecorder {
 	req, _ := http.NewRequest(method, path, bytes.NewBuffer(body))
 	w := httptest.NewRecorder()
@@ -25,7 +27,7 @@ func Test(t *testing.T) {
 	router := SetupRouter("test")
 
 	// Setup test_db for local use only
-	// db := db.TestDBInit()
+	// db := db.Init()
 
 	// create goblin
 	g := Goblin(t)
@@ -46,7 +48,7 @@ func Test(t *testing.T) {
 		// GET /posts?tag=rabbit
 		GETPostWithQuery(g, router)
 
-		// POST /posts with json {postid: 5}
+		// POST /posts with json {post-id: 5}
 		POSTpostsWithID(g, router)
 	})
 
@@ -71,7 +73,7 @@ func Test(t *testing.T) {
 func GETPing(g *G, router *gin.Engine) {
 	g.It("GET /ping should return JSON {message: pong}", func() {
 		// Build expected body
-		body := gin.H{
+		body := data{
 			"message": "pong",
 		}
 
@@ -93,7 +95,7 @@ func GETPing(g *G, router *gin.Engine) {
 
 func GETPost(g *G, router *gin.Engine) {
 	g.It("GET /posts should return list of all posts", func() {
-		body := gin.H{
+		body := data{
 			"result": []string{"test", "sample", "post"},
 		}
 
@@ -114,7 +116,7 @@ func GETPost(g *G, router *gin.Engine) {
 
 func GETPostWithID(g *G, router *gin.Engine) {
 	g.It("GET /posts/:id should return post with given id", func() {
-		body := gin.H{
+		body := data{
 			"result": "5",
 		}
 
@@ -135,7 +137,7 @@ func GETPostWithID(g *G, router *gin.Engine) {
 
 func GETLikesOfPost(g *G, router *gin.Engine) {
 	g.It("GET /posts/:id/like should return like count of post with given id", func() {
-		body := gin.H{
+		body := data{
 			"result": 10,
 		}
 
@@ -160,7 +162,7 @@ func GETPostWithQuery(g *G, router *gin.Engine) {
 		tag["tags"] = []string{"rabbit"}
 
 		// build expected body
-		body := gin.H{
+		body := data{
 			"result": tag,
 		}
 
@@ -182,7 +184,7 @@ func GETPostWithQuery(g *G, router *gin.Engine) {
 
 func GETUsers(g *G, router *gin.Engine) {
 	g.It("GET /users should return list of all users", func() {
-		body := gin.H{
+		body := data{
 			"result": []string{"test", "sample", "users"},
 		}
 
@@ -203,7 +205,7 @@ func GETUsers(g *G, router *gin.Engine) {
 
 func GETUsersWithID(g *G, router *gin.Engine) {
 	g.It("GET /users/:id should return user with given id", func() {
-		body := gin.H{
+		body := data{
 			"result": "5",
 		}
 
@@ -224,7 +226,7 @@ func GETUsersWithID(g *G, router *gin.Engine) {
 
 func POSTpostsWithID(g *G, router *gin.Engine) {
 	g.It("POST /posts should create a new post in database", func() {
-		values := map[string]string{"postid": "5"}
+		values := data{"post-id": "5"}
 		jsonValue, _ := json.Marshal(values)
 
 		w := MakeRequest(router, "POST", "/posts", jsonValue)
@@ -234,10 +236,10 @@ func POSTpostsWithID(g *G, router *gin.Engine) {
 		var response map[string]string
 		err := json.Unmarshal([]byte(w.Body.String()), &response)
 
-		value, exists := response["postid"]
+		value, exists := response["post-id"]
 
 		g.Assert(err).IsNil()
 		g.Assert(exists).IsTrue()
-		g.Assert(values["postid"]).Eql(value)
+		g.Assert(values["post-id"]).Eql(value)
 	})
 }
