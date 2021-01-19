@@ -9,7 +9,7 @@ import (
 
 type resData map[string]interface{}
 
-type POSTdata struct {
+type dataPOST struct {
 	PostID string `json:"post-id"`
 }
 
@@ -47,7 +47,7 @@ func AddRoutes(router *gin.Engine) {
 	})
 
 	router.POST("/posts", func(c *gin.Context) {
-		var postData POSTdata
+		var postData dataPOST
 		c.BindJSON(&postData)
 		c.JSON(http.StatusOK, resData{"post-id": postData.PostID})
 	})

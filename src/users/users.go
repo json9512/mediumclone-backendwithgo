@@ -1,12 +1,17 @@
 package users
 
 import (
+	"net/http"
 	"net/url"
 
 	"github.com/gin-gonic/gin"
 )
 
 type resData map[string]interface{}
+
+type dataPOST struct {
+	UserID string `json:"user-id"`
+}
 
 // AddRoutes adds HTTP Methods for the /users endpoint
 func AddRoutes(router *gin.Engine) {
@@ -34,6 +39,11 @@ func AddRoutes(router *gin.Engine) {
 		})
 	})
 
+	router.POST("/users", func(c *gin.Context) {
+		var userData dataPOST
+		c.BindJSON(&userData)
+		c.JSON(http.StatusOK, resData{"user-id": userData.UserID})
+	})
 }
 
 func checkIfQueriesExist(v url.Values) bool {
