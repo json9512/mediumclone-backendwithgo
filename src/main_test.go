@@ -40,6 +40,9 @@ func Test(t *testing.T) {
 
 		// PUT /posts with json {post-id: 5, doc: something}
 		tests.PUTSinglePost(g, router)
+
+		// DELETE /posts/:id  with json {post-id: 5}
+		tests.DELPostWithID(g, router)
 	})
 
 	g.Describe("/users endpoint test", func() {
@@ -54,6 +57,9 @@ func Test(t *testing.T) {
 
 		// PUT /users with json {user-id: 15, email: something@test.com}
 		tests.PUTSingleUser(g, router)
+
+		// DELETE /users/:id with json {user-id: 15}
+		tests.DELUserWithID(g, router)
 	})
 
 	// Environment setup test

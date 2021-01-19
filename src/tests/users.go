@@ -96,3 +96,24 @@ func PUTSingleUser(g *goblin.G, router *gin.Engine) {
 		g.Assert(values["email"]).Eql(userEmail)
 	})
 }
+
+// DELUserWithID tests /users/:id to delete a user in database
+func DELUserWithID(g *goblin.G, router *gin.Engine) {
+	g.It("DELETE /users/:id should delete a user with the given ID", func() {
+		values := Data{"user-id": "15"}
+		jsonValue, _ := json.Marshal(values)
+
+		w := MakeRequest(router, "DELETE", "/users", jsonValue)
+
+		g.Assert(w.Code).Eql(http.StatusOK)
+
+		var response map[string]string
+		err := json.Unmarshal([]byte(w.Body.String()), &response)
+
+		postID, IDExists := response["user-id"]
+
+		g.Assert(err).IsNil()
+		g.Assert(IDExists).IsTrue()
+		g.Assert(values["user-id"]).Eql(postID)
+	})
+}

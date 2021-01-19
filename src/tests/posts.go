@@ -171,3 +171,24 @@ func PUTSinglePost(g *goblin.G, router *gin.Engine) {
 		g.Assert(values["doc"]).Eql(postDoc)
 	})
 }
+
+// DELPostWithID tests /posts/:id to delete a post in database
+func DELPostWithID(g *goblin.G, router *gin.Engine) {
+	g.It("DELETE /posts/:id should delete a post with the given ID", func() {
+		values := Data{"post-id": "5"}
+		jsonValue, _ := json.Marshal(values)
+
+		w := MakeRequest(router, "DELETE", "/posts", jsonValue)
+
+		g.Assert(w.Code).Eql(http.StatusOK)
+
+		var response map[string]string
+		err := json.Unmarshal([]byte(w.Body.String()), &response)
+
+		postID, IDExists := response["post-id"]
+
+		g.Assert(err).IsNil()
+		g.Assert(IDExists).IsTrue()
+		g.Assert(values["post-id"]).Eql(postID)
+	})
+}

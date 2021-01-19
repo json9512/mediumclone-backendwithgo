@@ -62,6 +62,14 @@ func AddRoutes(router *gin.Engine) {
 		)
 	})
 
+	router.DELETE("/posts", func(c *gin.Context) {
+		var reqBody postReqData
+		c.BindJSON(&reqBody)
+		c.JSON(
+			http.StatusOK,
+			resData{"post-id": reqBody.PostID},
+		)
+	})
 }
 
 func checkIfQueriesExist(v url.Values) bool {
