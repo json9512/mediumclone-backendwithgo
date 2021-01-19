@@ -147,3 +147,27 @@ func POSTPostWithID(g *goblin.G, router *gin.Engine) {
 		g.Assert(values["post-id"]).Eql(value)
 	})
 }
+
+// PUTSinglePost tests /posts to update a post in database
+func PUTSinglePost(g *goblin.G, router *gin.Engine) {
+	g.It("PUT /posts should update a post in database", func() {
+		values := Data{"post-id": "5", "doc": "something"}
+		jsonValue, _ := json.Marshal(values)
+
+		w := MakeRequest(router, "PUT", "/posts", jsonValue)
+
+		g.Assert(w.Code).Eql(http.StatusOK)
+
+		var response map[string]string
+		err := json.Unmarshal([]byte(w.Body.String()), &response)
+
+		postID, IDExists := response["post-id"]
+		postDoc, docExists := response["doc"]
+
+		g.Assert(err).IsNil()
+		g.Assert(IDExists).IsTrue()
+		g.Assert(values["post-id"]).Eql(postID)
+		g.Assert(docExists).IsTrue()
+		g.Assert(values["doc"]).Eql(postDoc)
+	})
+}

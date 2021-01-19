@@ -37,6 +37,9 @@ func Test(t *testing.T) {
 
 		// POST /posts with json {post-id: 5}
 		tests.POSTPostWithID(g, router)
+
+		// PUT /posts with json {post-id: 5, doc: something}
+		tests.PUTSinglePost(g, router)
 	})
 
 	g.Describe("/users endpoint test", func() {
@@ -46,8 +49,11 @@ func Test(t *testing.T) {
 		// GET /users/:id
 		tests.GETUsersWithID(g, router)
 
-		// POST /users
+		// POST /users with json {user-id: 15}
 		tests.POSTUserWithID(g, router)
+
+		// PUT /users with json {user-id: 15, email: something@test.com}
+		tests.PUTSingleUser(g, router)
 	})
 
 	// Environment setup test

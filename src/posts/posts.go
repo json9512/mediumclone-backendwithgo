@@ -9,8 +9,9 @@ import (
 
 type resData map[string]interface{}
 
-type dataPOST struct {
+type postReqData struct {
 	PostID string `json:"post-id"`
+	Doc    string `json:"doc"`
 }
 
 // AddRoutes adds HTTP Methods for the /posts endpoint
@@ -47,10 +48,20 @@ func AddRoutes(router *gin.Engine) {
 	})
 
 	router.POST("/posts", func(c *gin.Context) {
-		var postData dataPOST
-		c.BindJSON(&postData)
-		c.JSON(http.StatusOK, resData{"post-id": postData.PostID})
+		var reqBody postReqData
+		c.BindJSON(&reqBody)
+		c.JSON(http.StatusOK, resData{"post-id": reqBody.PostID})
 	})
+
+	router.PUT("/posts", func(c *gin.Context) {
+		var reqBody postReqData
+		c.BindJSON(&reqBody)
+		c.JSON(
+			http.StatusOK,
+			resData{"post-id": reqBody.PostID, "doc": reqBody.Doc},
+		)
+	})
+
 }
 
 func checkIfQueriesExist(v url.Values) bool {

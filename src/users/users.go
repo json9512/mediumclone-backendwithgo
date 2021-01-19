@@ -9,8 +9,9 @@ import (
 
 type resData map[string]interface{}
 
-type dataPOST struct {
+type userReqData struct {
 	UserID string `json:"user-id"`
+	Email  string `json:"email"`
 }
 
 // AddRoutes adds HTTP Methods for the /users endpoint
@@ -21,7 +22,7 @@ func AddRoutes(router *gin.Engine) {
 		queries := c.Request.URL.Query()
 
 		if checkIfQueriesExist(queries) {
-			c.JSON(200, gin.H{
+			c.JSON(200, resData{
 				"result": queries,
 			})
 		} else {
@@ -40,9 +41,18 @@ func AddRoutes(router *gin.Engine) {
 	})
 
 	router.POST("/users", func(c *gin.Context) {
-		var userData dataPOST
-		c.BindJSON(&userData)
-		c.JSON(http.StatusOK, resData{"user-id": userData.UserID})
+		var reqBody userReqData
+		c.BindJSON(&reqBody)
+		c.JSON(http.StatusOK, resData{"user-id": reqBody.UserID})
+	})
+
+	router.PUT("/users", func(c *gin.Context) {
+		var reqBody userReqData
+		c.BindJSON(&reqBody)
+		c.JSON(
+			http.StatusOK,
+			resData{"user-id": reqBody.UserID, "email": reqBody.Email},
+		)
 	})
 }
 
