@@ -30,7 +30,7 @@ func GETUsers(g *goblin.G, router *gin.Engine) {
 	})
 }
 
-// GETUsers tests /users/:id to retrieve a user by id
+// GETUsersWithID tests /users/:id to retrieve a user by id
 func GETUsersWithID(g *goblin.G, router *gin.Engine) {
 	g.It("GET /users/:id should return user with given id", func() {
 		body := Data{
