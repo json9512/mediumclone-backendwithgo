@@ -6,6 +6,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type resData map[string]interface{}
+
 // AddRoutes adds HTTP Methods for the /users endpoint
 func AddRoutes(router *gin.Engine) {
 	router.GET("/users", func(c *gin.Context) {
@@ -18,7 +20,7 @@ func AddRoutes(router *gin.Engine) {
 				"result": queries,
 			})
 		} else {
-			c.JSON(200, gin.H{
+			c.JSON(200, resData{
 				"result": []string{"test", "sample", "users"},
 			})
 		}
@@ -27,7 +29,7 @@ func AddRoutes(router *gin.Engine) {
 	router.GET("/users/:id", func(c *gin.Context) {
 		id := c.Param("id")
 
-		c.JSON(200, gin.H{
+		c.JSON(200, resData{
 			"result": id,
 		})
 	})
