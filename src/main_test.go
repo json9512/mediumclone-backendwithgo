@@ -19,9 +19,6 @@ func Test(t *testing.T) {
 	// create goblin
 	g := Goblin(t)
 	g.Describe("/posts endpoint tests", func() {
-		// Passing test
-		// GET /ping
-		tests.GETPing(g, router)
 
 		// GET /posts
 		tests.GETPosts(g, router)

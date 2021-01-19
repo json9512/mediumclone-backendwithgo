@@ -29,13 +29,6 @@ func SetupRouter(mode string) *gin.Engine {
 		router.Use(gin.Recovery())
 	}
 
-	// For test only
-	router.GET("/ping", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "pong",
-		})
-	})
-
 	// Add routes
 	posts.AddRoutes(router)
 	users.AddRoutes(router)

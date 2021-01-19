@@ -8,30 +8,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// GETPing tests /ping endpoint to retrieve pong
-func GETPing(g *goblin.G, router *gin.Engine) {
-	g.It("GET /ping should return JSON {message: pong}", func() {
-		// Build expected body
-		body := Data{
-			"message": "pong",
-		}
-
-		w := MakeRequest(router, "GET", "/ping", nil)
-
-		g.Assert(w.Code).Equal(http.StatusOK)
-
-		var response map[string]string
-
-		err := json.Unmarshal([]byte(w.Body.String()), &response)
-
-		value, exists := response["message"]
-
-		g.Assert(err).IsNil()
-		g.Assert(exists).IsTrue()
-		g.Assert(body["message"]).Equal(value)
-	})
-}
-
 // GETPosts tests /posts to retrieve all posts
 func GETPosts(g *goblin.G, router *gin.Engine) {
 	g.It("GET /posts should return list of all posts", func() {
