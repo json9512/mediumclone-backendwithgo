@@ -168,3 +168,30 @@ func DELPostWithID(g *goblin.G, router *gin.Engine) {
 		g.Assert(values["post-id"]).Eql(postID)
 	})
 }
+
+// RunPostsTests executes all tests for /posts
+func RunPostsTests(g *goblin.G, router *gin.Engine) {
+	g.Describe("/posts endpoint tests", func() {
+
+		// GET /posts
+		GETPosts(g, router)
+
+		// GET /posts/:id
+		GETPostWithID(g, router)
+
+		// GET /posts/:id/like
+		GETLikesOfPost(g, router)
+
+		// GET /posts?tag=rabbit
+		GETPostWithQuery(g, router)
+
+		// POST /posts with json {post-id: 5}
+		POSTPostWithID(g, router)
+
+		// PUT /posts with json {post-id: 5, doc: something}
+		PUTSinglePost(g, router)
+
+		// DELETE /posts/:id  with json {post-id: 5}
+		DELPostWithID(g, router)
+	})
+}

@@ -117,3 +117,23 @@ func DELUserWithID(g *goblin.G, router *gin.Engine) {
 		g.Assert(values["user-id"]).Eql(postID)
 	})
 }
+
+// RunUsersTests executes all tests for /users
+func RunUsersTests(g *goblin.G, router *gin.Engine) {
+	g.Describe("/users endpoint test", func() {
+		// GET /users
+		GETUsers(g, router)
+
+		// GET /users/:id
+		GETUsersWithID(g, router)
+
+		// POST /users with json {user-id: 15}
+		POSTUserWithID(g, router)
+
+		// PUT /users with json {user-id: 15, email: something@test.com}
+		PUTSingleUser(g, router)
+
+		// DELETE /users/:id with json {user-id: 15}
+		DELUserWithID(g, router)
+	})
+}

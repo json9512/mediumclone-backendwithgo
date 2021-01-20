@@ -1,11 +1,15 @@
 package main
 
 import (
+	"errors"
 	"os"
 	"testing"
 
-	. "github.com/franela/goblin"
+	"github.com/franela/goblin"
+	"github.com/gin-gonic/gin"
 
+	"github.com/json9512/mediumclone-backendwithgo/src/dbtool"
+	"github.com/json9512/mediumclone-backendwithgo/src/posts"
 	"github.com/json9512/mediumclone-backendwithgo/src/tests"
 )
 
@@ -14,49 +18,32 @@ func Test(t *testing.T) {
 	router := SetupRouter("test")
 
 	// Setup test_db for local use only
-	// db := db.Init()
+	db := dbtool.Init()
+	dbtool.Migrate(db)
 
 	// create goblin
-	g := Goblin(t)
-	g.Describe("/posts endpoint tests", func() {
+	g := goblin.Goblin(t)
+	tests.RunPostsTests(g, router)
+	tests.RunUsersTests(g, router)
 
-		// GET /posts
-		tests.GETPosts(g, router)
+	g.Describe("DB test", func() {
+		g.It("dbtool.CreateSamplePost should create a sample post in DB", func() {
+			var post posts.PostModel
+			posts.CreateTestSample(db)
+			result := db.Where("author = ?", "test-author").Find(&post)
 
-		// GET /posts/:id
-		tests.GETPostWithID(g, router)
+			g.Assert(result.Error).IsNil()
+			g.Assert(post.Author).Eql("test-author")
+			g.Assert(post.Comments).Eql(posts.JSONB{"comments-test": "testing 321"})
+			g.Assert(post.Document).Eql(posts.JSONB{"testing": "test123"})
+		})
 
-		// GET /posts/:id/like
-		tests.GETLikesOfPost(g, router)
-
-		// GET /posts?tag=rabbit
-		tests.GETPostWithQuery(g, router)
-
-		// POST /posts with json {post-id: 5}
-		tests.POSTPostWithID(g, router)
-
-		// PUT /posts with json {post-id: 5, doc: something}
-		tests.PUTSinglePost(g, router)
-
-		// DELETE /posts/:id  with json {post-id: 5}
-		tests.DELPostWithID(g, router)
-	})
-
-	g.Describe("/users endpoint test", func() {
-		// GET /users
-		tests.GETUsers(g, router)
-
-		// GET /users/:id
-		tests.GETUsersWithID(g, router)
-
-		// POST /users with json {user-id: 15}
-		tests.POSTUserWithID(g, router)
-
-		// PUT /users with json {user-id: 15, email: something@test.com}
-		tests.PUTSingleUser(g, router)
-
-		// DELETE /users/:id with json {user-id: 15}
-		tests.DELUserWithID(g, router)
+		g.It("Delete the sample post created in DB", func() {
+			var post posts.PostModel
+			db.Where("author = ?", "test-author").Delete(&post)
+			result := db.Where("author = ?", "test-author").Find(&post)
+			g.Assert(result.Error).Eql(errors.New("record not found"))
+		})
 	})
 
 	// Environment setup test
@@ -66,5 +53,9 @@ func Test(t *testing.T) {
 			g.Assert(env).Equal("mediumclone")
 		})
 	})
+
+}
+
+func runPostsTest(g *goblin.G, router *gin.Engine) {
 
 }

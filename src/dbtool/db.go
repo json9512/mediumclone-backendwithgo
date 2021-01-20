@@ -1,4 +1,4 @@
-package db
+package dbtool
 
 import (
 	"fmt"
@@ -10,6 +10,7 @@ import (
 	_ "github.com/lib/pq"
 
 	"github.com/json9512/mediumclone-backendwithgo/src/logger"
+	"github.com/json9512/mediumclone-backendwithgo/src/posts"
 )
 
 // Config holds configuration for DB connection
@@ -45,7 +46,7 @@ func Init() *gorm.DB {
 
 	// Construct configString for database connection
 	configString := fmt.Sprintf(
-		"host=%s port=%s dbname=%s user=%s password=%s",
+		"host=%s port=%s dbname=%s user=%s password=%s sslmode=disable",
 		config.DBHost,
 		config.DBPort,
 		config.DBName,
@@ -65,4 +66,9 @@ func Init() *gorm.DB {
 	}
 
 	return db
+}
+
+// Migrate creates necessary tables in the db
+func Migrate(db *gorm.DB) {
+	db.AutoMigrate(&posts.PostModel{})
 }
