@@ -11,6 +11,7 @@ import (
 
 	"github.com/json9512/mediumclone-backendwithgo/src/logger"
 	"github.com/json9512/mediumclone-backendwithgo/src/posts"
+	"github.com/json9512/mediumclone-backendwithgo/src/users"
 )
 
 // Config holds configuration for DB connection
@@ -71,4 +72,5 @@ func Init() *gorm.DB {
 // Migrate creates necessary tables in the db
 func Migrate(db *gorm.DB) {
 	db.AutoMigrate(&posts.PostModel{})
+	db.AutoMigrate(&users.UserModel{})
 }
