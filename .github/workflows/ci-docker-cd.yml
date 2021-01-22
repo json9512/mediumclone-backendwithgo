@@ -75,6 +75,7 @@ jobs:
       run: echo ${{ steps.docker_build.outputs.digest }}
   
   deploy-container-on-aws:
+    if: github.ref == 'refs/heads/main'
     needs: [build-and-test]
     runs-on: 'ubuntu-latest'
     name: Push image to ECR and deploy with ECS
