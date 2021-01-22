@@ -71,6 +71,6 @@ func Init() *gorm.DB {
 
 // Migrate creates necessary tables in the db
 func Migrate(db *gorm.DB) {
-	db.AutoMigrate(&posts.PostModel{})
+	db.AutoMigrate(&posts.Post{})
 	db.AutoMigrate(&users.UserModel{})
 }

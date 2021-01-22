@@ -29,7 +29,7 @@ func Test(t *testing.T) {
 
 	g.Describe("DB test", func() {
 		g.It("posts.CreateTestSample should create a sample post in DB", func() {
-			var post posts.PostModel
+			var post posts.Post
 			posts.CreateTestSample(db)
 			result := db.Where("author = ?", "test-author").Find(&post)
 
@@ -40,14 +40,14 @@ func Test(t *testing.T) {
 		})
 
 		g.It("Delete the sample post created in DB", func() {
-			var post posts.PostModel
+			var post posts.Post
 			db.Where("author = ?", "test-author").Delete(&post)
 			result := db.Where("author = ?", "test-author").Find(&post)
 			g.Assert(result.Error).Eql(errors.New("record not found"))
 		})
 
 		g.It("users.CreateTestSample should create a sample user in DB", func() {
-			var user users.UserModel
+			var user users.User
 			users.CreateTestSample(db)
 			result := db.Where("username = ?", "test-user").Find(&user)
 
@@ -57,7 +57,7 @@ func Test(t *testing.T) {
 		})
 
 		g.It("Delete the sample user created in DB", func() {
-			var user users.UserModel
+			var user users.User
 			db.Where("username = ?", "test-user").Delete(&user)
 			result := db.Where("username = ?", "test-user").Find(&user)
 			g.Assert(result.Error).Eql(errors.New("record not found"))

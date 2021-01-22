@@ -5,8 +5,8 @@ import (
 	"github.com/json9512/mediumclone-backendwithgo/src/config"
 )
 
-// PostModel depicts post_model table in db
-type PostModel struct {
+// Post depicts "posts" table in db
+type Post struct {
 	gorm.Model
 	Author   string       `gorm:"column:author"`
 	Document config.JSONB `gorm:"type:jsonb"`
@@ -20,7 +20,7 @@ func CreateTestSample(db *gorm.DB) {
 	doc := config.JSONB{"testing": "test123"}
 	comments := config.JSONB{"comments-test": "testing 321"}
 
-	post := PostModel{
+	post := Post{
 		Author:   "test-author",
 		Document: doc,
 		Comments: comments,
