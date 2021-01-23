@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"os"
 	"testing"
@@ -41,25 +42,32 @@ func Test(t *testing.T) {
 
 		g.It("Delete the sample post created in DB", func() {
 			var post posts.Post
-			db.Where("author = ?", "test-author").Delete(&post)
-			result := db.Where("author = ?", "test-author").Find(&post)
+			db.Where("id = ?", "1").Delete(&post)
+			db.Unscoped().Delete(&post)
+			result := db.Where("id = ?", "1").Find(&post)
 			g.Assert(result.Error).Eql(errors.New("record not found"))
 		})
 
 		g.It("users.CreateTestSample should create a sample user in DB", func() {
 			var user users.User
 			users.CreateTestSample(db)
-			result := db.Where("username = ?", "test-user").Find(&user)
+			result := db.Where("email = ?", "test@test.com").Find(&user)
 
 			g.Assert(result.Error).IsNil()
 			g.Assert(user.Email).Eql("test@test.com")
-			g.Assert(user.Username).Eql("test-user")
+			g.Assert(user.Password).Eql("test-password")
+			g.Assert(user.AccessToken).Eql("")
+			g.Assert(user.RefreshToken).Eql("")
 		})
 
 		g.It("Delete the sample user created in DB", func() {
 			var user users.User
-			db.Where("username = ?", "test-user").Delete(&user)
-			result := db.Where("username = ?", "test-user").Find(&user)
+			// Soft delete
+			db.Where("email = ?", "test@test.com").Delete(&user)
+
+			// Hard delete
+			db.Unscoped().Delete(&user)
+			result := db.Where("email = ?", "test@test.com").Find(&user)
 			g.Assert(result.Error).Eql(errors.New("record not found"))
 		})
 	})
@@ -70,6 +78,46 @@ func Test(t *testing.T) {
 			env := os.Getenv("DB_NAME")
 			g.Assert(env).Equal("mediumclone")
 		})
+	})
+
+	g.Describe("Authentication/Authorization test", func() {
+		g.It("POST /login should attempt to login with the test user", func() {
+			var user users.User
+			users.CreateTestSample(db)
+			dbResult := db.Where("email = ?", "test@test.com").Find(&user)
+
+			g.Assert(dbResult.Error).IsNil()
+			g.Assert(user.Email).Eql("test@test.com")
+			g.Assert(user.Password).Eql("test-password")
+			g.Assert(user.AccessToken).Eql("")
+			g.Assert(user.RefreshToken).Eql("")
+
+			postBody := tests.Data{
+				"email":    user.Email,
+				"password": user.Password,
+			}
+			jsonBody, _ := json.Marshal(&postBody)
+
+			result := tests.MakeRequest(router, "POST", "/login", jsonBody)
+
+			var response map[string]string
+			err := json.Unmarshal(result.Body.Bytes(), &response)
+
+			accessToken, accessTokenExists := response["access-token"]
+			refreshToken, refreshTokenExists := response["refresh-token"]
+
+			g.Assert(err).IsNil()
+			g.Assert(accessTokenExists).IsTrue()
+			g.Assert(refreshTokenExists).IsTrue()
+			g.Assert(accessToken).Eql("testing-access-token")
+			g.Assert(refreshToken).Eql("testing-refresh-token")
+
+			// Soft delete
+			db.Where("email = ?", "test@test.com").Delete(&user)
+			// Hard delete
+			db.Unscoped().Delete(&user)
+		})
+
 	})
 
 }

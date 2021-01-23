@@ -13,8 +13,8 @@ type Data map[string]interface{}
 // with provided parameters
 func MakeRequest(r http.Handler, method, path string, body []byte) *httptest.ResponseRecorder {
 	req, _ := http.NewRequest(method, path, bytes.NewBuffer(body))
-	w := httptest.NewRecorder()
-	r.ServeHTTP(w, req)
+	resRecorder := httptest.NewRecorder()
+	r.ServeHTTP(resRecorder, req)
 
-	return w
+	return resRecorder
 }

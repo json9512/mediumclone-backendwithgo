@@ -13,6 +13,9 @@ import (
 // JSONB type def for database
 type JSONB map[string]interface{}
 
+// ResData is the universal format for server response body
+type ResData map[string]interface{}
+
 // ReadVariablesFromFile reads environment variables from given filename
 func ReadVariablesFromFile(filename string) {
 	log := logger.InitLogger()

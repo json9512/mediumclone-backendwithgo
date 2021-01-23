@@ -15,12 +15,12 @@ func GETPosts(g *goblin.G, router *gin.Engine) {
 			"result": []string{"test", "sample", "post"},
 		}
 
-		w := MakeRequest(router, "GET", "/posts", nil)
+		result := MakeRequest(router, "GET", "/posts", nil)
 
-		g.Assert(w.Code).Eql(http.StatusOK)
+		g.Assert(result.Code).Eql(http.StatusOK)
 
 		var response map[string][]string
-		err := json.Unmarshal([]byte(w.Body.String()), &response)
+		err := json.Unmarshal([]byte(result.Body.String()), &response)
 
 		value, exists := response["result"]
 
@@ -37,12 +37,12 @@ func GETPostWithID(g *goblin.G, router *gin.Engine) {
 			"result": "5",
 		}
 
-		w := MakeRequest(router, "GET", "/posts/5", nil)
+		result := MakeRequest(router, "GET", "/posts/5", nil)
 
-		g.Assert(w.Code).Eql(http.StatusOK)
+		g.Assert(result.Code).Eql(http.StatusOK)
 
 		var response map[string]string
-		err := json.Unmarshal([]byte(w.Body.String()), &response)
+		err := json.Unmarshal([]byte(result.Body.String()), &response)
 
 		value, exists := response["result"]
 
@@ -60,12 +60,12 @@ func GETLikesOfPost(g *goblin.G, router *gin.Engine) {
 			"result": 10,
 		}
 
-		w := MakeRequest(router, "GET", "/posts/5/like", nil)
+		result := MakeRequest(router, "GET", "/posts/5/like", nil)
 
-		g.Assert(w.Code).Eql(http.StatusOK)
+		g.Assert(result.Code).Eql(http.StatusOK)
 
 		var response map[string]int
-		err := json.Unmarshal([]byte(w.Body.String()), &response)
+		err := json.Unmarshal([]byte(result.Body.String()), &response)
 
 		value, exists := response["result"]
 
@@ -87,12 +87,12 @@ func GETPostWithQuery(g *goblin.G, router *gin.Engine) {
 			"result": tag,
 		}
 
-		w := MakeRequest(router, "GET", "/posts?tags=rabbit", nil)
+		result := MakeRequest(router, "GET", "/posts?tags=rabbit", nil)
 
-		g.Assert(w.Code).Eql(http.StatusOK)
+		g.Assert(result.Code).Eql(http.StatusOK)
 
 		var response map[string]map[string][]string
-		err := json.Unmarshal([]byte(w.Body.String()), &response)
+		err := json.Unmarshal([]byte(result.Body.String()), &response)
 
 		// grab the values
 		value, exists := response["result"]
@@ -109,12 +109,12 @@ func POSTPostWithID(g *goblin.G, router *gin.Engine) {
 		values := Data{"post-id": "5"}
 		jsonValue, _ := json.Marshal(values)
 
-		w := MakeRequest(router, "POST", "/posts", jsonValue)
+		result := MakeRequest(router, "POST", "/posts", jsonValue)
 
-		g.Assert(w.Code).Eql(http.StatusOK)
+		g.Assert(result.Code).Eql(http.StatusOK)
 
 		var response map[string]string
-		err := json.Unmarshal([]byte(w.Body.String()), &response)
+		err := json.Unmarshal([]byte(result.Body.String()), &response)
 
 		value, exists := response["post-id"]
 
@@ -130,12 +130,12 @@ func PUTSinglePost(g *goblin.G, router *gin.Engine) {
 		values := Data{"post-id": "5", "doc": "something"}
 		jsonValue, _ := json.Marshal(values)
 
-		w := MakeRequest(router, "PUT", "/posts", jsonValue)
+		result := MakeRequest(router, "PUT", "/posts", jsonValue)
 
-		g.Assert(w.Code).Eql(http.StatusOK)
+		g.Assert(result.Code).Eql(http.StatusOK)
 
 		var response map[string]string
-		err := json.Unmarshal([]byte(w.Body.String()), &response)
+		err := json.Unmarshal([]byte(result.Body.String()), &response)
 
 		postID, IDExists := response["post-id"]
 		postDoc, docExists := response["doc"]
@@ -154,12 +154,12 @@ func DELPostWithID(g *goblin.G, router *gin.Engine) {
 		values := Data{"post-id": "5"}
 		jsonValue, _ := json.Marshal(values)
 
-		w := MakeRequest(router, "DELETE", "/posts", jsonValue)
+		result := MakeRequest(router, "DELETE", "/posts", jsonValue)
 
-		g.Assert(w.Code).Eql(http.StatusOK)
+		g.Assert(result.Code).Eql(http.StatusOK)
 
 		var response map[string]string
-		err := json.Unmarshal([]byte(w.Body.String()), &response)
+		err := json.Unmarshal([]byte(result.Body.String()), &response)
 
 		postID, IDExists := response["post-id"]
 

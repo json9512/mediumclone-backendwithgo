@@ -5,9 +5,8 @@ import (
 	"net/url"
 
 	"github.com/gin-gonic/gin"
+	"github.com/json9512/mediumclone-backendwithgo/src/config"
 )
-
-type resData map[string]interface{}
 
 type userReqData struct {
 	UserID string `json:"user-id"`
@@ -22,11 +21,11 @@ func AddRoutes(router *gin.Engine) {
 		queries := c.Request.URL.Query()
 
 		if checkIfQueriesExist(queries) {
-			c.JSON(200, resData{
+			c.JSON(200, &config.ResData{
 				"result": queries,
 			})
 		} else {
-			c.JSON(200, resData{
+			c.JSON(200, &config.ResData{
 				"result": []string{"test", "sample", "users"},
 			})
 		}
@@ -35,7 +34,7 @@ func AddRoutes(router *gin.Engine) {
 	router.GET("/users/:id", func(c *gin.Context) {
 		id := c.Param("id")
 
-		c.JSON(200, resData{
+		c.JSON(200, &config.ResData{
 			"result": id,
 		})
 	})
@@ -43,7 +42,7 @@ func AddRoutes(router *gin.Engine) {
 	router.POST("/users", func(c *gin.Context) {
 		var reqBody userReqData
 		c.BindJSON(&reqBody)
-		c.JSON(http.StatusOK, resData{"user-id": reqBody.UserID})
+		c.JSON(http.StatusOK, &config.ResData{"user-id": reqBody.UserID})
 	})
 
 	router.PUT("/users", func(c *gin.Context) {
@@ -51,7 +50,7 @@ func AddRoutes(router *gin.Engine) {
 		c.BindJSON(&reqBody)
 		c.JSON(
 			http.StatusOK,
-			resData{"user-id": reqBody.UserID, "email": reqBody.Email},
+			&config.ResData{"user-id": reqBody.UserID, "email": reqBody.Email},
 		)
 	})
 
@@ -60,7 +59,7 @@ func AddRoutes(router *gin.Engine) {
 		c.BindJSON(&reqBody)
 		c.JSON(
 			http.StatusOK,
-			resData{"user-id": reqBody.UserID},
+			&config.ResData{"user-id": reqBody.UserID},
 		)
 	})
 }

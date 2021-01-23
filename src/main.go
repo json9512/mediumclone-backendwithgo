@@ -7,6 +7,7 @@ import (
 	"github.com/json9512/mediumclone-backendwithgo/src/config"
 	"github.com/json9512/mediumclone-backendwithgo/src/dbtool"
 	"github.com/json9512/mediumclone-backendwithgo/src/logger"
+	"github.com/json9512/mediumclone-backendwithgo/src/login"
 	"github.com/json9512/mediumclone-backendwithgo/src/posts"
 	"github.com/json9512/mediumclone-backendwithgo/src/users"
 )
@@ -32,6 +33,7 @@ func SetupRouter(mode string) *gin.Engine {
 	// Add routes
 	posts.AddRoutes(router)
 	users.AddRoutes(router)
+	login.AddRoutes(router)
 	return router
 }
 

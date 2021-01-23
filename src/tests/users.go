@@ -15,12 +15,12 @@ func GETUsers(g *goblin.G, router *gin.Engine) {
 			"result": []string{"test", "sample", "users"},
 		}
 
-		w := MakeRequest(router, "GET", "/users", nil)
+		result := MakeRequest(router, "GET", "/users", nil)
 
-		g.Assert(w.Code).Eql(http.StatusOK)
+		g.Assert(result.Code).Eql(http.StatusOK)
 
 		var response map[string][]string
-		err := json.Unmarshal([]byte(w.Body.String()), &response)
+		err := json.Unmarshal([]byte(result.Body.String()), &response)
 
 		value, exists := response["result"]
 
@@ -37,12 +37,12 @@ func GETUsersWithID(g *goblin.G, router *gin.Engine) {
 			"result": "5",
 		}
 
-		w := MakeRequest(router, "GET", "/users/5", nil)
+		result := MakeRequest(router, "GET", "/users/5", nil)
 
-		g.Assert(w.Code).Eql(http.StatusOK)
+		g.Assert(result.Code).Eql(http.StatusOK)
 
 		var response map[string]string
-		err := json.Unmarshal([]byte(w.Body.String()), &response)
+		err := json.Unmarshal([]byte(result.Body.String()), &response)
 
 		value, exists := response["result"]
 
@@ -58,12 +58,12 @@ func POSTUserWithID(g *goblin.G, router *gin.Engine) {
 		values := Data{"user-id": "15"}
 		jsonValue, _ := json.Marshal(values)
 
-		w := MakeRequest(router, "POST", "/users", jsonValue)
+		result := MakeRequest(router, "POST", "/users", jsonValue)
 
-		g.Assert(w.Code).Eql(http.StatusOK)
+		g.Assert(result.Code).Eql(http.StatusOK)
 
 		var response map[string]string
-		err := json.Unmarshal([]byte(w.Body.String()), &response)
+		err := json.Unmarshal([]byte(result.Body.String()), &response)
 
 		value, exists := response["user-id"]
 
@@ -79,12 +79,12 @@ func PUTSingleUser(g *goblin.G, router *gin.Engine) {
 		values := Data{"user-id": "15", "email": "something@test.com"}
 		jsonValue, _ := json.Marshal(values)
 
-		w := MakeRequest(router, "PUT", "/users", jsonValue)
+		result := MakeRequest(router, "PUT", "/users", jsonValue)
 
-		g.Assert(w.Code).Eql(http.StatusOK)
+		g.Assert(result.Code).Eql(http.StatusOK)
 
 		var response map[string]string
-		err := json.Unmarshal([]byte(w.Body.String()), &response)
+		err := json.Unmarshal([]byte(result.Body.String()), &response)
 
 		userID, IDExists := response["user-id"]
 		userEmail, emailExists := response["email"]
@@ -103,12 +103,12 @@ func DELUserWithID(g *goblin.G, router *gin.Engine) {
 		values := Data{"user-id": "15"}
 		jsonValue, _ := json.Marshal(values)
 
-		w := MakeRequest(router, "DELETE", "/users", jsonValue)
+		result := MakeRequest(router, "DELETE", "/users", jsonValue)
 
-		g.Assert(w.Code).Eql(http.StatusOK)
+		g.Assert(result.Code).Eql(http.StatusOK)
 
 		var response map[string]string
-		err := json.Unmarshal([]byte(w.Body.String()), &response)
+		err := json.Unmarshal([]byte(result.Body.String()), &response)
 
 		postID, IDExists := response["user-id"]
 
