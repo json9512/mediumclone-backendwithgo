@@ -14,6 +14,7 @@ import (
 type JSONB map[string]interface{}
 
 // ResData is the universal format for server response body
+// NOTE: this will be deleted when serializer instances are implemented
 type ResData map[string]interface{}
 
 // ReadVariablesFromFile reads environment variables from given filename

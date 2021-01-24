@@ -3,6 +3,7 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/jinzhu/gorm"
 
 	"github.com/json9512/mediumclone-backendwithgo/src/config"
 	"github.com/json9512/mediumclone-backendwithgo/src/dbtool"
@@ -13,10 +14,9 @@ import (
 )
 
 // SetupRouter returns a *gin.Engine
-func SetupRouter(mode string) *gin.Engine {
+func SetupRouter(mode string, db *gorm.DB) *gin.Engine {
 	var router *gin.Engine
 	log := logger.InitLogger()
-	config.ReadVariablesFromFile(".env")
 
 	if mode != "debug" {
 		gin.SetMode(gin.ReleaseMode)
@@ -32,19 +32,19 @@ func SetupRouter(mode string) *gin.Engine {
 
 	// Add routes
 	posts.AddRoutes(router)
-	users.AddRoutes(router)
-	login.AddRoutes(router)
+	users.AddRoutes(router, db)
+	login.AddRoutes(router, db)
 	return router
 }
 
 func main() {
-
-	r := SetupRouter("debug")
-
+	config.ReadVariablesFromFile(".env")
 	// db connection
 	db := dbtool.Init()
 	dbtool.Migrate(db)
 	defer db.Close()
+
+	r := SetupRouter("debug", db)
 
 	r.Run() // Port 8080
 }

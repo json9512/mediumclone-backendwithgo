@@ -1,26 +1,19 @@
 package users
 
 import (
-	"github.com/jinzhu/gorm"
+	"time"
+
+	"gorm.io/gorm"
 )
 
 // User depicts users table in the database
 type User struct {
-	gorm.Model
+	ID           uint   `gorm:"primary_key"`
 	Email        string `gorm:"column:email;not null;unique"`
 	Password     string `gorm:"column:password;not null"`
 	AccessToken  string `gorm:"column:access_token"`
 	RefreshToken string `gorm:"column:refresh_token"`
-}
-
-// CreateTestSample creates a sample user in the database
-func CreateTestSample(db *gorm.DB) {
-	user := User{
-		Email:        "test@test.com",
-		Password:     "test-password",
-		AccessToken:  "",
-		RefreshToken: "",
-	}
-
-	db.Create(&user)
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+	DeletedAt    gorm.DeletedAt `gorm:"index"`
 }
