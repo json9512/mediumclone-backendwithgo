@@ -41,7 +41,7 @@ func retrieveUser(db *gorm.DB) gin.HandlerFunc {
 		if err != nil {
 			c.JSON(
 				http.StatusBadRequest,
-				&ErrorResponse{
+				&errorResponse{
 					Msg: "Invalid ID.",
 				},
 			)
@@ -54,7 +54,7 @@ func retrieveUser(db *gorm.DB) gin.HandlerFunc {
 			fmt.Println(result.Error, id)
 			c.JSON(
 				http.StatusBadRequest,
-				&ErrorResponse{
+				&errorResponse{
 					Msg: "User not found",
 				},
 			)
@@ -63,7 +63,7 @@ func retrieveUser(db *gorm.DB) gin.HandlerFunc {
 
 		c.JSON(
 			http.StatusOK,
-			Serialize(&user),
+			serialize(&user),
 		)
 		return
 	}
@@ -77,11 +77,10 @@ func registerUser(db *gorm.DB) gin.HandlerFunc {
 		// - need to implement input verification
 		// - refactoring needed
 		var reqBody userReqData
-		err := c.BindJSON(&reqBody)
-		if err != nil {
+		if err := c.BindJSON(&reqBody); err != nil {
 			c.JSON(
 				http.StatusBadRequest,
-				&ErrorResponse{
+				&errorResponse{
 					Msg: "User registration failed. Invalid data type.",
 				},
 			)
@@ -95,7 +94,7 @@ func registerUser(db *gorm.DB) gin.HandlerFunc {
 		if result.Error != nil {
 			c.JSON(
 				http.StatusInternalServerError,
-				&ErrorResponse{
+				&errorResponse{
 					Msg: "User registration failed. Saving data to database failed.",
 				},
 			)
@@ -104,7 +103,7 @@ func registerUser(db *gorm.DB) gin.HandlerFunc {
 		// Serialize data
 		c.JSON(
 			http.StatusOK,
-			Serialize(user))
+			serialize(user))
 	}
 	return gin.HandlerFunc(handler)
 }
@@ -112,11 +111,10 @@ func registerUser(db *gorm.DB) gin.HandlerFunc {
 func updateUser(db *gorm.DB) gin.HandlerFunc {
 	handler := func(c *gin.Context) {
 		var reqBody userReqData
-		err := c.BindJSON(&reqBody)
-		if err != nil {
+		if err := c.BindJSON(&reqBody); err != nil {
 			c.JSON(
 				http.StatusBadRequest,
-				&ErrorResponse{
+				&errorResponse{
 					Msg: "User update failed. Invalid data type.",
 				},
 			)
@@ -129,7 +127,7 @@ func updateUser(db *gorm.DB) gin.HandlerFunc {
 		if result.Error != nil {
 			c.JSON(
 				http.StatusInternalServerError,
-				&ErrorResponse{
+				&errorResponse{
 					Msg: "User Update failed. Saving data to database failed.",
 				},
 			)
@@ -138,7 +136,7 @@ func updateUser(db *gorm.DB) gin.HandlerFunc {
 
 		c.JSON(
 			http.StatusOK,
-			Serialize(user),
+			serialize(user),
 		)
 	}
 	return gin.HandlerFunc(handler)
@@ -151,8 +149,8 @@ func deleteUser(db *gorm.DB) gin.HandlerFunc {
 		if err != nil {
 			c.JSON(
 				http.StatusBadRequest,
-				&ErrorResponse{
-					Msg: "Invalid ID.",
+				&errorResponse{
+					Msg: "Invalid ID",
 				},
 			)
 			return
@@ -164,7 +162,7 @@ func deleteUser(db *gorm.DB) gin.HandlerFunc {
 		if result.Error != nil {
 			c.JSON(
 				http.StatusBadRequest,
-				&ErrorResponse{
+				&errorResponse{
 					Msg: "Deleting user data from database failed. User not found",
 				},
 			)
@@ -173,7 +171,7 @@ func deleteUser(db *gorm.DB) gin.HandlerFunc {
 
 		c.JSON(
 			http.StatusOK,
-			Serialize(&user),
+			serialize(&user),
 		)
 	}
 	return gin.HandlerFunc(handler)

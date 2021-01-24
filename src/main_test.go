@@ -97,17 +97,13 @@ func Test(t *testing.T) {
 			result := tests.MakeRequest(router, "POST", "/login", jsonBody)
 			g.Assert(result.Code).Eql(http.StatusOK)
 
-			var response map[string]interface{}
-			err := json.Unmarshal(result.Body.Bytes(), &response)
+			cookies := result.Result().Cookies()
+			accessTokenVal := cookies[0].Value
+			refreshTokenVal := cookies[1].Value
 
-			accessToken, accessTokenExists := response["access-token"]
-			refreshToken, refreshTokenExists := response["refresh-token"]
-
-			g.Assert(err).IsNil()
-			g.Assert(accessTokenExists).IsTrue()
-			g.Assert(refreshTokenExists).IsTrue()
-			g.Assert(accessToken).Eql("testing-access-token")
-			g.Assert(refreshToken).Eql("testing-refresh-token")
+			g.Assert(cookies).IsNotNil()
+			g.Assert(accessTokenVal).Eql("testing-access-token")
+			g.Assert(refreshTokenVal).Eql("testing-refresh-token")
 
 			// Delete the test user
 			db.Where("email = ?", "login@test.com").Delete(&user)
@@ -128,19 +124,24 @@ func Test(t *testing.T) {
 
 			var response map[string]interface{}
 			err := json.Unmarshal(result.Body.Bytes(), &response)
+			g.Assert(err).IsNil()
+			g.Assert(response["email"]).Eql("logout@test.com")
 
-			g.Assert(response["access-token"]).IsNil()
-			g.Assert(response["refresh-token"]).IsNil()
+			emptyCookie := []*http.Cookie{}
+			cookies := result.Result().Cookies()
+			g.Assert(cookies).Eql(emptyCookie)
 
 			// Login with the created user
 			loginResult := tests.MakeRequest(router, "POST", "/login", jsonBody)
 			g.Assert(loginResult.Code).Eql(http.StatusOK)
 
-			var loginResponse map[string]interface{}
-			unmarshalErr := json.Unmarshal(loginResult.Body.Bytes(), &loginResponse)
-			g.Assert(unmarshalErr).IsNil()
-			g.Assert(loginResponse["access-token"]).Eql("testing-access-token")
-			g.Assert(loginResponse["refresh-token"]).Eql("testing-refresh-token")
+			cookies = loginResult.Result().Cookies()
+			accessTokenVal := cookies[0].Value
+			refreshTokenVal := cookies[1].Value
+
+			g.Assert(cookies).IsNotNil()
+			g.Assert(accessTokenVal).Eql("testing-access-token")
+			g.Assert(refreshTokenVal).Eql("testing-refresh-token")
 
 			// Test logout from here
 			postBody := tests.Data{
@@ -149,14 +150,16 @@ func Test(t *testing.T) {
 
 			jsonBody, _ = json.Marshal(&postBody)
 
-			result = tests.MakeRequest(router, "POST", "/logout", jsonBody)
-			g.Assert(result.Code).Eql(http.StatusOK)
+			logoutResult := tests.MakeRequest(router, "POST", "/logout", jsonBody)
+			g.Assert(logoutResult.Code).Eql(http.StatusOK)
 
-			var logoutResponse map[string]string
-			err = json.Unmarshal(result.Body.Bytes(), &logoutResponse)
-			g.Assert(err).IsNil()
-			g.Assert(logoutResponse["access-token"]).Eql("")
-			g.Assert(logoutResponse["refresh-token"]).Eql("")
+			cookies = logoutResult.Result().Cookies()
+			accessTokenVal = cookies[0].Value
+			refreshTokenVal = cookies[1].Value
+
+			g.Assert(cookies).IsNotNil()
+			g.Assert(accessTokenVal).Eql("")
+			g.Assert(refreshTokenVal).Eql("")
 
 			// Soft delete
 			db.Where("email = ?", "logout@test.com").Delete(&user)

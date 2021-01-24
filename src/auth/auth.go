@@ -6,7 +6,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
 
-	"github.com/json9512/mediumclone-backendwithgo/src/config"
 	"github.com/json9512/mediumclone-backendwithgo/src/users"
 )
 
@@ -15,16 +14,19 @@ type loginCredentials struct {
 	Password string `json:"password"`
 }
 
+type errorResponse struct {
+	Msg string `json:"message"`
+}
+
 // AddRoutes adds HTTP Methods for the /posts endpoint
 func AddRoutes(router *gin.Engine, db *gorm.DB) {
 	router.POST("/login", func(c *gin.Context) {
 		var userCredentials loginCredentials
-		err := c.BindJSON(&userCredentials)
-		if err != nil {
+		if err := c.BindJSON(&userCredentials); err != nil {
 			c.JSON(
 				http.StatusBadRequest,
-				&config.ResData{
-					"message": "Authentication failed. Invalid data type.",
+				&errorResponse{
+					Msg: "Authentication failed. Invalid data type.",
 				},
 			)
 			return
@@ -36,34 +38,32 @@ func AddRoutes(router *gin.Engine, db *gorm.DB) {
 		if dbResult.Error != nil {
 			c.JSON(
 				http.StatusBadRequest,
-				&config.ResData{
-					"message": "Authentication failed. User does not exist.",
+				&errorResponse{
+					Msg: "Authentication failed. User does not exist.",
 				},
 			)
 			return
 		}
 
-		// Update the database
 		db.Model(&user).Updates(
 			map[string]interface{}{
 				"access_token":  "testing-access-token",
 				"refresh_token": "testing-refresh-token",
 			})
 
-		c.JSON(200, &config.ResData{
-			"access-token":  "testing-access-token",
-			"refresh-token": "testing-refresh-token",
-		})
+		c.SetCookie("access_token", "testing-access-token", 10, "/", "", false, true)
+		c.SetCookie("refresh_token", "testing-refresh-token", 10, "/", "", false, true)
+
+		c.Status(200)
 	})
 
 	router.POST("/logout", func(c *gin.Context) {
 		var userDetail map[string]interface{}
-		err := c.BindJSON(&userDetail)
-		if err != nil {
+		if err := c.BindJSON(&userDetail); err != nil {
 			c.JSON(
 				http.StatusBadRequest,
-				&config.ResData{
-					"message": "Logout failed. Invalid data type.",
+				&errorResponse{
+					Msg: "Logout failed. Invalid data type.",
 				},
 			)
 			return
@@ -75,8 +75,8 @@ func AddRoutes(router *gin.Engine, db *gorm.DB) {
 		if dbResult.Error != nil {
 			c.JSON(
 				http.StatusBadRequest,
-				&config.ResData{
-					"message": "Authentication failed. User does not exist.",
+				&errorResponse{
+					Msg: "Authentication failed. User does not exist.",
 				},
 			)
 			return
@@ -89,10 +89,10 @@ func AddRoutes(router *gin.Engine, db *gorm.DB) {
 				"refresh_token": "",
 			})
 
-		c.JSON(200, &config.ResData{
-			"access-token":  "",
-			"refresh-token": "",
-		})
+		c.SetCookie("access_token", "", 0, "/", "", false, true)
+		c.SetCookie("refresh_token", "", 0, "/", "", false, true)
+
+		c.Status(200)
 
 	})
 

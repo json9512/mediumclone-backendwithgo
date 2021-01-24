@@ -109,8 +109,6 @@ func DELUserWithID(g *goblin.G, router *gin.Engine) {
 		g.Assert(IDExists).IsTrue()
 		g.Assert(delUserID).Eql(1)
 		g.Assert(response["email"]).Eql("something@test.com")
-		g.Assert(response["access_token"]).Eql("")
-		g.Assert(response["refresh_token"]).Eql("")
 
 	})
 }
