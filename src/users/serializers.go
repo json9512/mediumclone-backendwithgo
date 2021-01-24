@@ -14,7 +14,7 @@ type UserResponse struct {
 }
 
 type ErrorResponse struct {
-	msg string `json:"message"`
+	Msg string `json:"message"`
 }
 
 func Serialize(data *User) UserResponse {

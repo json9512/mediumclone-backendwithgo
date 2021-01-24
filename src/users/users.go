@@ -42,7 +42,7 @@ func retrieveUser(db *gorm.DB) gin.HandlerFunc {
 			c.JSON(
 				http.StatusBadRequest,
 				&ErrorResponse{
-					msg: "Invalid ID.",
+					Msg: "Invalid ID.",
 				},
 			)
 			return
@@ -55,7 +55,7 @@ func retrieveUser(db *gorm.DB) gin.HandlerFunc {
 			c.JSON(
 				http.StatusBadRequest,
 				&ErrorResponse{
-					msg: "User not found",
+					Msg: "User not found",
 				},
 			)
 			return
@@ -82,7 +82,7 @@ func registerUser(db *gorm.DB) gin.HandlerFunc {
 			c.JSON(
 				http.StatusBadRequest,
 				&ErrorResponse{
-					msg: "User registration failed. Invalid data type.",
+					Msg: "User registration failed. Invalid data type.",
 				},
 			)
 			return
@@ -96,7 +96,7 @@ func registerUser(db *gorm.DB) gin.HandlerFunc {
 			c.JSON(
 				http.StatusInternalServerError,
 				&ErrorResponse{
-					msg: "User registration failed. Saving data to database failed.",
+					Msg: "User registration failed. Saving data to database failed.",
 				},
 			)
 			return
@@ -117,7 +117,7 @@ func updateUser(db *gorm.DB) gin.HandlerFunc {
 			c.JSON(
 				http.StatusBadRequest,
 				&ErrorResponse{
-					msg: "User update failed. Invalid data type.",
+					Msg: "User update failed. Invalid data type.",
 				},
 			)
 			return
@@ -130,7 +130,7 @@ func updateUser(db *gorm.DB) gin.HandlerFunc {
 			c.JSON(
 				http.StatusInternalServerError,
 				&ErrorResponse{
-					msg: "User Update failed. Saving data to database failed.",
+					Msg: "User Update failed. Saving data to database failed.",
 				},
 			)
 			return
@@ -152,7 +152,7 @@ func deleteUser(db *gorm.DB) gin.HandlerFunc {
 			c.JSON(
 				http.StatusBadRequest,
 				&ErrorResponse{
-					msg: "Invalid ID.",
+					Msg: "Invalid ID.",
 				},
 			)
 			return
@@ -165,7 +165,7 @@ func deleteUser(db *gorm.DB) gin.HandlerFunc {
 			c.JSON(
 				http.StatusBadRequest,
 				&ErrorResponse{
-					msg: "Deleting user data from database failed. User not found",
+					Msg: "Deleting user data from database failed. User not found",
 				},
 			)
 			return
