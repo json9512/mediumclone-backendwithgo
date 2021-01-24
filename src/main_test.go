@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
+	"net/http"
 	"os"
 	"testing"
 
@@ -11,6 +13,7 @@ import (
 	"github.com/json9512/mediumclone-backendwithgo/src/dbtool"
 	"github.com/json9512/mediumclone-backendwithgo/src/posts"
 	"github.com/json9512/mediumclone-backendwithgo/src/tests"
+	"github.com/json9512/mediumclone-backendwithgo/src/users"
 )
 
 func Test(t *testing.T) {
@@ -60,105 +63,111 @@ func Test(t *testing.T) {
 		})
 	})
 
-	// g.Describe("Authentication/Authorization test", func() {
-	// 	g.It("POST /login should attempt to login with the test user", func() {
-	// 		// Create sample user before login request
-	// 		// and check tokens are empty
-	// 		var user users.User
-	// 		dbResult := db.Where("id = ?", "1").Find(&user)
+	g.Describe("Authentication/Authorization test", func() {
+		g.It("POST /login should attempt to login with the test user", func() {
+			// Create sample user before login request
+			// and check tokens are empty
+			sampleUserData := tests.Data{
+				"email":    "login@test.com",
+				"password": "login-test-password",
+			}
 
-	// 		g.Assert(dbResult.Error).IsNil()
-	// 		g.Assert(user.ID).Eql("1")
-	// 		g.Assert(user.Email).Eql("test@test.com")
-	// 		g.Assert(user.Password).Eql("test-password")
-	// 		g.Assert(user.AccessToken).Eql("")
-	// 		g.Assert(user.RefreshToken).Eql("")
+			jsonSampleData, _ := json.Marshal(&sampleUserData)
 
-	// 		// Successful login should populate tokens
-	// 		postBody := tests.Data{
-	// 			"email":    user.Email,
-	// 			"password": user.Password,
-	// 		}
+			createSampleResult := tests.MakeRequest(router, "POST", "/users", jsonSampleData)
+			g.Assert(createSampleResult.Code).Eql(http.StatusOK)
 
-	// 		jsonBody, _ := json.Marshal(&postBody)
+			// Fetch the created user
+			var user users.User
+			dbResult := db.Where("email = ?", "login@test.com").Find(&user)
+			g.Assert(dbResult.Error).IsNil()
+			g.Assert(user.ID).IsNotNil()
+			g.Assert(user.Email).Eql("login@test.com")
+			g.Assert(user.AccessToken).Eql("")
+			g.Assert(user.RefreshToken).Eql("")
 
-	// 		result := tests.MakeRequest(router, "POST", "/login", jsonBody)
-	// 		fmt.Println(result.Body.String())
-	// 		g.Assert(result.Code).Eql(http.StatusOK)
+			// Successful login should populate tokens
+			postBody := tests.Data{
+				"email":    user.Email,
+				"password": "login-test-password",
+			}
 
-	// 		var response map[string]string
-	// 		err := json.Unmarshal(result.Body.Bytes(), &response)
+			jsonBody, _ := json.Marshal(&postBody)
 
-	// 		accessToken, accessTokenExists := response["access-token"]
-	// 		refreshToken, refreshTokenExists := response["refresh-token"]
+			result := tests.MakeRequest(router, "POST", "/login", jsonBody)
+			g.Assert(result.Code).Eql(http.StatusOK)
 
-	// 		g.Assert(err).IsNil()
-	// 		g.Assert(accessTokenExists).IsTrue()
-	// 		g.Assert(refreshTokenExists).IsTrue()
-	// 		g.Assert(accessToken).Eql("testing-access-token")
-	// 		g.Assert(refreshToken).Eql("testing-refresh-token")
+			var response map[string]interface{}
+			err := json.Unmarshal(result.Body.Bytes(), &response)
 
-	// 		// Soft delete
-	// 		db.Where("id = ?", "1").Delete(&user)
-	// 		// Hard delete
-	// 		db.Unscoped().Delete(&user)
-	// 	})
+			accessToken, accessTokenExists := response["access-token"]
+			refreshToken, refreshTokenExists := response["refresh-token"]
 
-	// 	g.It("POST /logout should invalidate token for the user", func() {
+			g.Assert(err).IsNil()
+			g.Assert(accessTokenExists).IsTrue()
+			g.Assert(refreshTokenExists).IsTrue()
+			g.Assert(accessToken).Eql("testing-access-token")
+			g.Assert(refreshToken).Eql("testing-refresh-token")
 
-	// 		user := users.User{
-	// 			Email:        "test@test.com",
-	// 			Password:     "test-password",
-	// 			AccessToken:  "",
-	// 			RefreshToken: "",
-	// 		}
+			// Delete the test user
+			db.Where("email = ?", "login@test.com").Delete(&user)
+		})
 
-	// 		jsonBody, _ := json.Marshal(&user)
-	// 		result := tests.MakeRequest(router, "POST", "/login", jsonBody)
-	// 		g.Assert(result.Code).Eql(http.StatusOK)
+		g.It("POST /logout should invalidate token for the user", func() {
+			// Create new test user
+			user := users.User{
+				Email:        "logout@test.com",
+				Password:     "logout-test-password",
+				AccessToken:  "testing-access-token",
+				RefreshToken: "testing-refresh-token",
+			}
 
-	// 		var response map[string]string
-	// 		err := json.Unmarshal(result.Body.Bytes(), &response)
-	// 		accessToken, accessTokenExists := response["access-token"]
-	// 		refreshToken, refreshTokenExists := response["refresh-token"]
+			jsonBody, _ := json.Marshal(&user)
+			result := tests.MakeRequest(router, "POST", "/users", jsonBody)
+			g.Assert(result.Code).Eql(http.StatusOK)
 
-	// 		g.Assert(accessTokenExists).IsTrue()
-	// 		g.Assert(refreshTokenExists).IsTrue()
-	// 		g.Assert(accessToken).Eql("testing-access-token")
-	// 		g.Assert(refreshToken).Eql("testing-refresh-token")
+			var response map[string]interface{}
+			err := json.Unmarshal(result.Body.Bytes(), &response)
 
-	// 		// Test logout from here
-	// 		postBody := tests.Data{
-	// 			"email": user.Email,
-	// 		}
+			g.Assert(response["access-token"]).IsNil()
+			g.Assert(response["refresh-token"]).IsNil()
 
-	// 		jsonBody, _ = json.Marshal(&postBody)
+			// Login with the created user
+			loginResult := tests.MakeRequest(router, "POST", "/login", jsonBody)
+			g.Assert(loginResult.Code).Eql(http.StatusOK)
 
-	// 		result = tests.MakeRequest(router, "POST", "/logout", jsonBody)
-	// 		g.Assert(result.Code).Eql(http.StatusOK)
+			var loginResponse map[string]interface{}
+			unmarshalErr := json.Unmarshal(loginResult.Body.Bytes(), &loginResponse)
+			g.Assert(unmarshalErr).IsNil()
+			g.Assert(loginResponse["access-token"]).Eql("testing-access-token")
+			g.Assert(loginResponse["refresh-token"]).Eql("testing-refresh-token")
 
-	// 		var logoutResponse map[string]string
-	// 		err = json.Unmarshal(result.Body.Bytes(), &logoutResponse)
+			// Test logout from here
+			postBody := tests.Data{
+				"email": user.Email,
+			}
 
-	// 		g.Assert(err).IsNil()
-	// 		g.Assert(logoutResponse["access-token"]).Eql("")
-	// 		g.Assert(logoutResponse["refresh-token"]).Eql("")
+			jsonBody, _ = json.Marshal(&postBody)
 
-	// 		// Soft delete
-	// 		db.Where("email = ?", "test@test.com").Delete(&user)
-	// 		// Hard delete
-	// 		db.Unscoped().Delete(&user)
-	// 	})
+			result = tests.MakeRequest(router, "POST", "/logout", jsonBody)
+			g.Assert(result.Code).Eql(http.StatusOK)
 
-	// })
+			var logoutResponse map[string]string
+			err = json.Unmarshal(result.Body.Bytes(), &logoutResponse)
+			g.Assert(err).IsNil()
+			g.Assert(logoutResponse["access-token"]).Eql("")
+			g.Assert(logoutResponse["refresh-token"]).Eql("")
+
+			// Soft delete
+			db.Where("email = ?", "logout@test.com").Delete(&user)
+			// Hard delete
+			db.Unscoped().Delete(&user)
+		})
+	})
 
 	// Drop the users table
 	db.Exec("DROP TABLE users")
 	db.Exec("DROP TABLE posts")
 
 	// Note: should separate the test db and production db
-	// for the tests and the server to function properly
-	// currently, dropping all the tables after the tests
-	// is a hacky way of doing things
-
 }

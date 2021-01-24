@@ -1,4 +1,4 @@
-package login
+package auth
 
 import (
 	"net/http"
@@ -11,8 +11,8 @@ import (
 )
 
 type loginCredentials struct {
-	email    string
-	password string
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
 // AddRoutes adds HTTP Methods for the /posts endpoint
@@ -32,7 +32,7 @@ func AddRoutes(router *gin.Engine, db *gorm.DB) {
 
 		// Save access token and resfresh token [Testing for now]
 		var user users.User
-		dbResult := db.Where("email = ?", userCredentials.email).Find(&user)
+		dbResult := db.Where("email = ?", userCredentials.Email).Find(&user)
 		if dbResult.Error != nil {
 			c.JSON(
 				http.StatusBadRequest,

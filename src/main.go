@@ -5,10 +5,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
 
+	"github.com/json9512/mediumclone-backendwithgo/src/auth"
 	"github.com/json9512/mediumclone-backendwithgo/src/config"
 	"github.com/json9512/mediumclone-backendwithgo/src/dbtool"
 	"github.com/json9512/mediumclone-backendwithgo/src/logger"
-	"github.com/json9512/mediumclone-backendwithgo/src/login"
 	"github.com/json9512/mediumclone-backendwithgo/src/posts"
 	"github.com/json9512/mediumclone-backendwithgo/src/users"
 )
@@ -33,7 +33,7 @@ func SetupRouter(mode string, db *gorm.DB) *gin.Engine {
 	// Add routes
 	posts.AddRoutes(router)
 	users.AddRoutes(router, db)
-	login.AddRoutes(router, db)
+	auth.AddRoutes(router, db)
 	return router
 }
 
