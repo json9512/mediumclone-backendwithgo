@@ -77,13 +77,8 @@ func registerUser(db *gorm.DB) gin.HandlerFunc {
 		// - need to implement input verification
 		// - refactoring needed
 		var reqBody userReqData
-		if err := c.BindJSON(&reqBody); err != nil {
-			c.JSON(
-				http.StatusBadRequest,
-				&errorResponse{
-					Msg: "User registration failed. Invalid data type.",
-				},
-			)
+		err := handleReqBody(c, &reqBody, "User registration failed. Invalid data type.")
+		if err != nil {
 			return
 		}
 		// Convert reqBody to User type with empty access token and refresh token
@@ -111,13 +106,8 @@ func registerUser(db *gorm.DB) gin.HandlerFunc {
 func updateUser(db *gorm.DB) gin.HandlerFunc {
 	handler := func(c *gin.Context) {
 		var reqBody userReqData
-		if err := c.BindJSON(&reqBody); err != nil {
-			c.JSON(
-				http.StatusBadRequest,
-				&errorResponse{
-					Msg: "User update failed. Invalid data type.",
-				},
-			)
+		err := handleReqBody(c, &reqBody, "User update failed. Invalid data type.")
+		if err != nil {
 			return
 		}
 		// NOTE: need to retreive access token and refresh token from header
@@ -128,7 +118,7 @@ func updateUser(db *gorm.DB) gin.HandlerFunc {
 			c.JSON(
 				http.StatusInternalServerError,
 				&errorResponse{
-					Msg: "User Update failed. Saving data to database failed.",
+					Msg: "User update failed. Saving data to database failed.",
 				},
 			)
 			return
@@ -156,7 +146,6 @@ func deleteUser(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		// NOTE: need to retreive access token and refresh token from header
 		var user User
 		result := db.Find(&user, idInt).Delete(user)
 		if result.Error != nil {
@@ -175,4 +164,17 @@ func deleteUser(db *gorm.DB) gin.HandlerFunc {
 		)
 	}
 	return gin.HandlerFunc(handler)
+}
+
+func handleReqBody(c *gin.Context, reqBody *userReqData, errorMsg string) error {
+	if err := c.BindJSON(&reqBody); err != nil {
+		c.JSON(
+			http.StatusBadRequest,
+			&errorResponse{
+				Msg: errorMsg,
+			},
+		)
+		return err
+	}
+	return nil
 }
