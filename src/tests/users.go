@@ -7,11 +7,10 @@ import (
 
 	"github.com/franela/goblin"
 	"github.com/gin-gonic/gin"
-	"github.com/jinzhu/gorm"
+	"github.com/json9512/mediumclone-backendwithgo/src/dbtool"
 )
 
-// GETUsersWithID tests /users/:id to retrieve a user by id
-func GETUsersWithID(g *goblin.G, router *gin.Engine) {
+func testGetUserWithID(g *goblin.G, router *gin.Engine) {
 	g.It("GET /users/:id should return user with given id", func() {
 		body := Data{
 			"user-id": 1,
@@ -34,8 +33,7 @@ func GETUsersWithID(g *goblin.G, router *gin.Engine) {
 	})
 }
 
-// POSTUser tests /users to create a new user in database
-func POSTUser(g *goblin.G, router *gin.Engine) {
+func testCreatUser(g *goblin.G, router *gin.Engine) {
 	g.It("POST /users should create a new user in database", func() {
 		values := Data{
 			"email":    "test@test.com",
@@ -60,8 +58,7 @@ func POSTUser(g *goblin.G, router *gin.Engine) {
 	})
 }
 
-// PUTSingleUser tests /users to update a user in database
-func PUTSingleUser(g *goblin.G, router *gin.Engine) {
+func testUpdateUser(g *goblin.G, router *gin.Engine) {
 	g.It("PUT /users should update a user in database", func() {
 		values := Data{
 			"user-id": 1,
@@ -90,35 +87,22 @@ func PUTSingleUser(g *goblin.G, router *gin.Engine) {
 	})
 }
 
-// DELUserWithID tests /users/:id to delete a user in database
-func DELUserWithID(g *goblin.G, router *gin.Engine) {
+func testDeleteUser(g *goblin.G, router *gin.Engine) {
 	g.It("DELETE /users/:id should delete a user with the given ID", func() {
 		reqURL := fmt.Sprintf("/users/%d", 1)
 
-		// Perform DELETE request with extracted ID
+		// Perform DELETE request with ID
 		result := MakeRequest(router, "DELETE", reqURL, nil)
 		g.Assert(result.Code).Eql(http.StatusOK)
-
-		var response map[string]interface{}
-		err := json.Unmarshal([]byte(result.Body.Bytes()), &response)
-
-		delUserID, IDExists := response["user-id"]
-		delUserID = int(delUserID.(float64))
-
-		g.Assert(err).IsNil()
-		g.Assert(IDExists).IsTrue()
-		g.Assert(delUserID).Eql(1)
-		g.Assert(response["email"]).Eql("something@test.com")
-
 	})
 }
 
 // RunUsersTests executes all tests for /users
-func RunUsersTests(g *goblin.G, router *gin.Engine, db *gorm.DB) {
+func RunUsersTests(g *goblin.G, router *gin.Engine, db *dbtool.Pool) {
 	g.Describe("/users endpoint test", func() {
-		POSTUser(g, router)
-		GETUsersWithID(g, router)
-		PUTSingleUser(g, router)
-		DELUserWithID(g, router)
+		testCreatUser(g, router)
+		testGetUserWithID(g, router)
+		testUpdateUser(g, router)
+		testDeleteUser(g, router)
 	})
 }

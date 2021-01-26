@@ -1,41 +1,18 @@
-package users
+package api
 
 import (
 	"fmt"
 	"net/http"
-	"net/url"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jinzhu/gorm"
+	"github.com/json9512/mediumclone-backendwithgo/src/dbtool"
 )
 
-type userReqData struct {
-	UserID   uint   `json:"user-id"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
-
-// AddRoutes adds HTTP Methods for the /users endpoint
-func AddRoutes(router *gin.Engine, db *gorm.DB) {
-	router.GET("/users/:id", retrieveUser(db))
-
-	router.POST("/users", registerUser(db))
-
-	router.PUT("/users", updateUser(db))
-
-	router.DELETE("/users/:id", deleteUser(db))
-}
-
-func checkIfQueriesExist(v url.Values) bool {
-	if len(v) > 0 {
-		return true
-	}
-	return false
-}
-
-func retrieveUser(db *gorm.DB) gin.HandlerFunc {
+// RetrieveUser gets user by its ID from db
+func RetrieveUser(p *dbtool.Pool) gin.HandlerFunc {
 	handler := func(c *gin.Context) {
+
 		id := c.Param("id")
 		idInt, err := strconv.ParseInt(id, 10, 64)
 		if err != nil {
@@ -48,10 +25,10 @@ func retrieveUser(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		var user User
-		result := db.Find(&user, idInt)
-		if result.Error != nil {
-			fmt.Println(result.Error, id)
+		var user dbtool.User
+		dbErr := p.Query(&user, map[string]interface{}{"id": idInt})
+		if dbErr != nil {
+			fmt.Println(dbErr, id)
 			c.JSON(
 				http.StatusBadRequest,
 				&errorResponse{
@@ -63,7 +40,7 @@ func retrieveUser(db *gorm.DB) gin.HandlerFunc {
 
 		c.JSON(
 			http.StatusOK,
-			serialize(&user),
+			serializeUser(user),
 		)
 		return
 	}
@@ -71,22 +48,24 @@ func retrieveUser(db *gorm.DB) gin.HandlerFunc {
 	return gin.HandlerFunc(handler)
 }
 
-func registerUser(db *gorm.DB) gin.HandlerFunc {
+// RegisterUser creates a new user in db
+func RegisterUser(p *dbtool.Pool) gin.HandlerFunc {
 	handler := func(c *gin.Context) {
 		// NOTE to future me:
 		// - need to implement input verification
 		// - refactoring needed
-		var reqBody userReqData
+		var reqBody UserReqData
 		err := handleReqBody(c, &reqBody, "User registration failed. Invalid data type.")
 		if err != nil {
 			return
 		}
+
 		// Convert reqBody to User type with empty access token and refresh token
-		user := CreateUserData(reqBody, "", "")
+		user := createUserObj(reqBody, "", "")
 
 		// Save to db
-		result := db.Create(&user)
-		if result.Error != nil {
+		dbErr := p.Insert(&user)
+		if dbErr != nil {
 			c.JSON(
 				http.StatusInternalServerError,
 				&errorResponse{
@@ -98,23 +77,24 @@ func registerUser(db *gorm.DB) gin.HandlerFunc {
 		// Serialize data
 		c.JSON(
 			http.StatusOK,
-			serialize(user))
+			serializeUser(user))
 	}
 	return gin.HandlerFunc(handler)
 }
 
-func updateUser(db *gorm.DB) gin.HandlerFunc {
+// UpdateUser updates the user with provided info
+func UpdateUser(p *dbtool.Pool) gin.HandlerFunc {
 	handler := func(c *gin.Context) {
-		var reqBody userReqData
+		var reqBody UserReqData
 		err := handleReqBody(c, &reqBody, "User update failed. Invalid data type.")
 		if err != nil {
 			return
 		}
 		// NOTE: need to retreive access token and refresh token from header
-		user := CreateUserData(reqBody, "", "")
+		user := createUserObj(reqBody, "", "")
 
-		result := db.Model(&User{}).Updates(user)
-		if result.Error != nil {
+		dbErr := p.Update(&user)
+		if dbErr != nil {
 			c.JSON(
 				http.StatusInternalServerError,
 				&errorResponse{
@@ -126,13 +106,14 @@ func updateUser(db *gorm.DB) gin.HandlerFunc {
 
 		c.JSON(
 			http.StatusOK,
-			serialize(user),
+			serializeUser(user),
 		)
 	}
 	return gin.HandlerFunc(handler)
 }
 
-func deleteUser(db *gorm.DB) gin.HandlerFunc {
+// DeleteUser deletes the user in db with its ID
+func DeleteUser(p *dbtool.Pool) gin.HandlerFunc {
 	handler := func(c *gin.Context) {
 		id := c.Param("id")
 		idInt, err := strconv.ParseInt(id, 10, 64)
@@ -146,9 +127,9 @@ func deleteUser(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		var user User
-		result := db.Find(&user, idInt).Delete(user)
-		if result.Error != nil {
+		var user dbtool.User
+		dbErr := p.Delete(&user, map[string]interface{}{"id": idInt})
+		if dbErr != nil {
 			c.JSON(
 				http.StatusBadRequest,
 				&errorResponse{
@@ -158,15 +139,12 @@ func deleteUser(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(
-			http.StatusOK,
-			serialize(&user),
-		)
+		c.Status(http.StatusOK)
 	}
 	return gin.HandlerFunc(handler)
 }
 
-func handleReqBody(c *gin.Context, reqBody *userReqData, errorMsg string) error {
+func handleReqBody(c *gin.Context, reqBody *UserReqData, errorMsg string) error {
 	if err := c.BindJSON(&reqBody); err != nil {
 		c.JSON(
 			http.StatusBadRequest,

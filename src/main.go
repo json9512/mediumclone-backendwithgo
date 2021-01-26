@@ -3,20 +3,17 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/jinzhu/gorm"
 
-	"github.com/json9512/mediumclone-backendwithgo/src/auth"
 	"github.com/json9512/mediumclone-backendwithgo/src/config"
 	"github.com/json9512/mediumclone-backendwithgo/src/dbtool"
-	"github.com/json9512/mediumclone-backendwithgo/src/logger"
-	"github.com/json9512/mediumclone-backendwithgo/src/posts"
-	"github.com/json9512/mediumclone-backendwithgo/src/users"
+	"github.com/json9512/mediumclone-backendwithgo/src/middlewares"
+	"github.com/json9512/mediumclone-backendwithgo/src/routes"
 )
 
 // SetupRouter returns a *gin.Engine
-func SetupRouter(mode string, db *gorm.DB) *gin.Engine {
+func SetupRouter(mode string, db *dbtool.Pool) *gin.Engine {
 	var router *gin.Engine
-	log := logger.InitLogger()
+	log := config.InitLogger()
 
 	if mode != "debug" {
 		gin.SetMode(gin.ReleaseMode)
@@ -25,15 +22,11 @@ func SetupRouter(mode string, db *gorm.DB) *gin.Engine {
 	router = gin.New()
 
 	if mode != "test" {
-		router.Use(logger.Middleware(log))
+		router.Use(middlewares.CustomLogger(log))
 	}
 
 	router.Use(gin.Recovery())
-
-	// Add routes
-	posts.AddRoutes(router)
-	users.AddRoutes(router, db)
-	auth.AddRoutes(router, db)
+	routes.AddRoutes(router, db)
 	return router
 }
 

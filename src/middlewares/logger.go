@@ -1,4 +1,4 @@
-package logger
+package middlewares
 
 import (
 	"time"
@@ -7,17 +7,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// InitLogger returns a formatted logger
-func InitLogger() *logrus.Logger {
-	log := logrus.StandardLogger()
-	log.SetLevel(logrus.DebugLevel)
-	log.SetFormatter(&logrus.JSONFormatter{})
-
-	return log
-}
-
-// Middleware logs the requests
-func Middleware(log *logrus.Logger) gin.HandlerFunc {
+// CustomLogger logs the requests
+func CustomLogger(log *logrus.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		startTime := time.Now()
 		// Process request

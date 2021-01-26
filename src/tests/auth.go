@@ -6,12 +6,10 @@ import (
 
 	"github.com/franela/goblin"
 	"github.com/gin-gonic/gin"
-	"github.com/jinzhu/gorm"
-
-	"github.com/json9512/mediumclone-backendwithgo/src/users"
+	"github.com/json9512/mediumclone-backendwithgo/src/dbtool"
 )
 
-func testLogin(g *goblin.G, router *gin.Engine, db *gorm.DB) {
+func testLogin(g *goblin.G, router *gin.Engine, p *dbtool.Pool) {
 	g.It("POST /login should attempt to login with the test user", func() {
 		// Create sample user before login request
 		// and check tokens are empty
@@ -26,8 +24,8 @@ func testLogin(g *goblin.G, router *gin.Engine, db *gorm.DB) {
 		g.Assert(createSampleResult.Code).Eql(http.StatusOK)
 
 		// Fetch the created user
-		var user users.User
-		dbResult := db.Where("email = ?", "login@test.com").Find(&user)
+		var user dbtool.User
+		dbResult := p.Where("email = ?", "login@test.com").Find(&user)
 		g.Assert(dbResult.Error).IsNil()
 		g.Assert(user.ID).IsNotNil()
 		g.Assert(user.Email).Eql("login@test.com")
@@ -58,7 +56,7 @@ func testLogin(g *goblin.G, router *gin.Engine, db *gorm.DB) {
 func testLogout(g *goblin.G, router *gin.Engine) {
 	g.It("POST /logout should invalidate token for the user", func() {
 		// Create new test user
-		user := users.User{
+		user := dbtool.User{
 			Email:        "logout@test.com",
 			Password:     "logout-test-password",
 			AccessToken:  "testing-access-token",
@@ -111,7 +109,7 @@ func testLogout(g *goblin.G, router *gin.Engine) {
 }
 
 // RunAuthTests runs test cases for /login and /logout
-func RunAuthTests(g *goblin.G, router *gin.Engine, db *gorm.DB) {
+func RunAuthTests(g *goblin.G, router *gin.Engine, db *dbtool.Pool) {
 	g.Describe("Authentication/Authorization test", func() {
 		testLogin(g, router, db)
 		testLogout(g, router)
