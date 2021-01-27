@@ -13,7 +13,7 @@ func AddRoutes(router *gin.Engine, db *dbtool.Pool) {
 	router.POST("/logout", api.Logout(db))
 
 	router.GET("/posts", api.GetAllPosts())
-	router.GET("/posts/:id", api.GetSinglePost())
+	router.GET("/posts/:id", api.GetPost())
 	router.GET("/posts/:id/like", api.GetLikesForPost())
 	router.POST("/posts", api.CreatePost())
 	router.PUT("/posts", api.UpdatePost())

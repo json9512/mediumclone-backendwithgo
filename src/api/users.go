@@ -6,12 +6,13 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+
 	"github.com/json9512/mediumclone-backendwithgo/src/dbtool"
 )
 
 // RetrieveUser gets user by its ID from db
 func RetrieveUser(p *dbtool.Pool) gin.HandlerFunc {
-	handler := func(c *gin.Context) {
+	return func(c *gin.Context) {
 
 		id := c.Param("id")
 		idInt, err := strconv.ParseInt(id, 10, 64)
@@ -44,13 +45,11 @@ func RetrieveUser(p *dbtool.Pool) gin.HandlerFunc {
 		)
 		return
 	}
-
-	return gin.HandlerFunc(handler)
 }
 
 // RegisterUser creates a new user in db
 func RegisterUser(p *dbtool.Pool) gin.HandlerFunc {
-	handler := func(c *gin.Context) {
+	return func(c *gin.Context) {
 		// NOTE to future me:
 		// - need to implement input verification
 		// - refactoring needed
@@ -79,12 +78,11 @@ func RegisterUser(p *dbtool.Pool) gin.HandlerFunc {
 			http.StatusOK,
 			serializeUser(user))
 	}
-	return gin.HandlerFunc(handler)
 }
 
 // UpdateUser updates the user with provided info
 func UpdateUser(p *dbtool.Pool) gin.HandlerFunc {
-	handler := func(c *gin.Context) {
+	return func(c *gin.Context) {
 		var reqBody UserReqData
 		err := handleReqBody(c, &reqBody, "User update failed. Invalid data type.")
 		if err != nil {
@@ -109,12 +107,11 @@ func UpdateUser(p *dbtool.Pool) gin.HandlerFunc {
 			serializeUser(user),
 		)
 	}
-	return gin.HandlerFunc(handler)
 }
 
 // DeleteUser deletes the user in db with its ID
 func DeleteUser(p *dbtool.Pool) gin.HandlerFunc {
-	handler := func(c *gin.Context) {
+	return func(c *gin.Context) {
 		id := c.Param("id")
 		idInt, err := strconv.ParseInt(id, 10, 64)
 		if err != nil {
@@ -141,7 +138,6 @@ func DeleteUser(p *dbtool.Pool) gin.HandlerFunc {
 
 		c.Status(http.StatusOK)
 	}
-	return gin.HandlerFunc(handler)
 }
 
 func handleReqBody(c *gin.Context, reqBody *UserReqData, errorMsg string) error {

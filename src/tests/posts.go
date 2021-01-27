@@ -124,8 +124,8 @@ func POSTPostWithID(g *goblin.G, router *gin.Engine) {
 	})
 }
 
-// PUTSinglePost tests /posts to update a post in database
-func PUTSinglePost(g *goblin.G, router *gin.Engine) {
+// PUTPost tests /posts to update a post in database
+func PUTPost(g *goblin.G, router *gin.Engine) {
 	g.It("PUT /posts should update a post in database", func() {
 		values := Data{"post-id": "5", "doc": "something"}
 		jsonValue, _ := json.Marshal(values)
@@ -189,7 +189,7 @@ func RunPostsTests(g *goblin.G, router *gin.Engine) {
 		POSTPostWithID(g, router)
 
 		// PUT /posts with json {post-id: 5, doc: something}
-		PUTSinglePost(g, router)
+		PUTPost(g, router)
 
 		// DELETE /posts/:id  with json {post-id: 5}
 		DELPostWithID(g, router)

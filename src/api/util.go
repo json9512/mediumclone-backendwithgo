@@ -11,6 +11,7 @@ type PostReqData struct {
 	Doc    string `json:"doc"`
 }
 
+// 이게 필요한가 ?
 type UserReqData struct {
 	UserID   uint   `json:"user-id"`
 	Email    string `json:"email"`
@@ -18,8 +19,8 @@ type UserReqData struct {
 }
 
 type credential struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required"`
 }
 
 type errorResponse struct {

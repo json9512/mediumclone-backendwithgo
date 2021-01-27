@@ -21,7 +21,7 @@ func testGetUserWithID(g *goblin.G, router *gin.Engine) {
 		g.Assert(result.Code).Eql(http.StatusOK)
 
 		var response map[string]interface{}
-		err := json.Unmarshal([]byte(result.Body.Bytes()), &response)
+		err := json.Unmarshal(result.Body.Bytes(), &response)
 
 		userID, IDExists := response["user-id"]
 		userID = int(userID.(float64))
@@ -46,7 +46,7 @@ func testCreatUser(g *goblin.G, router *gin.Engine) {
 		g.Assert(result.Code).Eql(http.StatusOK)
 
 		var response map[string]interface{}
-		err := json.Unmarshal([]byte(result.Body.String()), &response)
+		err := json.Unmarshal(result.Body.Bytes(), &response)
 		userID, exists := response["user-id"]
 		email, emailExists := response["email"]
 
@@ -56,6 +56,23 @@ func testCreatUser(g *goblin.G, router *gin.Engine) {
 		g.Assert(userID).IsNotNil()
 		g.Assert(email).Eql(values["email"])
 	})
+
+	// g.It("POST /users with invalid data should fail", func() {
+	// 	values := Data{
+	// 		"something": "",
+	// 	}
+	// 	jsonValue, _ := json.Marshal(values)
+	// 	result := MakeRequest(router, "POST", "/users", jsonValue)
+	// 	g.Assert(result.Code).Eql(http.StatusBadRequest)
+
+	// 	var response map[string]interface{}
+	// 	err := json.Unmarshal(result.Body.Bytes(), &response)
+	// 	userID, exists := response["user-id"]
+
+	// 	g.Assert(err).IsNotNil()
+	// 	g.Assert(exists).IsFalse()
+	// 	g.Assert(userID).IsNil()
+	// })
 }
 
 func testUpdateUser(g *goblin.G, router *gin.Engine) {
@@ -71,7 +88,7 @@ func testUpdateUser(g *goblin.G, router *gin.Engine) {
 		g.Assert(result.Code).Eql(http.StatusOK)
 
 		var response map[string]interface{}
-		err := json.Unmarshal([]byte(result.Body.Bytes()), &response)
+		err := json.Unmarshal(result.Body.Bytes(), &response)
 
 		userID, IDExists := response["user-id"]
 		userEmail, emailExists := response["email"]
