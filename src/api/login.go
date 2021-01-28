@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/json9512/mediumclone-backendwithgo/src/dbtool"
@@ -34,15 +35,14 @@ func Login(p *dbtool.Pool) gin.HandlerFunc {
 			return
 		}
 
+		// Update the TokenCreatedAt time
+		createdAt := time.Now()
 		p.Model(&user).Updates(
 			map[string]interface{}{
-				"access_token":  "testing-access-token",
-				"refresh_token": "testing-refresh-token",
+				"token_created_at": createdAt,
 			})
 
 		c.SetCookie("access_token", "testing-access-token", 10, "/", "", false, true)
-		c.SetCookie("refresh_token", "testing-refresh-token", 10, "/", "", false, true)
-
 		c.Status(200)
 	}
 	return gin.HandlerFunc(handler)

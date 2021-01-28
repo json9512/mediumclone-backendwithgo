@@ -35,14 +35,21 @@ func Logout(p *dbtool.Pool) gin.HandlerFunc {
 		}
 
 		// Update the database
-		p.Model(&user).Updates(
+		dbQuery = p.Model(&user).Updates(
 			map[string]interface{}{
-				"access_token":  "",
-				"refresh_token": "",
+				"token_created_at": nil,
 			})
+		if dbQuery.Error != nil {
+			c.JSON(
+				http.StatusBadRequest,
+				&errorResponse{
+					Msg: "Updating user information in DB failed.",
+				},
+			)
+			return
+		}
 
 		c.SetCookie("access_token", "", 0, "/", "", false, true)
-		c.SetCookie("refresh_token", "", 0, "/", "", false, true)
 
 		c.Status(200)
 

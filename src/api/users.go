@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -29,7 +28,6 @@ func RetrieveUser(p *dbtool.Pool) gin.HandlerFunc {
 		var user dbtool.User
 		dbErr := p.Query(&user, map[string]interface{}{"id": idInt})
 		if dbErr != nil {
-			fmt.Println(dbErr, id)
 			c.JSON(
 				http.StatusBadRequest,
 				&errorResponse{
@@ -60,7 +58,7 @@ func RegisterUser(p *dbtool.Pool) gin.HandlerFunc {
 		}
 
 		// Convert reqBody to User type with empty access token and refresh token
-		user := createUserObj(reqBody, "", "")
+		user := createUserObj(reqBody)
 
 		// Save to db
 		dbErr := p.Insert(&user)
@@ -89,7 +87,7 @@ func UpdateUser(p *dbtool.Pool) gin.HandlerFunc {
 			return
 		}
 		// NOTE: need to retreive access token and refresh token from header
-		user := createUserObj(reqBody, "", "")
+		user := createUserObj(reqBody)
 
 		dbErr := p.Update(&user)
 		if dbErr != nil {

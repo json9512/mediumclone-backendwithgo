@@ -3,6 +3,7 @@ package tests
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/franela/goblin"
 	"github.com/gin-gonic/gin"
@@ -29,8 +30,6 @@ func testLogin(g *goblin.G, router *gin.Engine, p *dbtool.Pool) {
 		g.Assert(dbResult.Error).IsNil()
 		g.Assert(user.ID).IsNotNil()
 		g.Assert(user.Email).Eql("login@test.com")
-		g.Assert(user.AccessToken).Eql("")
-		g.Assert(user.RefreshToken).Eql("")
 
 		// Successful login should populate tokens
 		postBody := Data{
@@ -45,22 +44,18 @@ func testLogin(g *goblin.G, router *gin.Engine, p *dbtool.Pool) {
 
 		cookies := result.Result().Cookies()
 		accessTokenVal := cookies[0].Value
-		refreshTokenVal := cookies[1].Value
 
 		g.Assert(cookies).IsNotNil()
 		g.Assert(accessTokenVal).Eql("testing-access-token")
-		g.Assert(refreshTokenVal).Eql("testing-refresh-token")
 	})
 }
 
-func testLogout(g *goblin.G, router *gin.Engine) {
+func testLogout(g *goblin.G, router *gin.Engine, p *dbtool.Pool) {
 	g.It("POST /logout should invalidate token for the user", func() {
 		// Create new test user
 		user := dbtool.User{
-			Email:        "logout@test.com",
-			Password:     "logout-test-password",
-			AccessToken:  "testing-access-token",
-			RefreshToken: "testing-refresh-token",
+			Email:    "logout@test.com",
+			Password: "logout-test-password",
 		}
 
 		jsonBody, _ := json.Marshal(&user)
@@ -82,11 +77,9 @@ func testLogout(g *goblin.G, router *gin.Engine) {
 
 		cookies = loginResult.Result().Cookies()
 		accessTokenVal := cookies[0].Value
-		refreshTokenVal := cookies[1].Value
 
 		g.Assert(cookies).IsNotNil()
 		g.Assert(accessTokenVal).Eql("testing-access-token")
-		g.Assert(refreshTokenVal).Eql("testing-refresh-token")
 
 		// Test logout from here
 		postBody := Data{
@@ -100,11 +93,16 @@ func testLogout(g *goblin.G, router *gin.Engine) {
 
 		cookies = logoutResult.Result().Cookies()
 		accessTokenVal = cookies[0].Value
-		refreshTokenVal = cookies[1].Value
 
 		g.Assert(cookies).IsNotNil()
 		g.Assert(accessTokenVal).Eql("")
-		g.Assert(refreshTokenVal).Eql("")
+
+		// Query the db and check if token is removed
+		var userFromDB dbtool.User
+		err = p.Query(&userFromDB, map[string]interface{}{"email": "logout@test.com"})
+		g.Assert(err).IsNil()
+		g.Assert(userFromDB.TokenCreatedAt).Eql((*time.Time)(nil))
+
 	})
 }
 
@@ -112,6 +110,6 @@ func testLogout(g *goblin.G, router *gin.Engine) {
 func RunAuthTests(g *goblin.G, router *gin.Engine, db *dbtool.Pool) {
 	g.Describe("Authentication/Authorization test", func() {
 		testLogin(g, router, db)
-		testLogout(g, router)
+		testLogout(g, router, db)
 	})
 }

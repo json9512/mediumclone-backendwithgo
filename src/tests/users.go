@@ -12,11 +12,6 @@ import (
 
 func testGetUserWithID(g *goblin.G, router *gin.Engine) {
 	g.It("GET /users/:id should return user with given id", func() {
-		body := Data{
-			"user-id": 1,
-			"email":   "test@test.com",
-		}
-
 		result := MakeRequest(router, "GET", "/users/1", nil)
 		g.Assert(result.Code).Eql(http.StatusOK)
 
@@ -28,8 +23,19 @@ func testGetUserWithID(g *goblin.G, router *gin.Engine) {
 
 		g.Assert(err).IsNil()
 		g.Assert(IDExists).IsTrue()
-		g.Assert(body["user-id"]).Eql(userID)
-		g.Assert(body["email"]).Eql(response["email"])
+		g.Assert(1).Eql(userID)
+		g.Assert("test@test.com").Eql(response["email"])
+	})
+
+	g.It("GET /users/:id with invalid ID should return error", func() {
+
+		result := MakeRequest(router, "GET", "/users/-1", nil)
+		g.Assert(result.Code).Eql(http.StatusBadRequest)
+
+		var response map[string]interface{}
+		err := json.Unmarshal(result.Body.Bytes(), &response)
+		g.Assert(err).IsNil()
+		g.Assert(response["message"]).Eql("User not found")
 	})
 }
 

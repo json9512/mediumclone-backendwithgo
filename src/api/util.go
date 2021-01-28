@@ -48,12 +48,10 @@ func serializeUser(u dbtool.User) userResponse {
 	}
 }
 
-func createUserObj(req UserReqData, accessToken, refreshToken string) dbtool.User {
+func createUserObj(req UserReqData) dbtool.User {
 	return dbtool.User{
-		ID:           req.UserID,
-		Email:        req.Email,
-		Password:     req.Password,
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
+		ID:       req.UserID,
+		Email:    req.Email,
+		Password: req.Password,
 	}
 }
