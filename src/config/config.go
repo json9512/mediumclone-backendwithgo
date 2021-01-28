@@ -2,20 +2,24 @@ package config
 
 import (
 	"bufio"
-	"database/sql/driver"
-	"encoding/json"
 	"os"
 	"strings"
 
-	"github.com/json9512/mediumclone-backendwithgo/src/logger"
+	"github.com/sirupsen/logrus"
 )
 
-// JSONB type def for database
-type JSONB map[string]interface{}
+// InitLogger returns a formatted logger
+func InitLogger() *logrus.Logger {
+	log := logrus.StandardLogger()
+	log.SetLevel(logrus.DebugLevel)
+	log.SetFormatter(&logrus.JSONFormatter{})
+
+	return log
+}
 
 // ReadVariablesFromFile reads environment variables from given filename
 func ReadVariablesFromFile(filename string) {
-	log := logger.InitLogger()
+	log := InitLogger()
 
 	// Github Actions 테스트 환경에서는 .env파일이 없다
 	envFile, err := os.Open(filename)
@@ -39,19 +43,4 @@ func ReadVariablesFromFile(filename string) {
 			break
 		}
 	}
-}
-
-// Value for gorm to read the JSONB data
-func (j JSONB) Value() (driver.Value, error) {
-	valString, err := json.Marshal(j)
-	return string(valString), err
-}
-
-// Scan for gorm to scan the JSONB data
-func (j *JSONB) Scan(v interface{}) error {
-	err := json.Unmarshal(v.([]byte), &j)
-	if err != nil {
-		return err
-	}
-	return nil
 }

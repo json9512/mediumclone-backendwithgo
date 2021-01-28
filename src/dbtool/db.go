@@ -2,47 +2,23 @@ package dbtool
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/jinzhu/gorm"
 	// dependencies for above package
 	_ "github.com/jinzhu/now"
 	_ "github.com/lib/pq"
 
-	"github.com/json9512/mediumclone-backendwithgo/src/logger"
-	"github.com/json9512/mediumclone-backendwithgo/src/posts"
-	"github.com/json9512/mediumclone-backendwithgo/src/users"
+	"github.com/json9512/mediumclone-backendwithgo/src/config"
 )
 
-// Config holds configuration for DB connection
-type Config struct {
-	DBHost     string
-	DBPort     string
-	DBName     string
-	DBUsername string
-	DBPassword string
-}
-
-func getEnv(n string, dVal string) string {
-	if os.Getenv(n) != "" {
-		return os.Getenv(n)
-	}
-	return dVal
-}
-
-func createConfig() *Config {
-	return &Config{
-		DBHost:     getEnv("DB_HOST", "localhost"),
-		DBPort:     getEnv("DB_PORT", "5432"),
-		DBName:     getEnv("DB_NAME", "mediumclone"),
-		DBUsername: getEnv("DB_USERNAME", "postgres"),
-		DBPassword: getEnv("DB_PASSWORD", "postgres"),
-	}
+// Pool manages the gorm.DB struct
+type Pool struct {
+	*gorm.DB
 }
 
 // Init returns the db when connected gracefully
-func Init() *gorm.DB {
-	log := logger.InitLogger()
+func Init() *Pool {
+	log := config.InitLogger()
 	config := createConfig()
 
 	// Construct configString for database connection
@@ -66,11 +42,46 @@ func Init() *gorm.DB {
 		log.Info("DB connection successful")
 	}
 
-	return db
+	return &Pool{
+		db,
+	}
 }
 
-// Migrate creates necessary tables in the db
-func Migrate(db *gorm.DB) {
-	db.AutoMigrate(&posts.Post{})
-	db.AutoMigrate(&users.User{})
+// Migrate creates necessary tables in db
+func Migrate(db *Pool) {
+	db.AutoMigrate(&Post{})
+	db.AutoMigrate(&User{})
+}
+
+// Query finds the given record in db
+func (p *Pool) Query(obj interface{}, condition map[string]interface{}) error {
+	query := p.Where(condition).Find(obj)
+	return checkErr(query)
+}
+
+// Insert creates a new record in db
+func (p *Pool) Insert(obj interface{}) error {
+	query := p.Create(obj)
+	return checkErr(query)
+}
+
+// Update updates the record in db
+func (p *Pool) Update(obj interface{}) error {
+	query := p.Model(obj).Updates(obj)
+	return checkErr(query)
+}
+
+// Delete hard deletes the record in db
+func (p *Pool) Delete(obj interface{}, condition map[string]interface{}) error {
+	// Soft delete the user
+	// query := p.Where(condition).Find(obj).Delete(obj)
+	query := p.Unscoped().Delete(obj)
+	return checkErr(query)
+}
+
+func checkErr(g *gorm.DB) error {
+	if g.Error != nil {
+		return g.Error
+	}
+	return nil
 }

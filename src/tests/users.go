@@ -2,138 +2,124 @@ package tests
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
-
-	"github.com/franela/goblin"
-	"github.com/gin-gonic/gin"
 )
 
-// GETUsers tests /users to retrieve all users
-func GETUsers(g *goblin.G, router *gin.Engine) {
-	g.It("GET /users should return list of all users", func() {
-		body := Data{
-			"result": []string{"test", "sample", "users"},
+func testGetUserWithID(tb *TestToolbox) {
+	tb.G.It("GET /users/:id should return user with given id", func() {
+		result := MakeRequest(tb.R, "GET", "/users/1", nil)
+		tb.G.Assert(result.Code).Eql(http.StatusOK)
+
+		var response map[string]interface{}
+		err := json.Unmarshal(result.Body.Bytes(), &response)
+
+		userID, IDExists := response["user-id"]
+		userID = int(userID.(float64))
+
+		tb.G.Assert(err).IsNil()
+		tb.G.Assert(IDExists).IsTrue()
+		tb.G.Assert(1).Eql(userID)
+		tb.G.Assert("test@test.com").Eql(response["email"])
+	})
+
+	tb.G.It("GET /users/:id with invalid ID should return error", func() {
+
+		result := MakeRequest(tb.R, "GET", "/users/-1", nil)
+		tb.G.Assert(result.Code).Eql(http.StatusBadRequest)
+
+		var response map[string]interface{}
+		err := json.Unmarshal(result.Body.Bytes(), &response)
+		tb.G.Assert(err).IsNil()
+		tb.G.Assert(response["message"]).Eql("User not found")
+	})
+}
+
+func testCreatUser(tb *TestToolbox) {
+	tb.G.It("POST /users should create a new user in database", func() {
+		values := Data{
+			"email":    "test@test.com",
+			"password": "test-password",
 		}
 
-		w := MakeRequest(router, "GET", "/users", nil)
+		result := MakeRequest(tb.R, "POST", "/users", &values)
 
-		g.Assert(w.Code).Eql(http.StatusOK)
+		tb.G.Assert(result.Code).Eql(http.StatusOK)
 
-		var response map[string][]string
-		err := json.Unmarshal([]byte(w.Body.String()), &response)
+		var response map[string]interface{}
+		err := json.Unmarshal(result.Body.Bytes(), &response)
+		userID, exists := response["user-id"]
+		email, emailExists := response["email"]
 
-		value, exists := response["result"]
-
-		g.Assert(err).IsNil()
-		g.Assert(exists).IsTrue()
-		g.Assert(body["result"]).Eql(value)
+		tb.G.Assert(err).IsNil()
+		tb.G.Assert(exists).IsTrue()
+		tb.G.Assert(emailExists).IsTrue()
+		tb.G.Assert(userID).IsNotNil()
+		tb.G.Assert(email).Eql(values["email"])
 	})
+
+	// tb.G.It("POST /users with invalid data should fail", func() {
+	// 	values := Data{
+	// 		"something": "",
+	// 	}
+	// 	jsonValue, _ := json.Marshal(values)
+	// 	result := MakeRequest(tb.R, "POST", "/users", jsonValue)
+	// 	tb.G.Assert(result.Code).Eql(http.StatusBadRequest)
+
+	// 	var response map[string]interface{}
+	// 	err := json.Unmarshal(result.Body.Bytes(), &response)
+	// 	userID, exists := response["user-id"]
+
+	// 	tb.G.Assert(err).IsNotNil()
+	// 	tb.G.Assert(exists).IsFalse()
+	// 	tb.G.Assert(userID).IsNil()
+	// })
 }
 
-// GETUsersWithID tests /users/:id to retrieve a user by id
-func GETUsersWithID(g *goblin.G, router *gin.Engine) {
-	g.It("GET /users/:id should return user with given id", func() {
-		body := Data{
-			"result": "5",
+func testUpdateUser(tb *TestToolbox) {
+	tb.G.It("PUT /users should update a user in database", func() {
+		values := Data{
+			"user-id": 1,
+			"email":   "something@test.com",
 		}
 
-		w := MakeRequest(router, "GET", "/users/5", nil)
+		result := MakeRequest(tb.R, "PUT", "/users", &values)
 
-		g.Assert(w.Code).Eql(http.StatusOK)
+		tb.G.Assert(result.Code).Eql(http.StatusOK)
 
-		var response map[string]string
-		err := json.Unmarshal([]byte(w.Body.String()), &response)
-
-		value, exists := response["result"]
-
-		g.Assert(err).IsNil()
-		g.Assert(exists).IsTrue()
-		g.Assert(body["result"]).Eql(value)
-	})
-}
-
-// POSTUserWithID tests /users to create a new user in database
-func POSTUserWithID(g *goblin.G, router *gin.Engine) {
-	g.It("POST /users should create a new user in database", func() {
-		values := Data{"user-id": "15"}
-		jsonValue, _ := json.Marshal(values)
-
-		w := MakeRequest(router, "POST", "/users", jsonValue)
-
-		g.Assert(w.Code).Eql(http.StatusOK)
-
-		var response map[string]string
-		err := json.Unmarshal([]byte(w.Body.String()), &response)
-
-		value, exists := response["user-id"]
-
-		g.Assert(err).IsNil()
-		g.Assert(exists).IsTrue()
-		g.Assert(values["user-id"]).Eql(value)
-	})
-}
-
-// PUTSingleUser tests /users to update a user in database
-func PUTSingleUser(g *goblin.G, router *gin.Engine) {
-	g.It("PUT /users should update a user in database", func() {
-		values := Data{"user-id": "15", "email": "something@test.com"}
-		jsonValue, _ := json.Marshal(values)
-
-		w := MakeRequest(router, "PUT", "/users", jsonValue)
-
-		g.Assert(w.Code).Eql(http.StatusOK)
-
-		var response map[string]string
-		err := json.Unmarshal([]byte(w.Body.String()), &response)
+		var response map[string]interface{}
+		err := json.Unmarshal(result.Body.Bytes(), &response)
 
 		userID, IDExists := response["user-id"]
 		userEmail, emailExists := response["email"]
 
-		g.Assert(err).IsNil()
-		g.Assert(IDExists).IsTrue()
-		g.Assert(values["user-id"]).Eql(userID)
-		g.Assert(emailExists).IsTrue()
-		g.Assert(values["email"]).Eql(userEmail)
+		// Convert type float64 to uint
+		userID = int(userID.(float64))
+
+		tb.G.Assert(err).IsNil()
+		tb.G.Assert(IDExists).IsTrue()
+		tb.G.Assert(values["user-id"]).Eql(userID)
+		tb.G.Assert(emailExists).IsTrue()
+		tb.G.Assert(values["email"]).Eql(userEmail)
 	})
 }
 
-// DELUserWithID tests /users/:id to delete a user in database
-func DELUserWithID(g *goblin.G, router *gin.Engine) {
-	g.It("DELETE /users/:id should delete a user with the given ID", func() {
-		values := Data{"user-id": "15"}
-		jsonValue, _ := json.Marshal(values)
+func testDeleteUser(tb *TestToolbox) {
+	tb.G.It("DELETE /users/:id should delete a user with the given ID", func() {
+		reqURL := fmt.Sprintf("/users/%d", 1)
 
-		w := MakeRequest(router, "DELETE", "/users", jsonValue)
-
-		g.Assert(w.Code).Eql(http.StatusOK)
-
-		var response map[string]string
-		err := json.Unmarshal([]byte(w.Body.String()), &response)
-
-		postID, IDExists := response["user-id"]
-
-		g.Assert(err).IsNil()
-		g.Assert(IDExists).IsTrue()
-		g.Assert(values["user-id"]).Eql(postID)
+		// Perform DELETE request with ID
+		result := MakeRequest(tb.R, "DELETE", reqURL, nil)
+		tb.G.Assert(result.Code).Eql(http.StatusOK)
 	})
 }
 
 // RunUsersTests executes all tests for /users
-func RunUsersTests(g *goblin.G, router *gin.Engine) {
-	g.Describe("/users endpoint test", func() {
-		// GET /users
-		GETUsers(g, router)
-
-		// GET /users/:id
-		GETUsersWithID(g, router)
-
-		// POST /users with json {user-id: 15}
-		POSTUserWithID(g, router)
-
-		// PUT /users with json {user-id: 15, email: something@test.com}
-		PUTSingleUser(g, router)
-
-		// DELETE /users/:id with json {user-id: 15}
-		DELUserWithID(g, router)
+func RunUsersTests(tb *TestToolbox) {
+	tb.G.Describe("/users endpoint test", func() {
+		testCreatUser(tb)
+		testGetUserWithID(tb)
+		testUpdateUser(tb)
+		testDeleteUser(tb)
 	})
 }
