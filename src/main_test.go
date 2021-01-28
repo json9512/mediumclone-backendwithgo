@@ -23,14 +23,16 @@ func Test(t *testing.T) {
 	pool.Exec("DROP TABLE posts")
 
 	dbtool.Migrate(pool)
-
-	// Setup router
 	router := SetupRouter("test", pool)
-
-	// create goblin
 	g := goblin.Goblin(t)
-	tests.RunPostsTests(g, router)
-	tests.RunUsersTests(g, router, pool)
+
+	toolBox := tests.TestToolbox{
+		G: g,
+		R: router,
+		P: pool,
+	}
+	tests.RunPostsTests(&toolBox)
+	tests.RunUsersTests(&toolBox)
 
 	// NOTE for future me: For testing only,
 	// - all the test cases in DB should move to each endpoint
@@ -62,7 +64,7 @@ func Test(t *testing.T) {
 		})
 	})
 
-	tests.RunAuthTests(g, router, pool)
+	tests.RunAuthTests(&toolBox)
 
 	// Environment setup test
 	g.Describe("Environment variables test", func() {

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -63,6 +64,7 @@ func RegisterUser(p *dbtool.Pool) gin.HandlerFunc {
 		// Save to db
 		dbErr := p.Insert(&user)
 		if dbErr != nil {
+			fmt.Println(dbErr)
 			c.JSON(
 				http.StatusInternalServerError,
 				&errorResponse{

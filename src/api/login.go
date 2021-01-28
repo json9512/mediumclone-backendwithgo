@@ -35,6 +35,17 @@ func Login(p *dbtool.Pool) gin.HandlerFunc {
 			return
 		}
 
+		// Check password
+		if user.Password != userCred.Password {
+			c.JSON(
+				http.StatusBadRequest,
+				&errorResponse{
+					Msg: "Authentication failed. Wrong password.",
+				},
+			)
+			return
+		}
+
 		// Update the TokenCreatedAt time
 		createdAt := time.Now()
 		p.Model(&user).Updates(
