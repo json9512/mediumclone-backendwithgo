@@ -1,11 +1,20 @@
 package tests
 
 import (
+	"encoding/json"
 	"net/http"
 	"time"
 
 	"github.com/json9512/mediumclone-backendwithgo/src/dbtool"
 )
+
+type testCred struct {
+	userEmail   string
+	userPwd     string
+	testEmail   string
+	testPwd     string
+	expectedErr string
+}
 
 func testLogin(tb *TestToolbox) {
 	tb.G.It("POST /login should attempt to login with the test user", func() {
@@ -27,19 +36,44 @@ func testLogin(tb *TestToolbox) {
 		tb.G.Assert(accessTokenVal).Eql("testing-access-token")
 	})
 
-	tb.G.It("POST /login with invalid credential should return 500", func() {
-		user := createTestUser(tb, "login2@test.com", "test-password")
-		// Attempt to login with incorrect credentials
-		postBody := Data{
-			"email":    user.Email,
-			"password": "logi13n-test-password",
+	tb.G.It("POST /login with invalid credential should return error", func() {
+		// test with invalid password
+		invalidPwd := testCred{
+			userEmail:   "test@test.com",
+			userPwd:     "test-pwd",
+			testEmail:   "test@test.com",
+			testPwd:     "test-pwd-invalid",
+			expectedErr: "Authentication failed. Wrong password.",
 		}
 
-		result := MakeRequest(tb.R, "POST", "/login", &postBody)
-		tb.G.Assert(result.Code).Eql(http.StatusBadRequest)
+		testLoginWithCred(
+			tb,
+			invalidPwd,
+		)
+		invalidEmail := testCred{
+			userEmail:   "test1@test.com",
+			userPwd:     "test-pwd",
+			testEmail:   "test13@test.com",
+			testPwd:     "test-pwd",
+			expectedErr: "Authentication failed. User does not exist.",
+		}
 
-		cookies := result.Result().Cookies()
-		tb.G.Assert(len(cookies)).Eql(0)
+		testLoginWithCred(
+			tb,
+			invalidEmail,
+		)
+		invalidEmailFormat := testCred{
+			userEmail:   "test142@test.com",
+			userPwd:     "test-pwd",
+			testEmail:   "testtest.com",
+			testPwd:     "test-pwd",
+			expectedErr: "Authentication failed. Invalid data type.",
+		}
+
+		testLoginWithCred(
+			tb,
+			invalidEmailFormat,
+		)
 	})
 }
 
@@ -99,6 +133,27 @@ func createTestUser(tb *TestToolbox, email, pwd string) *dbtool.User {
 	tb.G.Assert(user.Email).Eql(email)
 
 	return &user
+}
+
+func testLoginWithCred(tb *TestToolbox, testUser testCred) {
+	createTestUser(tb, testUser.userEmail, testUser.userPwd)
+	// Attempt to login with incorrect credentials
+	postBody := Data{
+		"email":    testUser.testEmail,
+		"password": testUser.testPwd,
+	}
+
+	result := MakeRequest(tb.R, "POST", "/login", &postBody)
+	tb.G.Assert(result.Code).Eql(http.StatusBadRequest)
+
+	var response map[string]interface{}
+	err := json.Unmarshal(result.Body.Bytes(), &response)
+	tb.G.Assert(err).IsNil()
+
+	cookies := result.Result().Cookies()
+	tb.G.Assert(len(cookies)).Eql(0)
+	tb.G.Assert(response["message"]).Eql(testUser.expectedErr)
+
 }
 
 // RunAuthTests runs test cases for /login and /logout
