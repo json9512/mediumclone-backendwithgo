@@ -37,7 +37,6 @@ func testLogin(tb *TestToolbox) {
 	})
 
 	tb.G.It("POST /login with invalid credential should return error", func() {
-		// test with invalid password
 		invalidPwd := testCred{
 			userEmail:   "test@test.com",
 			userPwd:     "test-pwd",
@@ -46,10 +45,11 @@ func testLogin(tb *TestToolbox) {
 			expectedErr: "Authentication failed. Wrong password.",
 		}
 
-		testLoginWithCred(
+		loginWithInvalidCred(
 			tb,
 			invalidPwd,
 		)
+
 		invalidEmail := testCred{
 			userEmail:   "test1@test.com",
 			userPwd:     "test-pwd",
@@ -58,7 +58,7 @@ func testLogin(tb *TestToolbox) {
 			expectedErr: "Authentication failed. User does not exist.",
 		}
 
-		testLoginWithCred(
+		loginWithInvalidCred(
 			tb,
 			invalidEmail,
 		)
@@ -70,7 +70,7 @@ func testLogin(tb *TestToolbox) {
 			expectedErr: "Authentication failed. Invalid data type.",
 		}
 
-		testLoginWithCred(
+		loginWithInvalidCred(
 			tb,
 			invalidEmailFormat,
 		)
@@ -127,17 +127,16 @@ func createTestUser(tb *TestToolbox, email, pwd string) *dbtool.User {
 
 	// Fetch the created user
 	var user dbtool.User
-	dbResult := tb.P.Where("email = ?", email).Find(&user)
-	tb.G.Assert(dbResult.Error).IsNil()
+	err := tb.P.Query(&user, map[string]interface{}{"email": email})
+	tb.G.Assert(err).IsNil()
 	tb.G.Assert(user.ID).IsNotNil()
 	tb.G.Assert(user.Email).Eql(email)
 
 	return &user
 }
 
-func testLoginWithCred(tb *TestToolbox, testUser testCred) {
+func loginWithInvalidCred(tb *TestToolbox, testUser testCred) {
 	createTestUser(tb, testUser.userEmail, testUser.userPwd)
-	// Attempt to login with incorrect credentials
 	postBody := Data{
 		"email":    testUser.testEmail,
 		"password": testUser.testPwd,
