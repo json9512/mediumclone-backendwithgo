@@ -12,7 +12,13 @@ func GETPosts(tb *TestToolbox) {
 			"result": []string{"test", "sample", "post"},
 		}
 
-		result := MakeRequest(tb.R, "GET", "/posts", nil)
+		result := MakeRequest(&reqData{
+			handler: tb.R,
+			method:  "GET",
+			path:    "/posts",
+			reqBody: nil,
+			cookie:  nil,
+		})
 
 		tb.G.Assert(result.Code).Eql(http.StatusOK)
 
@@ -34,7 +40,13 @@ func GETPostWithID(tb *TestToolbox) {
 			"result": "5",
 		}
 
-		result := MakeRequest(tb.R, "GET", "/posts/5", nil)
+		result := MakeRequest(&reqData{
+			handler: tb.R,
+			method:  "GET",
+			path:    "/posts/5",
+			reqBody: nil,
+			cookie:  nil,
+		})
 
 		tb.G.Assert(result.Code).Eql(http.StatusOK)
 
@@ -57,7 +69,13 @@ func GETLikesOfPost(tb *TestToolbox) {
 			"result": 10,
 		}
 
-		result := MakeRequest(tb.R, "GET", "/posts/5/like", nil)
+		result := MakeRequest(&reqData{
+			handler: tb.R,
+			method:  "GET",
+			path:    "/posts/5/like",
+			reqBody: nil,
+			cookie:  nil,
+		})
 
 		tb.G.Assert(result.Code).Eql(http.StatusOK)
 
@@ -76,27 +94,35 @@ func GETLikesOfPost(tb *TestToolbox) {
 // to retrieve post/posts based on the query
 func GETPostWithQuery(tb *TestToolbox) {
 	tb.G.It("GET /posts?tag=rabbit should return tags: [rabbit]", func() {
-		tag := make(map[string][]string)
-		tag["tags"] = []string{"rabbit"}
+		tag := map[string]interface{}{
+			"tag": []interface{}{"rabbit"},
+		}
 
 		// build expected body
 		body := Data{
 			"result": tag,
 		}
 
-		result := MakeRequest(tb.R, "GET", "/posts?tags=rabbit", nil)
+		result := MakeRequest(&reqData{
+			handler: tb.R,
+			method:  "GET",
+			path:    "/posts?tag=rabbit",
+			reqBody: nil,
+			cookie:  nil,
+		})
 
 		tb.G.Assert(result.Code).Eql(http.StatusOK)
 
-		var response map[string]map[string][]string
-		err := json.Unmarshal([]byte(result.Body.String()), &response)
+		var response map[string]interface{}
+		err := json.Unmarshal(result.Body.Bytes(), &response)
 
 		// grab the values
 		value, exists := response["result"]
+		bodyTag := body["result"]
 
 		tb.G.Assert(err).IsNil()
 		tb.G.Assert(exists).IsTrue()
-		tb.G.Assert(body["result"]).Eql(value)
+		tb.G.Assert(bodyTag).Eql(value)
 	})
 }
 
@@ -105,7 +131,13 @@ func POSTPostWithID(tb *TestToolbox) {
 	tb.G.It("POST /posts should create a new post in database", func() {
 		values := Data{"post-id": "5"}
 
-		result := MakeRequest(tb.R, "POST", "/posts", &values)
+		result := MakeRequest(&reqData{
+			handler: tb.R,
+			method:  "POST",
+			path:    "/posts",
+			reqBody: &values,
+			cookie:  nil,
+		})
 
 		tb.G.Assert(result.Code).Eql(http.StatusOK)
 
@@ -125,7 +157,13 @@ func PUTPost(tb *TestToolbox) {
 	tb.G.It("PUT /posts should update a post in database", func() {
 		values := Data{"post-id": "5", "doc": "something"}
 
-		result := MakeRequest(tb.R, "PUT", "/posts", &values)
+		result := MakeRequest(&reqData{
+			handler: tb.R,
+			method:  "PUT",
+			path:    "/posts",
+			reqBody: &values,
+			cookie:  nil,
+		})
 
 		tb.G.Assert(result.Code).Eql(http.StatusOK)
 
@@ -148,7 +186,13 @@ func DELPostWithID(tb *TestToolbox) {
 	tb.G.It("DELETE /posts/:id should delete a post with the given ID", func() {
 		values := Data{"post-id": "5"}
 
-		result := MakeRequest(tb.R, "DELETE", "/posts", &values)
+		result := MakeRequest(&reqData{
+			handler: tb.R,
+			method:  "DELETE",
+			path:    "/posts",
+			reqBody: &values,
+			cookie:  nil,
+		})
 
 		tb.G.Assert(result.Code).Eql(http.StatusOK)
 
