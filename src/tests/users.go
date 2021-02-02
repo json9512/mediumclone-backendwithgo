@@ -194,7 +194,6 @@ func createWithInvalidCred(tb *TestToolbox, email, password, errorMsg string) {
 
 	var response map[string]interface{}
 	err := json.Unmarshal(result.Body.Bytes(), &response)
-	fmt.Println(response["message"])
 	tb.G.Assert(err).IsNil()
 	tb.G.Assert(response["message"]).Eql(errorMsg)
 }
