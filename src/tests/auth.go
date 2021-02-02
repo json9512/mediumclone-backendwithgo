@@ -136,21 +136,7 @@ func testLogout(tb *TestToolbox) {
 
 	})
 
-	tb.G.It("POST /logout with invalid cred should return error", func() {
-		invalidEmail := testCred{
-			userEmail:   "test131@test.com",
-			userPwd:     "test-pwd",
-			testEmail:   "test133@test.com",
-			testPwd:     "",
-			expectedErr: "Logout failed. User does not exist.",
-		}
-
-		authWithInvalidCred(
-			"/logout",
-			tb,
-			invalidEmail,
-		)
-
+	tb.G.It("POST /logout with invalid email format should return error", func() {
 		invalidEmailFormat := testCred{
 			userEmail:   "test1422@test.com",
 			userPwd:     "test-pwd",
@@ -163,6 +149,22 @@ func testLogout(tb *TestToolbox) {
 			"/logout",
 			tb,
 			invalidEmailFormat,
+		)
+	})
+
+	tb.G.It("POST /logout with invalid email should return error", func() {
+		invalidEmail := testCred{
+			userEmail:   "test131@test.com",
+			userPwd:     "test-pwd",
+			testEmail:   "test133@test.com",
+			testPwd:     "",
+			expectedErr: "Logout failed. User does not exist.",
+		}
+
+		authWithInvalidCred(
+			"/logout",
+			tb,
+			invalidEmail,
 		)
 	})
 }
