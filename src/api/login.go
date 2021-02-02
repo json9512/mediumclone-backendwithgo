@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator/v10"
 
 	"github.com/json9512/mediumclone-backendwithgo/src/dbtool"
 )
@@ -25,8 +24,7 @@ func Login(p *dbtool.Pool) gin.HandlerFunc {
 			return
 		}
 
-		v := validator.New()
-		if valErr := v.Struct(userCred); valErr != nil {
+		if valErr := validateCredential(&userCred); valErr != nil {
 			c.JSON(
 				http.StatusBadRequest,
 				&errorResponse{

@@ -3,6 +3,7 @@ package api
 import (
 	"net/url"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/json9512/mediumclone-backendwithgo/src/dbtool"
 )
 
@@ -54,4 +55,12 @@ func createUserObj(req UserReqData) dbtool.User {
 		Email:    req.Email,
 		Password: req.Password,
 	}
+}
+
+func validateCredential(c *credential) error {
+	v := validator.New()
+	if valErr := v.Struct(c); valErr != nil {
+		return valErr
+	}
+	return nil
 }

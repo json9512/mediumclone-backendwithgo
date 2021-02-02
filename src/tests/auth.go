@@ -20,7 +20,7 @@ type testCred struct {
 func testLogin(tb *TestToolbox) {
 	tb.G.It("POST /login should attempt to login with the test user", func() {
 		// Create sample user before login request
-		user := createTestUser(tb, "login@test.com", "test-password")
+		user := createSampleUser(tb, "login@test.com", "test-password")
 		// Successful login should populate tokens
 		postBody := Data{
 			"email":    user.Email,
@@ -90,7 +90,7 @@ func testLogin(tb *TestToolbox) {
 func testLogout(tb *TestToolbox) {
 	tb.G.It("POST /logout should invalidate token for the user", func() {
 		// Create new test user
-		user := createTestUser(tb, "logout@test.com", "test-password")
+		user := createSampleUser(tb, "logout@test.com", "test-password")
 
 		// Login with the created user
 		loginResult := MakeRequest(&reqData{
@@ -151,6 +151,7 @@ func testLogout(tb *TestToolbox) {
 			tb,
 			invalidEmail,
 		)
+
 		invalidEmailFormat := testCred{
 			userEmail:   "test1422@test.com",
 			userPwd:     "test-pwd",
@@ -167,7 +168,7 @@ func testLogout(tb *TestToolbox) {
 	})
 }
 
-func createTestUser(tb *TestToolbox, email, pwd string) *dbtool.User {
+func createSampleUser(tb *TestToolbox, email, pwd string) *dbtool.User {
 	// Create sample user before login request
 	sampleUserData := Data{
 		"email":    email,
@@ -192,8 +193,11 @@ func createTestUser(tb *TestToolbox, email, pwd string) *dbtool.User {
 	return &user
 }
 
+// NOTE: mixing /login and /logout test logic can be confusing
+// although they share code. Need to separate the func
+// considering sustainability and readability.
 func authWithInvalidCred(url string, tb *TestToolbox, testUser testCred) {
-	createTestUser(tb, testUser.userEmail, testUser.userPwd)
+	createSampleUser(tb, testUser.userEmail, testUser.userPwd)
 	postBody := Data{
 		"email":    testUser.testEmail,
 		"password": testUser.testPwd,
@@ -241,13 +245,12 @@ func authWithInvalidCred(url string, tb *TestToolbox, testUser testCred) {
 	} else if url == "/logout" {
 		// user in db should have the token
 		var userFrmDB dbtool.User
-		dbErr := tb.P.Query(&userFrmDB, map[string]interface{}{"email": testUser.userEmail})
-		tb.G.Assert(dbErr).IsNil()
+		err := tb.P.Query(&userFrmDB, map[string]interface{}{"email": testUser.userEmail})
+		tb.G.Assert(err).IsNil()
 		tb.G.Assert(userFrmDB.TokenCreatedAt).IsNotNil()
 	}
 
 	tb.G.Assert(response["message"]).Eql(testUser.expectedErr)
-
 }
 
 // RunAuthTests runs test cases for /login and /logout

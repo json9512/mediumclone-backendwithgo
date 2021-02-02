@@ -29,8 +29,24 @@ func testGetUserWithID(tb *TestToolbox) {
 		tb.G.Assert("test@test.com").Eql(response["email"])
 	})
 
-	tb.G.It("GET /users/:id with invalid ID should return error", func() {
+	tb.G.It("GET /users/:id with invalid type should return error", func() {
+		result := MakeRequest(&reqData{
+			handler: tb.R,
+			method:  "GET",
+			path:    "/users/2@",
+			reqBody: nil,
+			cookie:  nil,
+		})
+		tb.G.Assert(result.Code).Eql(http.StatusBadRequest)
 
+		var response map[string]interface{}
+		err := json.Unmarshal(result.Body.Bytes(), &response)
+		tb.G.Assert(err).IsNil()
+		tb.G.Assert(response["message"]).Eql("Invalid ID.")
+	})
+
+	tb.G.It("GET /users/:id with invalid ID should return error", func() {
+		// Create sample user
 		result := MakeRequest(&reqData{
 			handler: tb.R,
 			method:  "GET",
@@ -43,7 +59,7 @@ func testGetUserWithID(tb *TestToolbox) {
 		var response map[string]interface{}
 		err := json.Unmarshal(result.Body.Bytes(), &response)
 		tb.G.Assert(err).IsNil()
-		tb.G.Assert(response["message"]).Eql("User not found")
+		tb.G.Assert(response["message"]).Eql("User not found.")
 	})
 }
 
@@ -74,6 +90,29 @@ func testCreatUser(tb *TestToolbox) {
 		tb.G.Assert(emailExists).IsTrue()
 		tb.G.Assert(userID).IsNotNil()
 		tb.G.Assert(email).Eql(values["email"])
+	})
+
+	tb.G.It("POST /users with invalid credential should throw error", func() {
+		createWithInvalidCred(
+			tb,
+			"test@test.com",
+			"",
+			"User registration failed. Invalid credential.")
+		createWithInvalidCred(
+			tb,
+			"",
+			"some-pwd",
+			"User registration failed. Invalid credential.")
+		createWithInvalidCred(
+			tb,
+			"invalidemail.com",
+			"some-pwd",
+			"User registration failed. Invalid credential.")
+		createWithInvalidCred(
+			tb,
+			"",
+			"",
+			"User registration failed. Invalid credential.")
 	})
 }
 
@@ -135,4 +174,27 @@ func RunUsersTests(tb *TestToolbox) {
 		testUpdateUser(tb)
 		testDeleteUser(tb)
 	})
+}
+
+func createWithInvalidCred(tb *TestToolbox, email, password, errorMsg string) {
+	values := Data{
+		"email":    email,
+		"password": password,
+	}
+
+	result := MakeRequest(&reqData{
+		handler: tb.R,
+		method:  "POST",
+		path:    "/users",
+		reqBody: &values,
+		cookie:  nil,
+	})
+
+	tb.G.Assert(result.Code).Eql(http.StatusBadRequest)
+
+	var response map[string]interface{}
+	err := json.Unmarshal(result.Body.Bytes(), &response)
+	fmt.Println(response["message"])
+	tb.G.Assert(err).IsNil()
+	tb.G.Assert(response["message"]).Eql(errorMsg)
 }
