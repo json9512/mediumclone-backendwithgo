@@ -5,6 +5,7 @@ import (
 	"net/url"
 
 	"github.com/go-playground/validator/v10"
+
 	"github.com/json9512/mediumclone-backendwithgo/src/dbtool"
 )
 
@@ -63,10 +64,16 @@ func createUserUpdate(u userUpdateForm) (dbtool.User, error) {
 	}
 
 	if u.Email == "" && u.Password == "" {
-		return user, errors.New("Update failed: Data required")
+		return user, errors.New("User update failed. No new data")
 	}
 
 	if u.Email != "" {
+		v := validator.New()
+
+		if err := v.Var(u.Email, "email"); err != nil {
+			return user, errors.New("User update failed. Invalid email")
+		}
+
 		user.Email = u.Email
 	}
 

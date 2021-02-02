@@ -112,7 +112,7 @@ func UpdateUser(p *dbtool.Pool) gin.HandlerFunc {
 			c.JSON(
 				http.StatusBadRequest,
 				&errorResponse{
-					Msg: "User update failed. No new data.",
+					Msg: err.Error(),
 				},
 			)
 			return
