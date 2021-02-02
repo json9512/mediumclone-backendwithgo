@@ -86,8 +86,8 @@ func createUserUpdate(u userUpdateForm) (dbtool.User, error) {
 
 func validateStruct(c interface{}) error {
 	v := validator.New()
-	if valErr := v.Struct(c); valErr != nil {
-		return valErr
+	if err := v.Struct(c); err != nil {
+		return err
 	}
 	return nil
 }

@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -23,8 +24,8 @@ func Logout(p *dbtool.Pool) gin.HandlerFunc {
 		}
 
 		var user dbtool.User
-		dbQuery := p.Where("email = ?", userInfo["email"]).Find(&user)
-		if dbQuery.Error != nil {
+		err := p.Query(&user, map[string]interface{}{"email": userInfo["email"]})
+		if err != nil {
 			c.JSON(
 				http.StatusBadRequest,
 				&errorResponse{
@@ -33,12 +34,9 @@ func Logout(p *dbtool.Pool) gin.HandlerFunc {
 			)
 			return
 		}
-
-		dbQuery = p.Model(&user).Updates(
-			map[string]interface{}{
-				"token_created_at": nil,
-			})
-		if dbQuery.Error != nil {
+		user.TokenCreatedAt = &time.Time{}
+		err = p.Update(&user)
+		if err != nil {
 			c.JSON(
 				http.StatusInternalServerError,
 				&errorResponse{

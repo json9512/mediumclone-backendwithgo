@@ -132,7 +132,7 @@ func testLogout(tb *TestToolbox) {
 		var userFromDB dbtool.User
 		err := tb.P.Query(&userFromDB, map[string]interface{}{"email": "logout@test.com"})
 		tb.G.Assert(err).IsNil()
-		tb.G.Assert(userFromDB.TokenCreatedAt).Eql((*time.Time)(nil))
+		tb.G.Assert(userFromDB.TokenCreatedAt).Eql(&time.Time{})
 
 	})
 

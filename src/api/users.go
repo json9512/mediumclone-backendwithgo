@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -27,8 +26,8 @@ func RetrieveUser(p *dbtool.Pool) gin.HandlerFunc {
 		}
 
 		var user dbtool.User
-		dbErr := p.Query(&user, map[string]interface{}{"id": idInt})
-		if dbErr != nil {
+		err = p.Query(&user, map[string]interface{}{"id": idInt})
+		if err != nil {
 			c.JSON(
 				http.StatusBadRequest,
 				&errorResponse{
@@ -55,7 +54,7 @@ func RegisterUser(p *dbtool.Pool) gin.HandlerFunc {
 			return
 		}
 
-		if valErr := validateStruct(&userCred); valErr != nil {
+		if err := validateStruct(&userCred); err != nil {
 			c.JSON(
 				http.StatusBadRequest,
 				&errorResponse{
@@ -70,9 +69,8 @@ func RegisterUser(p *dbtool.Pool) gin.HandlerFunc {
 			Password: userCred.Password,
 		}
 
-		dbErr := p.Insert(&user)
-		if dbErr != nil {
-			fmt.Println(dbErr)
+		err = p.Insert(&user)
+		if err != nil {
 			c.JSON(
 				http.StatusInternalServerError,
 				&errorResponse{
@@ -97,7 +95,7 @@ func UpdateUser(p *dbtool.Pool) gin.HandlerFunc {
 			return
 		}
 
-		if valErr := validateStruct(reqBody); valErr != nil {
+		if err := validateStruct(reqBody); err != nil {
 			c.JSON(
 				http.StatusBadRequest,
 				&errorResponse{
@@ -118,8 +116,8 @@ func UpdateUser(p *dbtool.Pool) gin.HandlerFunc {
 			return
 		}
 
-		qErr := p.Query(&dbtool.User{}, map[string]interface{}{"id": user.ID})
-		if qErr != nil {
+		err = p.Query(&dbtool.User{}, map[string]interface{}{"id": user.ID})
+		if err != nil {
 			c.JSON(
 				http.StatusBadRequest,
 				&errorResponse{
@@ -129,8 +127,8 @@ func UpdateUser(p *dbtool.Pool) gin.HandlerFunc {
 			return
 		}
 
-		dbErr := p.Update(&user)
-		if dbErr != nil {
+		err = p.Update(&user)
+		if err != nil {
 			c.JSON(
 				http.StatusInternalServerError,
 				&errorResponse{
@@ -163,8 +161,8 @@ func DeleteUser(p *dbtool.Pool) gin.HandlerFunc {
 		}
 
 		var user dbtool.User
-		dbErr := p.Delete(&user, map[string]interface{}{"id": idInt})
-		if dbErr != nil {
+		err = p.Delete(&user, map[string]interface{}{"id": idInt})
+		if err != nil {
 			c.JSON(
 				http.StatusBadRequest,
 				&errorResponse{
