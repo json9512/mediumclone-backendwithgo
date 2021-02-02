@@ -50,7 +50,7 @@ func serializeUser(u dbtool.User) userResponse {
 	}
 }
 
-func createUserReg(cred credential) dbtool.User {
+func createRegUser(cred credential) dbtool.User {
 	return dbtool.User{
 		ID:       0,
 		Email:    cred.Email,
