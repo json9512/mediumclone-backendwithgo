@@ -24,7 +24,7 @@ func Login(p *dbtool.Pool) gin.HandlerFunc {
 			return
 		}
 
-		if valErr := validateCredential(&userCred); valErr != nil {
+		if valErr := validateStruct(&userCred); valErr != nil {
 			c.JSON(
 				http.StatusBadRequest,
 				&errorResponse{

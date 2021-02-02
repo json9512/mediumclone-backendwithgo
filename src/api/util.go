@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"net/url"
 
 	"github.com/go-playground/validator/v10"
@@ -12,9 +13,8 @@ type PostReqData struct {
 	Doc    string `json:"doc"`
 }
 
-// 이게 필요한가 ?
-type UserReqData struct {
-	UserID   uint   `json:"user-id"`
+type userUpdateForm struct {
+	ID       uint   `json:"user-id" validate:"required"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
@@ -49,15 +49,35 @@ func serializeUser(u dbtool.User) userResponse {
 	}
 }
 
-func createUserObj(req UserReqData) dbtool.User {
+func createUserReg(cred credential) dbtool.User {
 	return dbtool.User{
-		ID:       req.UserID,
-		Email:    req.Email,
-		Password: req.Password,
+		ID:       0,
+		Email:    cred.Email,
+		Password: cred.Password,
 	}
 }
 
-func validateCredential(c *credential) error {
+func createUserUpdate(u userUpdateForm) (dbtool.User, error) {
+	user := dbtool.User{
+		ID: u.ID,
+	}
+
+	if u.Email == "" && u.Password == "" {
+		return user, errors.New("Update failed: Data required")
+	}
+
+	if u.Email != "" {
+		user.Email = u.Email
+	}
+
+	if u.Password != "" {
+		user.Password = u.Password
+	}
+
+	return user, nil
+}
+
+func validateStruct(c interface{}) error {
 	v := validator.New()
 	if valErr := v.Struct(c); valErr != nil {
 		return valErr

@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"github.com/json9512/mediumclone-backendwithgo/src/dbtool"
 )
 
 func testGetUserWithID(tb *TestToolbox) {
@@ -118,8 +120,12 @@ func testCreatUser(tb *TestToolbox) {
 
 func testUpdateUser(tb *TestToolbox) {
 	tb.G.It("PUT /users should update a user in database", func() {
+		var user dbtool.User
+		qErr := tb.P.Query(&user, map[string]interface{}{"id": 1})
+		tb.G.Assert(qErr).IsNil()
+
 		values := Data{
-			"user-id": 1,
+			"user-id": user.ID,
 			"email":   "something@test.com",
 		}
 
@@ -140,13 +146,58 @@ func testUpdateUser(tb *TestToolbox) {
 		userEmail, emailExists := response["email"]
 
 		// Convert type float64 to uint
-		userID = int(userID.(float64))
+		userID = uint(userID.(float64))
 
 		tb.G.Assert(err).IsNil()
 		tb.G.Assert(IDExists).IsTrue()
 		tb.G.Assert(values["user-id"]).Eql(userID)
 		tb.G.Assert(emailExists).IsTrue()
 		tb.G.Assert(values["email"]).Eql(userEmail)
+	})
+
+	tb.G.It("PUT /users with invalid ID should return error", func() {
+		values := Data{
+			"user-id": 2,
+			"email":   "something@test.com",
+		}
+
+		result := MakeRequest(&reqData{
+			handler: tb.R,
+			method:  "PUT",
+			path:    "/users",
+			reqBody: &values,
+			cookie:  nil,
+		})
+
+		tb.G.Assert(result.Code).Eql(http.StatusBadRequest)
+
+		var response map[string]interface{}
+		err := json.Unmarshal(result.Body.Bytes(), &response)
+
+		tb.G.Assert(err).IsNil()
+		tb.G.Assert(response["message"]).Eql("User update failed. Invalid ID.")
+	})
+
+	tb.G.It("PUT /users without new data should return error", func() {
+		values := Data{
+			"user-id": 1,
+		}
+
+		result := MakeRequest(&reqData{
+			handler: tb.R,
+			method:  "PUT",
+			path:    "/users",
+			reqBody: &values,
+			cookie:  nil,
+		})
+
+		tb.G.Assert(result.Code).Eql(http.StatusBadRequest)
+
+		var response map[string]interface{}
+		err := json.Unmarshal(result.Body.Bytes(), &response)
+
+		tb.G.Assert(err).IsNil()
+		tb.G.Assert(response["message"]).Eql("User update failed. No new data.")
 	})
 }
 

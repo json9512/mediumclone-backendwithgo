@@ -66,8 +66,8 @@ func (p *Pool) Insert(obj interface{}) error {
 }
 
 // Update updates the record in db
-func (p *Pool) Update(obj interface{}) error {
-	query := p.Model(obj).Updates(obj)
+func (p *Pool) Update(user interface{}) error {
+	query := p.Model(user).Updates(user)
 	return checkErr(query)
 }
 

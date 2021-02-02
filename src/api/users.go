@@ -49,18 +49,13 @@ func RetrieveUser(p *dbtool.Pool) gin.HandlerFunc {
 // RegisterUser creates a new user in db
 func RegisterUser(p *dbtool.Pool) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var reqBody UserReqData
-		err := handleReqBody(c, &reqBody, "User registration failed. Invalid data type.")
+		var userCred credential
+		err := handleReqBody(c, &userCred, "User registration failed. Invalid data type.")
 		if err != nil {
 			return
 		}
 
-		userCred := credential{
-			Email:    reqBody.Email,
-			Password: reqBody.Password,
-		}
-
-		if valErr := validateCredential(&userCred); valErr != nil {
+		if valErr := validateStruct(&userCred); valErr != nil {
 			c.JSON(
 				http.StatusBadRequest,
 				&errorResponse{
@@ -70,10 +65,11 @@ func RegisterUser(p *dbtool.Pool) gin.HandlerFunc {
 			return
 		}
 
-		// Convert reqBody to User
-		user := createUserObj(reqBody)
+		user := dbtool.User{
+			Email:    userCred.Email,
+			Password: userCred.Password,
+		}
 
-		// Save to db
 		dbErr := p.Insert(&user)
 		if dbErr != nil {
 			fmt.Println(dbErr)
@@ -95,13 +91,43 @@ func RegisterUser(p *dbtool.Pool) gin.HandlerFunc {
 // UpdateUser updates the user with provided info
 func UpdateUser(p *dbtool.Pool) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var reqBody UserReqData
+		var reqBody userUpdateForm
 		err := handleReqBody(c, &reqBody, "User update failed. Invalid data type.")
 		if err != nil {
 			return
 		}
-		// NOTE: need to retreive access token and refresh token from header
-		user := createUserObj(reqBody)
+
+		if valErr := validateStruct(reqBody); valErr != nil {
+			c.JSON(
+				http.StatusBadRequest,
+				&errorResponse{
+					Msg: "User update failed. Invalid data.",
+				},
+			)
+			return
+		}
+
+		user, err := createUserUpdate(reqBody)
+		if err != nil {
+			c.JSON(
+				http.StatusBadRequest,
+				&errorResponse{
+					Msg: "User update failed. No new data.",
+				},
+			)
+			return
+		}
+
+		qErr := p.Query(&dbtool.User{}, map[string]interface{}{"id": user.ID})
+		if qErr != nil {
+			c.JSON(
+				http.StatusBadRequest,
+				&errorResponse{
+					Msg: "User update failed. Invalid ID.",
+				},
+			)
+			return
+		}
 
 		dbErr := p.Update(&user)
 		if dbErr != nil {
@@ -152,7 +178,7 @@ func DeleteUser(p *dbtool.Pool) gin.HandlerFunc {
 	}
 }
 
-func handleReqBody(c *gin.Context, reqBody *UserReqData, errorMsg string) error {
+func handleReqBody(c *gin.Context, reqBody interface{}, errorMsg string) error {
 	if err := c.BindJSON(&reqBody); err != nil {
 		c.JSON(
 			http.StatusBadRequest,
