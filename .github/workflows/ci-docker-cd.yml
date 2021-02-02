@@ -2,8 +2,6 @@ name: CI/Docker/CD
 on:
   push:
     branches: ['main', 'develop']
-  pull_request:
-    branches: ['main', 'develop']
 
 env:
   DB_USERNAME: ${{ secrets.DB_USERNAME }}

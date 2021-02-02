@@ -8,7 +8,13 @@ import (
 
 func testGetUserWithID(tb *TestToolbox) {
 	tb.G.It("GET /users/:id should return user with given id", func() {
-		result := MakeRequest(tb.R, "GET", "/users/1", nil)
+		result := MakeRequest(&reqData{
+			handler: tb.R,
+			method:  "GET",
+			path:    "/users/1",
+			reqBody: nil,
+			cookie:  nil,
+		})
 		tb.G.Assert(result.Code).Eql(http.StatusOK)
 
 		var response map[string]interface{}
@@ -23,15 +29,37 @@ func testGetUserWithID(tb *TestToolbox) {
 		tb.G.Assert("test@test.com").Eql(response["email"])
 	})
 
-	tb.G.It("GET /users/:id with invalid ID should return error", func() {
-
-		result := MakeRequest(tb.R, "GET", "/users/-1", nil)
+	tb.G.It("GET /users/:id with invalid type should return error", func() {
+		result := MakeRequest(&reqData{
+			handler: tb.R,
+			method:  "GET",
+			path:    "/users/2@",
+			reqBody: nil,
+			cookie:  nil,
+		})
 		tb.G.Assert(result.Code).Eql(http.StatusBadRequest)
 
 		var response map[string]interface{}
 		err := json.Unmarshal(result.Body.Bytes(), &response)
 		tb.G.Assert(err).IsNil()
-		tb.G.Assert(response["message"]).Eql("User not found")
+		tb.G.Assert(response["message"]).Eql("Invalid ID.")
+	})
+
+	tb.G.It("GET /users/:id with invalid ID should return error", func() {
+		// Create sample user
+		result := MakeRequest(&reqData{
+			handler: tb.R,
+			method:  "GET",
+			path:    "/users/-1",
+			reqBody: nil,
+			cookie:  nil,
+		})
+		tb.G.Assert(result.Code).Eql(http.StatusBadRequest)
+
+		var response map[string]interface{}
+		err := json.Unmarshal(result.Body.Bytes(), &response)
+		tb.G.Assert(err).IsNil()
+		tb.G.Assert(response["message"]).Eql("User not found.")
 	})
 }
 
@@ -42,7 +70,13 @@ func testCreatUser(tb *TestToolbox) {
 			"password": "test-password",
 		}
 
-		result := MakeRequest(tb.R, "POST", "/users", &values)
+		result := MakeRequest(&reqData{
+			handler: tb.R,
+			method:  "POST",
+			path:    "/users",
+			reqBody: &values,
+			cookie:  nil,
+		})
 
 		tb.G.Assert(result.Code).Eql(http.StatusOK)
 
@@ -58,22 +92,28 @@ func testCreatUser(tb *TestToolbox) {
 		tb.G.Assert(email).Eql(values["email"])
 	})
 
-	// tb.G.It("POST /users with invalid data should fail", func() {
-	// 	values := Data{
-	// 		"something": "",
-	// 	}
-	// 	jsonValue, _ := json.Marshal(values)
-	// 	result := MakeRequest(tb.R, "POST", "/users", jsonValue)
-	// 	tb.G.Assert(result.Code).Eql(http.StatusBadRequest)
-
-	// 	var response map[string]interface{}
-	// 	err := json.Unmarshal(result.Body.Bytes(), &response)
-	// 	userID, exists := response["user-id"]
-
-	// 	tb.G.Assert(err).IsNotNil()
-	// 	tb.G.Assert(exists).IsFalse()
-	// 	tb.G.Assert(userID).IsNil()
-	// })
+	tb.G.It("POST /users with invalid credential should throw error", func() {
+		createWithInvalidCred(
+			tb,
+			"testUser@test.com",
+			"",
+			"User registration failed. Invalid credential.")
+		createWithInvalidCred(
+			tb,
+			"",
+			"some-pwd",
+			"User registration failed. Invalid credential.")
+		createWithInvalidCred(
+			tb,
+			"invalidemail.com",
+			"some-pwd",
+			"User registration failed. Invalid credential.")
+		createWithInvalidCred(
+			tb,
+			"",
+			"",
+			"User registration failed. Invalid credential.")
+	})
 }
 
 func testUpdateUser(tb *TestToolbox) {
@@ -83,7 +123,13 @@ func testUpdateUser(tb *TestToolbox) {
 			"email":   "something@test.com",
 		}
 
-		result := MakeRequest(tb.R, "PUT", "/users", &values)
+		result := MakeRequest(&reqData{
+			handler: tb.R,
+			method:  "PUT",
+			path:    "/users",
+			reqBody: &values,
+			cookie:  nil,
+		})
 
 		tb.G.Assert(result.Code).Eql(http.StatusOK)
 
@@ -109,7 +155,13 @@ func testDeleteUser(tb *TestToolbox) {
 		reqURL := fmt.Sprintf("/users/%d", 1)
 
 		// Perform DELETE request with ID
-		result := MakeRequest(tb.R, "DELETE", reqURL, nil)
+		result := MakeRequest(&reqData{
+			handler: tb.R,
+			method:  "DELETE",
+			path:    reqURL,
+			reqBody: nil,
+			cookie:  nil,
+		})
 		tb.G.Assert(result.Code).Eql(http.StatusOK)
 	})
 }
@@ -122,4 +174,26 @@ func RunUsersTests(tb *TestToolbox) {
 		testUpdateUser(tb)
 		testDeleteUser(tb)
 	})
+}
+
+func createWithInvalidCred(tb *TestToolbox, email, password, errorMsg string) {
+	values := Data{
+		"email":    email,
+		"password": password,
+	}
+
+	result := MakeRequest(&reqData{
+		handler: tb.R,
+		method:  "POST",
+		path:    "/users",
+		reqBody: &values,
+		cookie:  nil,
+	})
+
+	tb.G.Assert(result.Code).Eql(http.StatusBadRequest)
+
+	var response map[string]interface{}
+	err := json.Unmarshal(result.Body.Bytes(), &response)
+	tb.G.Assert(err).IsNil()
+	tb.G.Assert(response["message"]).Eql(errorMsg)
 }

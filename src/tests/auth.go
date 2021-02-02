@@ -1,23 +1,39 @@
 package tests
 
 import (
+	"encoding/json"
 	"net/http"
+	"net/http/httptest"
 	"time"
 
 	"github.com/json9512/mediumclone-backendwithgo/src/dbtool"
 )
 
+type testCred struct {
+	userEmail   string
+	userPwd     string
+	testEmail   string
+	testPwd     string
+	expectedErr string
+}
+
 func testLogin(tb *TestToolbox) {
 	tb.G.It("POST /login should attempt to login with the test user", func() {
 		// Create sample user before login request
-		user := createTestUser(tb, "login@test.com", "test-password")
+		user := createSampleUser(tb, "login@test.com", "test-password")
 		// Successful login should populate tokens
 		postBody := Data{
 			"email":    user.Email,
 			"password": "test-password",
 		}
 
-		result := MakeRequest(tb.R, "POST", "/login", &postBody)
+		result := MakeRequest(&reqData{
+			handler: tb.R,
+			method:  "POST",
+			path:    "/login",
+			reqBody: &postBody,
+			cookie:  nil,
+		})
 		tb.G.Assert(result.Code).Eql(http.StatusOK)
 
 		cookies := result.Result().Cookies()
@@ -27,29 +43,63 @@ func testLogin(tb *TestToolbox) {
 		tb.G.Assert(accessTokenVal).Eql("testing-access-token")
 	})
 
-	tb.G.It("POST /login with invalid credential should return 500", func() {
-		user := createTestUser(tb, "login2@test.com", "test-password")
-		// Attempt to login with incorrect credentials
-		postBody := Data{
-			"email":    user.Email,
-			"password": "logi13n-test-password",
+	tb.G.It("POST /login with invalid credential should return error", func() {
+		invalidPwd := testCred{
+			userEmail:   "test@test.com",
+			userPwd:     "test-pwd",
+			testEmail:   "test@test.com",
+			testPwd:     "test-pwd-invalid",
+			expectedErr: "Authentication failed. Wrong password.",
 		}
 
-		result := MakeRequest(tb.R, "POST", "/login", &postBody)
-		tb.G.Assert(result.Code).Eql(http.StatusBadRequest)
+		authWithInvalidCred(
+			"/login",
+			tb,
+			invalidPwd,
+		)
 
-		cookies := result.Result().Cookies()
-		tb.G.Assert(len(cookies)).Eql(0)
+		invalidEmail := testCred{
+			userEmail:   "test1@test.com",
+			userPwd:     "test-pwd",
+			testEmail:   "test13@test.com",
+			testPwd:     "test-pwd",
+			expectedErr: "Authentication failed. User does not exist.",
+		}
+
+		authWithInvalidCred(
+			"/login",
+			tb,
+			invalidEmail,
+		)
+		invalidEmailFormat := testCred{
+			userEmail:   "test142@test.com",
+			userPwd:     "test-pwd",
+			testEmail:   "testtest.com",
+			testPwd:     "test-pwd",
+			expectedErr: "Authentication failed. Invalid data type.",
+		}
+
+		authWithInvalidCred(
+			"/login",
+			tb,
+			invalidEmailFormat,
+		)
 	})
 }
 
 func testLogout(tb *TestToolbox) {
 	tb.G.It("POST /logout should invalidate token for the user", func() {
 		// Create new test user
-		user := createTestUser(tb, "logout@test.com", "test-password")
+		user := createSampleUser(tb, "logout@test.com", "test-password")
 
 		// Login with the created user
-		loginResult := MakeRequest(tb.R, "POST", "/login", &user)
+		loginResult := MakeRequest(&reqData{
+			handler: tb.R,
+			method:  "POST",
+			path:    "/login",
+			reqBody: &user,
+			cookie:  nil,
+		})
 		tb.G.Assert(loginResult.Code).Eql(http.StatusOK)
 
 		cookies := loginResult.Result().Cookies()
@@ -63,7 +113,13 @@ func testLogout(tb *TestToolbox) {
 			"email": user.Email,
 		}
 
-		logoutResult := MakeRequest(tb.R, "POST", "/logout", &postBody)
+		logoutResult := MakeRequest(&reqData{
+			handler: tb.R,
+			method:  "POST",
+			path:    "/logout",
+			reqBody: &postBody,
+			cookie:  nil,
+		})
 		tb.G.Assert(logoutResult.Code).Eql(http.StatusOK)
 
 		cookies = logoutResult.Result().Cookies()
@@ -79,26 +135,123 @@ func testLogout(tb *TestToolbox) {
 		tb.G.Assert(userFromDB.TokenCreatedAt).Eql((*time.Time)(nil))
 
 	})
+
+	tb.G.It("POST /logout with invalid email format should return error", func() {
+		invalidEmailFormat := testCred{
+			userEmail:   "test1422@test.com",
+			userPwd:     "test-pwd",
+			testEmail:   "testtest.com",
+			testPwd:     "",
+			expectedErr: "Logout failed. User does not exist.",
+		}
+
+		authWithInvalidCred(
+			"/logout",
+			tb,
+			invalidEmailFormat,
+		)
+	})
+
+	tb.G.It("POST /logout with invalid email should return error", func() {
+		invalidEmail := testCred{
+			userEmail:   "test131@test.com",
+			userPwd:     "test-pwd",
+			testEmail:   "test133@test.com",
+			testPwd:     "",
+			expectedErr: "Logout failed. User does not exist.",
+		}
+
+		authWithInvalidCred(
+			"/logout",
+			tb,
+			invalidEmail,
+		)
+	})
 }
 
-func createTestUser(tb *TestToolbox, email, pwd string) *dbtool.User {
+func createSampleUser(tb *TestToolbox, email, pwd string) *dbtool.User {
 	// Create sample user before login request
 	sampleUserData := Data{
 		"email":    email,
 		"password": pwd,
 	}
 
-	createSampleResult := MakeRequest(tb.R, "POST", "/users", &sampleUserData)
+	createSampleResult := MakeRequest(&reqData{
+		handler: tb.R,
+		method:  "POST",
+		path:    "/users",
+		reqBody: &sampleUserData,
+		cookie:  nil,
+	})
 	tb.G.Assert(createSampleResult.Code).Eql(http.StatusOK)
 
-	// Fetch the created user
 	var user dbtool.User
-	dbResult := tb.P.Where("email = ?", email).Find(&user)
-	tb.G.Assert(dbResult.Error).IsNil()
+	err := tb.P.Query(&user, map[string]interface{}{"email": email})
+	tb.G.Assert(err).IsNil()
 	tb.G.Assert(user.ID).IsNotNil()
 	tb.G.Assert(user.Email).Eql(email)
 
 	return &user
+}
+
+// NOTE: mixing /login and /logout test logic can be confusing
+// although they share code. Need to separate the func
+// considering sustainability and readability.
+func authWithInvalidCred(url string, tb *TestToolbox, testUser testCred) {
+	createSampleUser(tb, testUser.userEmail, testUser.userPwd)
+	postBody := Data{
+		"email":    testUser.testEmail,
+		"password": testUser.testPwd,
+	}
+
+	var result *httptest.ResponseRecorder
+	var cookies []*http.Cookie
+
+	if url == "/logout" {
+		// login to create a token
+		loginBody := Data{
+			"email":    testUser.userEmail,
+			"password": testUser.userPwd,
+		}
+
+		result = MakeRequest(&reqData{
+			handler: tb.R,
+			method:  "POST",
+			path:    "/login",
+			reqBody: &loginBody,
+			cookie:  nil,
+		})
+		tb.G.Assert(result.Code).Eql(http.StatusOK)
+		tb.G.Assert(result.Result().Cookies()[0].Value).Eql("testing-access-token")
+		cookies = result.Result().Cookies()
+	}
+
+	result = MakeRequest(&reqData{
+		handler: tb.R,
+		method:  "POST",
+		path:    url,
+		reqBody: &postBody,
+		cookie:  cookies,
+	})
+	tb.G.Assert(result.Code).Eql(http.StatusBadRequest)
+
+	var response map[string]interface{}
+	err := json.Unmarshal(result.Body.Bytes(), &response)
+	tb.G.Assert(err).IsNil()
+
+	cookies = result.Result().Cookies()
+
+	if url == "/login" {
+		tb.G.Assert(len(cookies)).Eql(0)
+	} else if url == "/logout" {
+		// user in db should have the token
+		var userFrmDB dbtool.User
+		err := tb.P.Query(&userFrmDB, map[string]interface{}{"email": testUser.userEmail})
+		tb.G.Assert(err).IsNil()
+		tb.G.Assert(userFrmDB.TokenCreatedAt).IsNotNil()
+	}
+
+	tb.G.Assert(response["message"]).Eql(testUser.expectedErr)
 }
 
 // RunAuthTests runs test cases for /login and /logout

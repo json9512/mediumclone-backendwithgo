@@ -5,12 +5,14 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+
 	"github.com/json9512/mediumclone-backendwithgo/src/dbtool"
 )
 
 // Login validates the user and distributes the tokens
+// Note: refactoring needed
 func Login(p *dbtool.Pool) gin.HandlerFunc {
-	handler := func(c *gin.Context) {
+	return func(c *gin.Context) {
 		var userCred credential
 		if err := c.BindJSON(&userCred); err != nil {
 			c.JSON(
@@ -22,10 +24,19 @@ func Login(p *dbtool.Pool) gin.HandlerFunc {
 			return
 		}
 
-		// Save access token and resfresh token [Testing for now]
+		if valErr := validateCredential(&userCred); valErr != nil {
+			c.JSON(
+				http.StatusBadRequest,
+				&errorResponse{
+					Msg: "Authentication failed. Invalid data type.",
+				},
+			)
+			return
+		}
+
 		var user dbtool.User
-		dbQuery := p.Where("email = ?", userCred.Email).Find(&user)
-		if dbQuery.Error != nil {
+		dbErr := p.Query(&user, map[string]interface{}{"email": userCred.Email})
+		if dbErr != nil {
 			c.JSON(
 				http.StatusBadRequest,
 				&errorResponse{
@@ -35,7 +46,6 @@ func Login(p *dbtool.Pool) gin.HandlerFunc {
 			return
 		}
 
-		// Check password
 		if user.Password != userCred.Password {
 			c.JSON(
 				http.StatusBadRequest,
@@ -48,13 +58,18 @@ func Login(p *dbtool.Pool) gin.HandlerFunc {
 
 		// Update the TokenCreatedAt time
 		createdAt := time.Now()
-		p.Model(&user).Updates(
-			map[string]interface{}{
-				"token_created_at": createdAt,
-			})
+		user.TokenCreatedAt = &createdAt
+		if err := p.Update(&user); err != nil {
+			c.JSON(
+				http.StatusInternalServerError,
+				&errorResponse{
+					Msg: "Authentication failed. Update failed.",
+				},
+			)
+			return
+		}
 
 		c.SetCookie("access_token", "testing-access-token", 10, "/", "", false, true)
 		c.Status(200)
 	}
-	return gin.HandlerFunc(handler)
 }

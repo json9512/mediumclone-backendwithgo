@@ -32,7 +32,7 @@ func RetrieveUser(p *dbtool.Pool) gin.HandlerFunc {
 			c.JSON(
 				http.StatusBadRequest,
 				&errorResponse{
-					Msg: "User not found",
+					Msg: "User not found.",
 				},
 			)
 			return
@@ -49,16 +49,28 @@ func RetrieveUser(p *dbtool.Pool) gin.HandlerFunc {
 // RegisterUser creates a new user in db
 func RegisterUser(p *dbtool.Pool) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// NOTE to future me:
-		// - need to implement input verification
-		// - refactoring needed
 		var reqBody UserReqData
 		err := handleReqBody(c, &reqBody, "User registration failed. Invalid data type.")
 		if err != nil {
 			return
 		}
 
-		// Convert reqBody to User type with empty access token and refresh token
+		userCred := credential{
+			Email:    reqBody.Email,
+			Password: reqBody.Password,
+		}
+
+		if valErr := validateCredential(&userCred); valErr != nil {
+			c.JSON(
+				http.StatusBadRequest,
+				&errorResponse{
+					Msg: "User registration failed. Invalid credential.",
+				},
+			)
+			return
+		}
+
+		// Convert reqBody to User
 		user := createUserObj(reqBody)
 
 		// Save to db
@@ -73,7 +85,7 @@ func RegisterUser(p *dbtool.Pool) gin.HandlerFunc {
 			)
 			return
 		}
-		// Serialize data
+
 		c.JSON(
 			http.StatusOK,
 			serializeUser(user))

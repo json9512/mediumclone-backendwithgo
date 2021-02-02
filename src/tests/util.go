@@ -22,15 +22,30 @@ type TestToolbox struct {
 	P *dbtool.Pool
 }
 
+type reqData struct {
+	handler http.Handler
+	method  string
+	path    string
+	reqBody interface{}
+	cookie  []*http.Cookie
+}
+
 // MakeRequest returns the response after making a HTTP request
 // with provided parameters
-func MakeRequest(r http.Handler, method, path string, reqBody interface{}) *httptest.ResponseRecorder {
+func MakeRequest(r *reqData) *httptest.ResponseRecorder {
 	var jsonBody []byte
-	if reqBody != nil {
-		jsonBody, _ = json.Marshal(&reqBody)
+	if r.reqBody != nil {
+		jsonBody, _ = json.Marshal(&r.reqBody)
 	}
-	req, _ := http.NewRequest(method, path, bytes.NewBuffer(jsonBody))
+
+	req, _ := http.NewRequest(r.method, r.path, bytes.NewBuffer(jsonBody))
+	if r.cookie != nil {
+		for _, c := range r.cookie {
+			req.AddCookie(c)
+		}
+	}
+
 	resRecorder := httptest.NewRecorder()
-	r.ServeHTTP(resRecorder, req)
+	r.handler.ServeHTTP(resRecorder, req)
 	return resRecorder
 }

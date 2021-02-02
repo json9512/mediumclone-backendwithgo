@@ -10,7 +10,7 @@ import (
 	"github.com/json9512/mediumclone-backendwithgo/src/routes"
 )
 
-// SetupRouter returns a *gin.Engine
+// SetupRouter returns the API server
 func SetupRouter(mode string, db *dbtool.Pool) *gin.Engine {
 	var router *gin.Engine
 	log := config.InitLogger()
