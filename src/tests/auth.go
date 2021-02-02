@@ -137,9 +137,6 @@ func testLogout(tb *TestToolbox) {
 	})
 
 	tb.G.It("POST /logout with invalid cred should return error", func() {
-		// Override default timeout duration
-		tb.G.Timeout(20 * time.Millisecond)
-
 		invalidEmail := testCred{
 			userEmail:   "test131@test.com",
 			userPwd:     "test-pwd",

@@ -95,7 +95,7 @@ func testCreatUser(tb *TestToolbox) {
 	tb.G.It("POST /users with invalid credential should throw error", func() {
 		createWithInvalidCred(
 			tb,
-			"test@test.com",
+			"testUser@test.com",
 			"",
 			"User registration failed. Invalid credential.")
 		createWithInvalidCred(
