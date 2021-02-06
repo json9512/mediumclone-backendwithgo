@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -12,39 +13,24 @@ import (
 func Logout(p *dbtool.Pool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var userInfo map[string]interface{}
+
 		if err := c.BindJSON(&userInfo); err != nil {
-			c.JSON(
-				http.StatusBadRequest,
-				&errorResponse{
-					Msg: "Logout failed. Invalid data type.",
-				},
-			)
+			msg := "Logout failed. Invalid data type."
+			handleError(&customError{c, http.StatusBadRequest, msg})
 			return
 		}
 
 		var user dbtool.User
-		dbQuery := p.Where("email = ?", userInfo["email"]).Find(&user)
-		if dbQuery.Error != nil {
-			c.JSON(
-				http.StatusBadRequest,
-				&errorResponse{
-					Msg: "Logout failed. User does not exist.",
-				},
-			)
+		err := p.Query(&user, map[string]interface{}{"email": userInfo["email"]})
+		if err != nil {
+			msg := "Logout failed. User does not exist."
+			handleError(&customError{c, http.StatusBadRequest, msg})
 			return
 		}
-
-		dbQuery = p.Model(&user).Updates(
-			map[string]interface{}{
-				"token_created_at": nil,
-			})
-		if dbQuery.Error != nil {
-			c.JSON(
-				http.StatusInternalServerError,
-				&errorResponse{
-					Msg: "Updating user information in DB failed.",
-				},
-			)
+		user.TokenCreatedAt = &time.Time{}
+		if err = p.Update(&user); err != nil {
+			msg := "Updating user information in DB failed."
+			handleError(&customError{c, http.StatusInternalServerError, msg})
 			return
 		}
 

@@ -1,20 +1,22 @@
 package api
 
 import (
+	"errors"
 	"net/url"
 
+	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+
 	"github.com/json9512/mediumclone-backendwithgo/src/dbtool"
 )
 
-type PostReqData struct {
-	PostID string `json:"post-id"`
-	Doc    string `json:"doc"`
+type postReqData struct {
+	ID  string `json:"id"`
+	Doc string `json:"doc"`
 }
 
-// 이게 필요한가 ?
-type UserReqData struct {
-	UserID   uint   `json:"user-id"`
+type userUpdateForm struct {
+	ID       uint   `json:"id" validate:"required"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
@@ -24,12 +26,18 @@ type credential struct {
 	Password string `json:"password" validate:"required"`
 }
 
+type customError struct {
+	g    *gin.Context
+	code int
+	msg  string
+}
+
 type errorResponse struct {
 	Msg string `json:"message"`
 }
 
 type userResponse struct {
-	ID    uint   `json:"user-id"`
+	ID    uint   `json:"id"`
 	Email string `json:"email"`
 }
 
@@ -49,18 +57,48 @@ func serializeUser(u dbtool.User) userResponse {
 	}
 }
 
-func createUserObj(req UserReqData) dbtool.User {
+func createRegUser(cred credential) dbtool.User {
 	return dbtool.User{
-		ID:       req.UserID,
-		Email:    req.Email,
-		Password: req.Password,
+		ID:       0,
+		Email:    cred.Email,
+		Password: cred.Password,
 	}
 }
 
-func validateCredential(c *credential) error {
+func createUserUpdate(u userUpdateForm) (dbtool.User, error) {
+	user := dbtool.User{
+		ID: u.ID,
+	}
+
+	if u.Email == "" && u.Password == "" {
+		return user, errors.New("User update failed. No new data")
+	}
+
+	if u.Email != "" {
+		v := validator.New()
+
+		if err := v.Var(u.Email, "email"); err != nil {
+			return user, errors.New("User update failed. Invalid email")
+		}
+
+		user.Email = u.Email
+	}
+
+	if u.Password != "" {
+		user.Password = u.Password
+	}
+
+	return user, nil
+}
+
+func validateStruct(c interface{}) error {
 	v := validator.New()
-	if valErr := v.Struct(c); valErr != nil {
-		return valErr
+	if err := v.Struct(c); err != nil {
+		return err
 	}
 	return nil
+}
+
+func handleError(e *customError) {
+	e.g.JSON(e.code, &errorResponse{Msg: e.msg})
 }

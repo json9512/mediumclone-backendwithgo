@@ -120,6 +120,7 @@ func testLogout(tb *TestToolbox) {
 			reqBody: &postBody,
 			cookie:  nil,
 		})
+
 		tb.G.Assert(logoutResult.Code).Eql(http.StatusOK)
 
 		cookies = logoutResult.Result().Cookies()
@@ -130,9 +131,9 @@ func testLogout(tb *TestToolbox) {
 
 		// Query the db and check if token is removed
 		var userFromDB dbtool.User
-		err := tb.P.Query(&userFromDB, map[string]interface{}{"email": "logout@test.com"})
+		err := tb.P.Query(&userFromDB, map[string]interface{}{"email": user.Email})
 		tb.G.Assert(err).IsNil()
-		tb.G.Assert(userFromDB.TokenCreatedAt).Eql((*time.Time)(nil))
+		tb.G.Assert(userFromDB.TokenCreatedAt.UTC()).Eql(time.Time{})
 
 	})
 

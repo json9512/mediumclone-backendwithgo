@@ -5,8 +5,8 @@ import (
 	"net/http"
 )
 
-// GETPosts tests /posts to retrieve all posts
-func GETPosts(tb *TestToolbox) {
+// testGetPosts tests /posts to retrieve all posts
+func testGetPosts(tb *TestToolbox) {
 	tb.G.It("GET /posts should return list of all posts", func() {
 		body := Data{
 			"result": []string{"test", "sample", "post"},
@@ -33,8 +33,8 @@ func GETPosts(tb *TestToolbox) {
 	})
 }
 
-// GETPostWithID tests /posts/:id to retrieve single post with id
-func GETPostWithID(tb *TestToolbox) {
+// testGetPost tests /posts/:id to retrieve single post with id
+func testGetPost(tb *TestToolbox) {
 	tb.G.It("GET /posts/:id should return post with given id", func() {
 		body := Data{
 			"result": "5",
@@ -61,9 +61,9 @@ func GETPostWithID(tb *TestToolbox) {
 	})
 }
 
-// GETLikesOfPost tests /posts/:id/like
+// testGetLikeOfPost tests /posts/:id/like
 // to retrieve like count of a single post with given id
-func GETLikesOfPost(tb *TestToolbox) {
+func testGetLikeOfPost(tb *TestToolbox) {
 	tb.G.It("GET /posts/:id/like should return like count of post with given id", func() {
 		body := Data{
 			"result": 10,
@@ -90,9 +90,9 @@ func GETLikesOfPost(tb *TestToolbox) {
 	})
 }
 
-// GETPostWithQuery tests /posts?queryname=XXX
+// testGetPostWithQuery tests /posts?queryname=XXX
 // to retrieve post/posts based on the query
-func GETPostWithQuery(tb *TestToolbox) {
+func testGetPostWithQuery(tb *TestToolbox) {
 	tb.G.It("GET /posts?tag=rabbit should return tags: [rabbit]", func() {
 		tag := map[string]interface{}{
 			"tag": []interface{}{"rabbit"},
@@ -126,10 +126,10 @@ func GETPostWithQuery(tb *TestToolbox) {
 	})
 }
 
-// POSTPostWithID tests /posts to create a new post in database
-func POSTPostWithID(tb *TestToolbox) {
+// testCreatePost tests /posts to create a new post in database
+func testCreatePost(tb *TestToolbox) {
 	tb.G.It("POST /posts should create a new post in database", func() {
-		values := Data{"post-id": "5"}
+		values := Data{"id": "5"}
 
 		result := MakeRequest(&reqData{
 			handler: tb.R,
@@ -144,18 +144,18 @@ func POSTPostWithID(tb *TestToolbox) {
 		var response map[string]string
 		err := json.Unmarshal([]byte(result.Body.String()), &response)
 
-		value, exists := response["post-id"]
+		value, exists := response["id"]
 
 		tb.G.Assert(err).IsNil()
 		tb.G.Assert(exists).IsTrue()
-		tb.G.Assert(values["post-id"]).Eql(value)
+		tb.G.Assert(values["id"]).Eql(value)
 	})
 }
 
-// PUTPost tests /posts to update a post in database
-func PUTPost(tb *TestToolbox) {
+// testUpdatePost tests /posts to update a post in database
+func testUpdatePost(tb *TestToolbox) {
 	tb.G.It("PUT /posts should update a post in database", func() {
-		values := Data{"post-id": "5", "doc": "something"}
+		values := Data{"id": "5", "doc": "something"}
 
 		result := MakeRequest(&reqData{
 			handler: tb.R,
@@ -170,21 +170,21 @@ func PUTPost(tb *TestToolbox) {
 		var response map[string]string
 		err := json.Unmarshal([]byte(result.Body.String()), &response)
 
-		postID, IDExists := response["post-id"]
+		postID, IDExists := response["id"]
 		postDoc, docExists := response["doc"]
 
 		tb.G.Assert(err).IsNil()
 		tb.G.Assert(IDExists).IsTrue()
-		tb.G.Assert(values["post-id"]).Eql(postID)
+		tb.G.Assert(values["id"]).Eql(postID)
 		tb.G.Assert(docExists).IsTrue()
 		tb.G.Assert(values["doc"]).Eql(postDoc)
 	})
 }
 
-// DELPostWithID tests /posts/:id to delete a post in database
-func DELPostWithID(tb *TestToolbox) {
+// testDeletePost tests /posts/:id to delete a post in database
+func testDeletePost(tb *TestToolbox) {
 	tb.G.It("DELETE /posts/:id should delete a post with the given ID", func() {
-		values := Data{"post-id": "5"}
+		values := Data{"id": "5"}
 
 		result := MakeRequest(&reqData{
 			handler: tb.R,
@@ -199,11 +199,11 @@ func DELPostWithID(tb *TestToolbox) {
 		var response map[string]string
 		err := json.Unmarshal([]byte(result.Body.String()), &response)
 
-		postID, IDExists := response["post-id"]
+		postID, IDExists := response["id"]
 
 		tb.G.Assert(err).IsNil()
 		tb.G.Assert(IDExists).IsTrue()
-		tb.G.Assert(values["post-id"]).Eql(postID)
+		tb.G.Assert(values["id"]).Eql(postID)
 	})
 }
 
@@ -212,24 +212,24 @@ func RunPostsTests(toolBox *TestToolbox) {
 	toolBox.G.Describe("/posts endpoint tests", func() {
 
 		// GET /posts
-		GETPosts(toolBox)
+		testGetPosts(toolBox)
 
 		// GET /posts/:id
-		GETPostWithID(toolBox)
+		testGetPost(toolBox)
 
 		// GET /posts/:id/like
-		GETLikesOfPost(toolBox)
+		testGetLikeOfPost(toolBox)
 
 		// GET /posts?tag=rabbit
-		GETPostWithQuery(toolBox)
+		testGetPostWithQuery(toolBox)
 
-		// POST /posts with json {post-id: 5}
-		POSTPostWithID(toolBox)
+		// POST /posts with json {id: 5}
+		testCreatePost(toolBox)
 
-		// PUT /posts with json {post-id: 5, doc: something}
-		PUTPost(toolBox)
+		// PUT /posts with json {id: 5, doc: something}
+		testUpdatePost(toolBox)
 
-		// DELETE /posts/:id  with json {post-id: 5}
-		DELPostWithID(toolBox)
+		// DELETE /posts/:id  with json {id: 5}
+		testDeletePost(toolBox)
 	})
 }

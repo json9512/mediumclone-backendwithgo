@@ -2,3 +2,4 @@
 *config.env
 *.env*
 *notes.txt
+*.out

@@ -50,20 +50,20 @@ func GetLikesForPost() gin.HandlerFunc {
 // CreatePost creates a post in db
 func CreatePost() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var reqBody PostReqData
+		var reqBody postReqData
 		c.BindJSON(&reqBody)
-		c.JSON(http.StatusOK, &response{"post-id": reqBody.PostID})
+		c.JSON(http.StatusOK, &response{"id": reqBody.ID})
 	}
 }
 
 // UpdatePost updates a post in db
 func UpdatePost() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var reqBody PostReqData
+		var reqBody postReqData
 		c.BindJSON(&reqBody)
 		c.JSON(
 			http.StatusOK,
-			&response{"post-id": reqBody.PostID, "doc": reqBody.Doc},
+			&response{"id": reqBody.ID, "doc": reqBody.Doc},
 		)
 	}
 }
@@ -71,11 +71,11 @@ func UpdatePost() gin.HandlerFunc {
 // DeletePost deletes a post with given ID in db
 func DeletePost() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var reqBody PostReqData
+		var reqBody postReqData
 		c.BindJSON(&reqBody)
 		c.JSON(
 			http.StatusOK,
-			&response{"post-id": reqBody.PostID},
+			&response{"id": reqBody.ID},
 		)
 	}
 }

@@ -24,7 +24,7 @@ func Login(p *dbtool.Pool) gin.HandlerFunc {
 			return
 		}
 
-		if valErr := validateCredential(&userCred); valErr != nil {
+		if err := validateStruct(&userCred); err != nil {
 			c.JSON(
 				http.StatusBadRequest,
 				&errorResponse{
@@ -35,8 +35,8 @@ func Login(p *dbtool.Pool) gin.HandlerFunc {
 		}
 
 		var user dbtool.User
-		dbErr := p.Query(&user, map[string]interface{}{"email": userCred.Email})
-		if dbErr != nil {
+		err := p.Query(&user, map[string]interface{}{"email": userCred.Email})
+		if err != nil {
 			c.JSON(
 				http.StatusBadRequest,
 				&errorResponse{

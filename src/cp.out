@@ -1,7 +1,0 @@
-mode: set
-github.com/json9512/mediumclone-backendwithgo/src/main.go:14.60,18.21 3 1
-github.com/json9512/mediumclone-backendwithgo/src/main.go:22.2,24.20 2 1
-github.com/json9512/mediumclone-backendwithgo/src/main.go:28.2,30.15 3 1
-github.com/json9512/mediumclone-backendwithgo/src/main.go:18.21,20.3 1 1
-github.com/json9512/mediumclone-backendwithgo/src/main.go:24.20,26.3 1 0
-github.com/json9512/mediumclone-backendwithgo/src/main.go:33.13,43.2 6 0
