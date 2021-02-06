@@ -186,21 +186,14 @@ func testUpdateUser(tb *TestToolbox) {
 			"email": "something@test.com",
 		}
 
-		result := MakeRequest(&reqData{
-			handler: tb.R,
-			method:  "PUT",
-			path:    "/users",
-			reqBody: &values,
-			cookie:  nil,
+		makeInvalidReq(&errorTestCase{
+			tb,
+			values,
+			"PUT",
+			"/users",
+			"User update failed. Invalid ID.",
+			http.StatusBadRequest,
 		})
-
-		tb.G.Assert(result.Code).Eql(http.StatusBadRequest)
-
-		var response map[string]interface{}
-		err := json.Unmarshal(result.Body.Bytes(), &response)
-
-		tb.G.Assert(err).IsNil()
-		tb.G.Assert(response["message"]).Eql("User update failed. Invalid ID.")
 	})
 
 	tb.G.It("PUT /users without new data should return error", func() {
@@ -208,21 +201,14 @@ func testUpdateUser(tb *TestToolbox) {
 			"id": 1,
 		}
 
-		result := MakeRequest(&reqData{
-			handler: tb.R,
-			method:  "PUT",
-			path:    "/users",
-			reqBody: &values,
-			cookie:  nil,
+		makeInvalidReq(&errorTestCase{
+			tb,
+			values,
+			"PUT",
+			"/users",
+			"User update failed. No new data",
+			http.StatusBadRequest,
 		})
-
-		tb.G.Assert(result.Code).Eql(http.StatusBadRequest)
-
-		var response map[string]interface{}
-		err := json.Unmarshal(result.Body.Bytes(), &response)
-
-		tb.G.Assert(err).IsNil()
-		tb.G.Assert(response["message"]).Eql("User update failed. No new data")
 	})
 
 	tb.G.It("PUT /users with invalid email should return error", func() {
@@ -235,21 +221,14 @@ func testUpdateUser(tb *TestToolbox) {
 			"email": "somethingtest.com",
 		}
 
-		result := MakeRequest(&reqData{
-			handler: tb.R,
-			method:  "PUT",
-			path:    "/users",
-			reqBody: &values,
-			cookie:  nil,
+		makeInvalidReq(&errorTestCase{
+			tb,
+			values,
+			"PUT",
+			"/users",
+			"User update failed. Invalid email",
+			http.StatusBadRequest,
 		})
-
-		tb.G.Assert(result.Code).Eql(http.StatusBadRequest)
-
-		var response map[string]interface{}
-		err := json.Unmarshal(result.Body.Bytes(), &response)
-
-		tb.G.Assert(err).IsNil()
-		tb.G.Assert(response["message"]).Eql("User update failed. Invalid email")
 	})
 
 	tb.G.It("PUT /users with invalid data type should return error", func() {
@@ -262,21 +241,14 @@ func testUpdateUser(tb *TestToolbox) {
 			"somethingtest.com",
 		}
 
-		result := MakeRequest(&reqData{
-			handler: tb.R,
-			method:  "PUT",
-			path:    "/users",
-			reqBody: &values,
-			cookie:  nil,
+		makeInvalidReq(&errorTestCase{
+			tb,
+			values,
+			"PUT",
+			"/users",
+			"User update failed. Invalid data type.",
+			http.StatusBadRequest,
 		})
-
-		tb.G.Assert(result.Code).Eql(http.StatusBadRequest)
-
-		var response map[string]interface{}
-		err := json.Unmarshal(result.Body.Bytes(), &response)
-
-		tb.G.Assert(err).IsNil()
-		tb.G.Assert(response["message"]).Eql("User update failed. Invalid data type.")
 	})
 }
 
@@ -321,4 +293,23 @@ func createWithInvalidCred(tb *TestToolbox, d interface{}, errorMsg string) {
 	err := json.Unmarshal(result.Body.Bytes(), &response)
 	tb.G.Assert(err).IsNil()
 	tb.G.Assert(response["message"]).Eql(errorMsg)
+}
+
+func makeInvalidReq(e *errorTestCase) {
+
+	result := MakeRequest(&reqData{
+		handler: e.tb.R,
+		method:  e.method,
+		path:    e.url,
+		reqBody: &e.data,
+		cookie:  nil,
+	})
+
+	e.tb.G.Assert(result.Code).Eql(e.errCode)
+
+	var response map[string]interface{}
+	err := json.Unmarshal(result.Body.Bytes(), &response)
+
+	e.tb.G.Assert(err).IsNil()
+	e.tb.G.Assert(response["message"]).Eql(e.errMsg)
 }

@@ -30,6 +30,15 @@ type reqData struct {
 	cookie  []*http.Cookie
 }
 
+type errorTestCase struct {
+	tb      *TestToolbox
+	data    interface{}
+	method  string
+	url     string
+	errMsg  string
+	errCode int
+}
+
 // MakeRequest returns the response after making a HTTP request
 // with provided parameters
 func MakeRequest(r *reqData) *httptest.ResponseRecorder {
