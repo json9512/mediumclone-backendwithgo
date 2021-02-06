@@ -16,24 +16,16 @@ func RetrieveUser(p *dbtool.Pool) gin.HandlerFunc {
 		id := c.Param("id")
 		idInt, err := strconv.ParseInt(id, 10, 64)
 		if err != nil {
-			c.JSON(
-				http.StatusBadRequest,
-				&errorResponse{
-					Msg: "Invalid ID.",
-				},
-			)
+			msg := "Invalid ID."
+			handleError(&customError{c, http.StatusBadRequest, msg})
 			return
 		}
 
 		var user dbtool.User
 		err = p.Query(&user, map[string]interface{}{"id": idInt})
 		if err != nil {
-			c.JSON(
-				http.StatusBadRequest,
-				&errorResponse{
-					Msg: "User not found.",
-				},
-			)
+			msg := "User not found."
+			handleError(&customError{c, http.StatusBadRequest, msg})
 			return
 		}
 
@@ -55,12 +47,8 @@ func RegisterUser(p *dbtool.Pool) gin.HandlerFunc {
 		}
 
 		if err := validateStruct(&userCred); err != nil {
-			c.JSON(
-				http.StatusBadRequest,
-				&errorResponse{
-					Msg: "User registration failed. Invalid credential.",
-				},
-			)
+			msg := "User registration failed. Invalid credential."
+			handleError(&customError{c, http.StatusBadRequest, msg})
 			return
 		}
 
@@ -69,14 +57,9 @@ func RegisterUser(p *dbtool.Pool) gin.HandlerFunc {
 			Password: userCred.Password,
 		}
 
-		err = p.Insert(&user)
-		if err != nil {
-			c.JSON(
-				http.StatusInternalServerError,
-				&errorResponse{
-					Msg: "User registration failed. Saving data to database failed.",
-				},
-			)
+		if err := p.Insert(&user); err != nil {
+			msg := "User update failed. Saving data to database failed."
+			handleError(&customError{c, http.StatusInternalServerError, msg})
 			return
 		}
 
@@ -96,52 +79,31 @@ func UpdateUser(p *dbtool.Pool) gin.HandlerFunc {
 		}
 
 		if err := validateStruct(reqBody); err != nil {
-			c.JSON(
-				http.StatusBadRequest,
-				&errorResponse{
-					Msg: "User update failed. Invalid data.",
-				},
-			)
+			msg := "User update failed. Invalid data."
+			handleError(&customError{c, http.StatusBadRequest, msg})
 			return
 		}
 
 		user, err := createUserUpdate(reqBody)
 		if err != nil {
-			c.JSON(
-				http.StatusBadRequest,
-				&errorResponse{
-					Msg: err.Error(),
-				},
-			)
+			handleError(&customError{c, http.StatusBadRequest, err.Error()})
 			return
 		}
 
 		err = p.Query(&dbtool.User{}, map[string]interface{}{"id": user.ID})
 		if err != nil {
-			c.JSON(
-				http.StatusBadRequest,
-				&errorResponse{
-					Msg: "User update failed. Invalid ID.",
-				},
-			)
+			msg := "User update failed. Invalid ID."
+			handleError(&customError{c, http.StatusBadRequest, msg})
 			return
 		}
 
-		err = p.Update(&user)
-		if err != nil {
-			c.JSON(
-				http.StatusInternalServerError,
-				&errorResponse{
-					Msg: "User update failed. Saving data to database failed.",
-				},
-			)
+		if err = p.Update(&user); err != nil {
+			msg := "User update failed. Saving data to database failed."
+			handleError(&customError{c, http.StatusInternalServerError, msg})
 			return
 		}
 
-		c.JSON(
-			http.StatusOK,
-			serializeUser(user),
-		)
+		c.JSON(http.StatusOK, serializeUser(user))
 	}
 }
 
@@ -150,25 +112,18 @@ func DeleteUser(p *dbtool.Pool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 		idInt, err := strconv.ParseInt(id, 10, 64)
+
 		if err != nil {
-			c.JSON(
-				http.StatusBadRequest,
-				&errorResponse{
-					Msg: "Invalid ID",
-				},
-			)
+			msg := "Invalid ID"
+			handleError(&customError{c, http.StatusBadRequest, msg})
 			return
 		}
 
 		var user dbtool.User
 		err = p.Delete(&user, map[string]interface{}{"id": idInt})
 		if err != nil {
-			c.JSON(
-				http.StatusBadRequest,
-				&errorResponse{
-					Msg: "Deleting user data from database failed. User not found",
-				},
-			)
+			msg := "Deleting user data from database failed. User not found"
+			handleError(&customError{c, http.StatusBadRequest, msg})
 			return
 		}
 
@@ -178,12 +133,7 @@ func DeleteUser(p *dbtool.Pool) gin.HandlerFunc {
 
 func handleReqBody(c *gin.Context, reqBody interface{}, errorMsg string) error {
 	if err := c.BindJSON(&reqBody); err != nil {
-		c.JSON(
-			http.StatusBadRequest,
-			&errorResponse{
-				Msg: errorMsg,
-			},
-		)
+		handleError(&customError{c, http.StatusBadRequest, errorMsg})
 		return err
 	}
 	return nil

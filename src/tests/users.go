@@ -22,7 +22,7 @@ func testGetUserWithID(tb *TestToolbox) {
 		var response map[string]interface{}
 		err := json.Unmarshal(result.Body.Bytes(), &response)
 
-		userID, IDExists := response["user-id"]
+		userID, IDExists := response["id"]
 		userID = int(userID.(float64))
 
 		tb.G.Assert(err).IsNil()
@@ -84,7 +84,7 @@ func testCreatUser(tb *TestToolbox) {
 
 		var response map[string]interface{}
 		err := json.Unmarshal(result.Body.Bytes(), &response)
-		userID, exists := response["user-id"]
+		userID, exists := response["id"]
 		email, emailExists := response["email"]
 
 		tb.G.Assert(err).IsNil()
@@ -150,8 +150,8 @@ func testUpdateUser(tb *TestToolbox) {
 		tb.G.Assert(qErr).IsNil()
 
 		values := Data{
-			"user-id": user.ID,
-			"email":   "something@test.com",
+			"id":    user.ID,
+			"email": "something@test.com",
 		}
 
 		result := MakeRequest(&reqData{
@@ -167,7 +167,7 @@ func testUpdateUser(tb *TestToolbox) {
 		var response map[string]interface{}
 		err := json.Unmarshal(result.Body.Bytes(), &response)
 
-		userID, IDExists := response["user-id"]
+		userID, IDExists := response["id"]
 		userEmail, emailExists := response["email"]
 
 		// Convert type float64 to uint
@@ -175,15 +175,15 @@ func testUpdateUser(tb *TestToolbox) {
 
 		tb.G.Assert(err).IsNil()
 		tb.G.Assert(IDExists).IsTrue()
-		tb.G.Assert(values["user-id"]).Eql(userID)
+		tb.G.Assert(values["id"]).Eql(userID)
 		tb.G.Assert(emailExists).IsTrue()
 		tb.G.Assert(values["email"]).Eql(userEmail)
 	})
 
 	tb.G.It("PUT /users with invalid ID should return error", func() {
 		values := Data{
-			"user-id": 2,
-			"email":   "something@test.com",
+			"id":    2,
+			"email": "something@test.com",
 		}
 
 		result := MakeRequest(&reqData{
@@ -205,7 +205,7 @@ func testUpdateUser(tb *TestToolbox) {
 
 	tb.G.It("PUT /users without new data should return error", func() {
 		values := Data{
-			"user-id": 1,
+			"id": 1,
 		}
 
 		result := MakeRequest(&reqData{
@@ -231,8 +231,8 @@ func testUpdateUser(tb *TestToolbox) {
 		tb.G.Assert(qErr).IsNil()
 
 		values := Data{
-			"user-id": user.ID,
-			"email":   "somethingtest.com",
+			"id":    user.ID,
+			"email": "somethingtest.com",
 		}
 
 		result := MakeRequest(&reqData{

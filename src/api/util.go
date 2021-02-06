@@ -4,18 +4,19 @@ import (
 	"errors"
 	"net/url"
 
+	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 
 	"github.com/json9512/mediumclone-backendwithgo/src/dbtool"
 )
 
-type PostReqData struct {
-	PostID string `json:"post-id"`
-	Doc    string `json:"doc"`
+type postReqData struct {
+	ID  string `json:"id"`
+	Doc string `json:"doc"`
 }
 
 type userUpdateForm struct {
-	ID       uint   `json:"user-id" validate:"required"`
+	ID       uint   `json:"id" validate:"required"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
@@ -25,12 +26,18 @@ type credential struct {
 	Password string `json:"password" validate:"required"`
 }
 
+type customError struct {
+	g    *gin.Context
+	code int
+	msg  string
+}
+
 type errorResponse struct {
 	Msg string `json:"message"`
 }
 
 type userResponse struct {
-	ID    uint   `json:"user-id"`
+	ID    uint   `json:"id"`
 	Email string `json:"email"`
 }
 
@@ -90,4 +97,8 @@ func validateStruct(c interface{}) error {
 		return err
 	}
 	return nil
+}
+
+func handleError(e *customError) {
+	e.g.JSON(e.code, &errorResponse{Msg: e.msg})
 }
