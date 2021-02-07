@@ -16,7 +16,7 @@ func Logout(p *dbtool.Pool) gin.HandlerFunc {
 
 		if err := c.BindJSON(&userInfo); err != nil {
 			msg := "Logout failed. Invalid data type."
-			HandleError(&CustomError{c, http.StatusBadRequest, msg})
+			HandleError(c, http.StatusBadRequest, msg)
 			return
 		}
 
@@ -24,13 +24,13 @@ func Logout(p *dbtool.Pool) gin.HandlerFunc {
 		err := p.Query(&user, map[string]interface{}{"email": userInfo["email"]})
 		if err != nil {
 			msg := "Logout failed. User does not exist."
-			HandleError(&CustomError{c, http.StatusBadRequest, msg})
+			HandleError(c, http.StatusBadRequest, msg)
 			return
 		}
 		user.TokenCreatedAt = &time.Time{}
 		if err = p.Update(&user); err != nil {
 			msg := "Updating user information in DB failed."
-			HandleError(&CustomError{c, http.StatusInternalServerError, msg})
+			HandleError(c, http.StatusInternalServerError, msg)
 			return
 		}
 

@@ -17,7 +17,7 @@ func RetrieveUser(p *dbtool.Pool) gin.HandlerFunc {
 		idInt, err := strconv.ParseInt(id, 10, 64)
 		if err != nil {
 			msg := "Invalid ID."
-			HandleError(&CustomError{c, http.StatusBadRequest, msg})
+			HandleError(c, http.StatusBadRequest, msg)
 			return
 		}
 
@@ -25,7 +25,7 @@ func RetrieveUser(p *dbtool.Pool) gin.HandlerFunc {
 		err = p.Query(&user, map[string]interface{}{"id": idInt})
 		if err != nil {
 			msg := "User not found."
-			HandleError(&CustomError{c, http.StatusBadRequest, msg})
+			HandleError(c, http.StatusBadRequest, msg)
 			return
 		}
 
@@ -48,7 +48,7 @@ func RegisterUser(p *dbtool.Pool) gin.HandlerFunc {
 
 		if err := validateStruct(&userCred); err != nil {
 			msg := "User registration failed. Invalid credential."
-			HandleError(&CustomError{c, http.StatusBadRequest, msg})
+			HandleError(c, http.StatusBadRequest, msg)
 			return
 		}
 
@@ -59,7 +59,7 @@ func RegisterUser(p *dbtool.Pool) gin.HandlerFunc {
 
 		if err := p.Insert(&user); err != nil {
 			msg := "User update failed. Saving data to database failed."
-			HandleError(&CustomError{c, http.StatusInternalServerError, msg})
+			HandleError(c, http.StatusInternalServerError, msg)
 			return
 		}
 
@@ -80,26 +80,26 @@ func UpdateUser(p *dbtool.Pool) gin.HandlerFunc {
 
 		if err := validateStruct(reqBody); err != nil {
 			msg := "User update failed. Invalid data."
-			HandleError(&CustomError{c, http.StatusBadRequest, msg})
+			HandleError(c, http.StatusBadRequest, msg)
 			return
 		}
 
 		user, err := createUserUpdate(reqBody)
 		if err != nil {
-			HandleError(&CustomError{c, http.StatusBadRequest, err.Error()})
+			HandleError(c, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		err = p.Query(&dbtool.User{}, map[string]interface{}{"id": user.ID})
 		if err != nil {
 			msg := "User update failed. Invalid ID."
-			HandleError(&CustomError{c, http.StatusBadRequest, msg})
+			HandleError(c, http.StatusBadRequest, msg)
 			return
 		}
 
 		if err = p.Update(&user); err != nil {
 			msg := "User update failed. Saving data to database failed."
-			HandleError(&CustomError{c, http.StatusInternalServerError, msg})
+			HandleError(c, http.StatusInternalServerError, msg)
 			return
 		}
 
@@ -115,7 +115,7 @@ func DeleteUser(p *dbtool.Pool) gin.HandlerFunc {
 
 		if err != nil || idInt < 1 {
 			msg := "Invalid ID"
-			HandleError(&CustomError{c, http.StatusBadRequest, msg})
+			HandleError(c, http.StatusBadRequest, msg)
 			return
 		}
 
@@ -123,7 +123,7 @@ func DeleteUser(p *dbtool.Pool) gin.HandlerFunc {
 		err = p.Delete(&user, map[string]interface{}{"id": idInt})
 		if err != nil {
 			msg := "Deleting user data from database failed. User not found"
-			HandleError(&CustomError{c, http.StatusBadRequest, msg})
+			HandleError(c, http.StatusBadRequest, msg)
 			return
 		}
 
@@ -133,7 +133,7 @@ func DeleteUser(p *dbtool.Pool) gin.HandlerFunc {
 
 func handleReqBody(c *gin.Context, reqBody interface{}, errorMsg string) error {
 	if err := c.BindJSON(&reqBody); err != nil {
-		HandleError(&CustomError{c, http.StatusBadRequest, errorMsg})
+		HandleError(c, http.StatusBadRequest, errorMsg)
 		return err
 	}
 	return nil

@@ -99,6 +99,6 @@ func validateStruct(c interface{}) error {
 	return nil
 }
 
-func HandleError(e *CustomError) {
-	e.G.JSON(e.Code, &errorResponse{Msg: e.Msg})
+func HandleError(c *gin.Context, code int, msg string) {
+	c.JSON(code, &errorResponse{Msg: msg})
 }
