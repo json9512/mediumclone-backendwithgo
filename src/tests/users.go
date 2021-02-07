@@ -266,6 +266,19 @@ func testDeleteUser(tb *TestToolbox) {
 		})
 		tb.G.Assert(result.Code).Eql(http.StatusOK)
 	})
+
+	tb.G.It("DELETE /users/:id with invalid ID should return error", func() {
+		reqURL := fmt.Sprintf("/users/%d", -1)
+
+		makeInvalidReq(&errorTestCase{
+			tb,
+			nil,
+			"DELETE",
+			reqURL,
+			"Invalid ID",
+			http.StatusBadRequest,
+		})
+	})
 }
 
 // RunUsersTests executes all tests for /users

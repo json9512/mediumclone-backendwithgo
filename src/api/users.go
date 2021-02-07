@@ -113,7 +113,7 @@ func DeleteUser(p *dbtool.Pool) gin.HandlerFunc {
 		id := c.Param("id")
 		idInt, err := strconv.ParseInt(id, 10, 64)
 
-		if err != nil {
+		if err != nil || idInt < 1 {
 			msg := "Invalid ID"
 			handleError(&customError{c, http.StatusBadRequest, msg})
 			return
