@@ -37,6 +37,7 @@ type errorTestCase struct {
 	url     string
 	errMsg  string
 	errCode int
+	cookies []*http.Cookie
 }
 
 // MakeRequest returns the response after making a HTTP request
