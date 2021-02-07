@@ -26,10 +26,10 @@ type credential struct {
 	Password string `json:"password" validate:"required"`
 }
 
-type customError struct {
-	g    *gin.Context
-	code int
-	msg  string
+type CustomError struct {
+	G    *gin.Context
+	Code int
+	Msg  string
 }
 
 type errorResponse struct {
@@ -99,6 +99,6 @@ func validateStruct(c interface{}) error {
 	return nil
 }
 
-func handleError(e *customError) {
-	e.g.JSON(e.code, &errorResponse{Msg: e.msg})
+func HandleError(c *gin.Context, code int, msg string) {
+	c.JSON(code, &errorResponse{Msg: msg})
 }

@@ -118,7 +118,7 @@ func testLogout(tb *TestToolbox) {
 			method:  "POST",
 			path:    "/logout",
 			reqBody: &postBody,
-			cookie:  nil,
+			cookie:  cookies,
 		})
 
 		tb.G.Assert(logoutResult.Code).Eql(http.StatusOK)

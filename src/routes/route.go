@@ -5,22 +5,27 @@ import (
 
 	"github.com/json9512/mediumclone-backendwithgo/src/api"
 	"github.com/json9512/mediumclone-backendwithgo/src/dbtool"
+	"github.com/json9512/mediumclone-backendwithgo/src/middlewares"
 )
 
 // AddRoutes adds available routes to the provided router
 func AddRoutes(router *gin.Engine, db *dbtool.Pool) {
+
 	router.POST("/login", api.Login(db))
-	router.POST("/logout", api.Logout(db))
+	router.POST("/logout", middlewares.VerifyUser(), api.Logout(db))
 
-	router.GET("/posts", api.GetAllPosts())
-	router.GET("/posts/:id", api.GetPost())
-	router.GET("/posts/:id/like", api.GetLikesForPost())
-	router.POST("/posts", api.CreatePost())
-	router.PUT("/posts", api.UpdatePost())
-	router.DELETE("/posts", api.DeletePost())
+	postsRouter := router.Group("/posts")
+	postsRouter.GET("", api.GetAllPosts())
+	postsRouter.GET("/:id", api.GetPost())
+	postsRouter.GET("/:id/like", api.GetLikesForPost())
+	postsRouter.POST("", api.CreatePost())
+	postsRouter.PUT("", api.UpdatePost())
+	postsRouter.DELETE("", api.DeletePost())
 
-	router.GET("/users/:id", api.RetrieveUser(db))
-	router.POST("/users", api.RegisterUser(db))
-	router.PUT("/users", api.UpdateUser(db))
-	router.DELETE("/users/:id", api.DeleteUser(db))
+	usersRouter := router.Group("/users")
+	usersRouter.GET("/:id", api.RetrieveUser(db))
+	usersRouter.POST("", api.RegisterUser(db))
+	usersRouter.PUT("", middlewares.VerifyUser(), api.UpdateUser(db))
+	usersRouter.DELETE("/:id", middlewares.VerifyUser(), api.DeleteUser(db))
+
 }
