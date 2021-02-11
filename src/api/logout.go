@@ -2,7 +2,6 @@ package api
 
 import (
 	"net/http"
-	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -27,7 +26,7 @@ func Logout(p *dbtool.Pool) gin.HandlerFunc {
 			HandleError(c, http.StatusBadRequest, msg)
 			return
 		}
-		user.TokenCreatedAt = &time.Time{}
+		user.TokenExpiryAt = 0
 		if err = p.Update(&user); err != nil {
 			msg := "Updating user information in DB failed."
 			HandleError(c, http.StatusInternalServerError, msg)

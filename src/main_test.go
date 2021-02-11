@@ -70,7 +70,7 @@ func Test(t *testing.T) {
 	g.Describe("Environment variables test", func() {
 		g.It("os.Getenv('DB_NAME') should return $DB_NAME", func() {
 			env := os.Getenv("DB_NAME")
-			g.Assert(env).Equal("mediumclone")
+			g.Assert(env).Equal("mediumclone\n")
 		})
 	})
 

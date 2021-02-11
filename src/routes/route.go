@@ -12,7 +12,7 @@ import (
 func AddRoutes(router *gin.Engine, db *dbtool.Pool) {
 
 	router.POST("/login", api.Login(db))
-	router.POST("/logout", middlewares.VerifyUser(), api.Logout(db))
+	router.POST("/logout", middlewares.VerifyUser(db), api.Logout(db))
 
 	postsRouter := router.Group("/posts")
 	postsRouter.GET("", api.GetAllPosts())
@@ -25,7 +25,7 @@ func AddRoutes(router *gin.Engine, db *dbtool.Pool) {
 	usersRouter := router.Group("/users")
 	usersRouter.GET("/:id", api.RetrieveUser(db))
 	usersRouter.POST("", api.RegisterUser(db))
-	usersRouter.PUT("", middlewares.VerifyUser(), api.UpdateUser(db))
-	usersRouter.DELETE("/:id", middlewares.VerifyUser(), api.DeleteUser(db))
+	usersRouter.PUT("", middlewares.VerifyUser(db), api.UpdateUser(db))
+	usersRouter.DELETE("/:id", middlewares.VerifyUser(db), api.DeleteUser(db))
 
 }

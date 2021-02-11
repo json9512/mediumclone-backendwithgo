@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"time"
 
 	"github.com/json9512/mediumclone-backendwithgo/src/dbtool"
+	"github.com/json9512/mediumclone-backendwithgo/src/middlewares"
 )
 
 type testCred struct {
@@ -38,9 +38,10 @@ func testLogin(tb *TestToolbox) {
 
 		cookies := result.Result().Cookies()
 		accessTokenVal := cookies[0].Value
+		valid := middlewares.ValidateToken(accessTokenVal, tb.P)
 
 		tb.G.Assert(cookies).IsNotNil()
-		tb.G.Assert(accessTokenVal).Eql("testing-access-token")
+		tb.G.Assert(valid).IsNil()
 	})
 
 	tb.G.It("POST /login with invalid credential should return error", func() {
@@ -104,9 +105,10 @@ func testLogout(tb *TestToolbox) {
 
 		cookies := loginResult.Result().Cookies()
 		accessTokenVal := cookies[0].Value
+		valid := middlewares.ValidateToken(accessTokenVal, tb.P)
 
 		tb.G.Assert(cookies).IsNotNil()
-		tb.G.Assert(accessTokenVal).Eql("testing-access-token")
+		tb.G.Assert(valid).IsNil()
 
 		// Test logout from here
 		postBody := Data{
@@ -133,7 +135,7 @@ func testLogout(tb *TestToolbox) {
 		var userFromDB dbtool.User
 		err := tb.P.Query(&userFromDB, map[string]interface{}{"email": user.Email})
 		tb.G.Assert(err).IsNil()
-		tb.G.Assert(userFromDB.TokenCreatedAt.UTC()).Eql(time.Time{})
+		tb.G.Assert(userFromDB.TokenExpiryAt).Eql(userFromDB.TokenExpiryAt)
 
 	})
 
@@ -223,7 +225,9 @@ func authWithInvalidCred(url string, tb *TestToolbox, testUser testCred) {
 			cookie:  nil,
 		})
 		tb.G.Assert(result.Code).Eql(http.StatusOK)
-		tb.G.Assert(result.Result().Cookies()[0].Value).Eql("testing-access-token")
+
+		valid := middlewares.ValidateToken(result.Result().Cookies()[0].Value, tb.P)
+		tb.G.Assert(valid).IsNil()
 		cookies = result.Result().Cookies()
 	}
 
@@ -249,7 +253,7 @@ func authWithInvalidCred(url string, tb *TestToolbox, testUser testCred) {
 		var userFrmDB dbtool.User
 		err := tb.P.Query(&userFrmDB, map[string]interface{}{"email": testUser.userEmail})
 		tb.G.Assert(err).IsNil()
-		tb.G.Assert(userFrmDB.TokenCreatedAt).IsNotNil()
+		tb.G.Assert(userFrmDB.TokenExpiryAt).IsNotNil()
 	}
 
 	tb.G.Assert(response["message"]).Eql(testUser.expectedErr)

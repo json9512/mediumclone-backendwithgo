@@ -2,8 +2,10 @@ package api
 
 import (
 	"net/http"
+	"os"
 	"time"
 
+	"github.com/dgrijalva/jwt-go/v4"
 	"github.com/gin-gonic/gin"
 
 	"github.com/json9512/mediumclone-backendwithgo/src/dbtool"
@@ -57,8 +59,8 @@ func Login(p *dbtool.Pool) gin.HandlerFunc {
 		}
 
 		// Update the TokenCreatedAt time
-		createdAt := time.Now()
-		user.TokenCreatedAt = &createdAt
+		expiryDate := time.Now().Add(time.Hour * 24).Unix()
+		user.TokenExpiryAt = expiryDate
 		if err := p.Update(&user); err != nil {
 			c.JSON(
 				http.StatusInternalServerError,
@@ -69,7 +71,28 @@ func Login(p *dbtool.Pool) gin.HandlerFunc {
 			return
 		}
 
-		c.SetCookie("access_token", "testing-access-token", 10, "/", "", false, true)
+		at, err := createAccessToken(user.Email, expiryDate)
+
+		if err != nil {
+			msg := "Login failed. Unable to create token."
+			HandleError(c, http.StatusInternalServerError, msg)
+		}
+
+		c.SetCookie("access_token", at, 10, "/", "", false, true)
 		c.Status(200)
 	}
+}
+
+func createAccessToken(userEmail string, expiryDate int64) (string, error) {
+	var err error
+	claims := jwt.MapClaims{}
+	claims["authorized"] = true
+	claims["user_email"] = userEmail
+	claims["exp"] = expiryDate
+	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	token, err := accessToken.SignedString([]byte(os.Getenv("TOKEN_SECRET")))
+	if err != nil {
+		return "", err
+	}
+	return token, nil
 }
