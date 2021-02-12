@@ -19,13 +19,14 @@ func VerifyUser(p *dbtool.Pool) gin.HandlerFunc {
 
 		if err != nil {
 			api.HandleError(c, http.StatusUnauthorized, "Unauthorized request. Token not found.")
+			c.Abort()
 			return
 		}
 
 		// JWT verification here
 		if err := ValidateToken(token, p); err != nil {
-			fmt.Println(err)
-			api.HandleError(c, http.StatusUnauthorized, "Unauthorized request.")
+			api.HandleError(c, http.StatusUnauthorized, "Unauthorized request. Token invalid.")
+			c.Abort()
 			return
 		}
 

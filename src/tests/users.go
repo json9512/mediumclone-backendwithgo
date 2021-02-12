@@ -248,6 +248,44 @@ func testUpdateUser(tb *TestToolbox) {
 			cookies,
 		})
 	})
+
+	tb.G.It("PUT /users with invalid cookie should return error", func() {
+		var user dbtool.User
+		cookies := userLogin(tb, &user)
+		cookies[0].Value += "k"
+
+		values := Data{
+			"id":    user.ID,
+			"email": "something@test.com",
+		}
+
+		makeInvalidReq(&errorTestCase{
+			tb,
+			values,
+			"PUT",
+			"/users",
+			"Unauthorized request. Token invalid.",
+			http.StatusUnauthorized,
+			cookies,
+		})
+	})
+
+	tb.G.It("PUT /users with no cookie should return error", func() {
+		values := Data{
+			"id":    1,
+			"email": "something@test.com",
+		}
+
+		makeInvalidReq(&errorTestCase{
+			tb,
+			values,
+			"PUT",
+			"/users",
+			"Unauthorized request. Token not found.",
+			http.StatusUnauthorized,
+			nil,
+		})
+	})
 }
 
 func testDeleteUser(tb *TestToolbox) {
@@ -265,6 +303,38 @@ func testDeleteUser(tb *TestToolbox) {
 			"Invalid ID",
 			http.StatusBadRequest,
 			cookies,
+		})
+	})
+
+	tb.G.It("DELETE /users with invalid cookie should return error", func() {
+		var user dbtool.User
+		cookies := userLogin(tb, &user)
+		cookies[0].Value += "k"
+
+		reqURL := fmt.Sprintf("/users/%d", user.ID)
+
+		makeInvalidReq(&errorTestCase{
+			tb,
+			nil,
+			"DELETE",
+			reqURL,
+			"Unauthorized request. Token invalid.",
+			http.StatusUnauthorized,
+			cookies,
+		})
+	})
+
+	tb.G.It("DELETE /users with no cookie should return error", func() {
+		reqURL := fmt.Sprintf("/users/%d", 1)
+
+		makeInvalidReq(&errorTestCase{
+			tb,
+			nil,
+			"DELETE",
+			reqURL,
+			"Unauthorized request. Token not found.",
+			http.StatusUnauthorized,
+			nil,
 		})
 	})
 

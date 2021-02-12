@@ -49,7 +49,7 @@ func MakeRequest(r *reqData) *httptest.ResponseRecorder {
 	}
 
 	req, _ := http.NewRequest(r.method, r.path, bytes.NewBuffer(jsonBody))
-	if r.cookie != nil {
+	if len(r.cookie) > 0 {
 		for _, c := range r.cookie {
 			req.AddCookie(c)
 		}

@@ -170,6 +170,72 @@ func testLogout(tb *TestToolbox) {
 			invalidEmail,
 		)
 	})
+
+	tb.G.It("POST /logout with invalid cookie should return error", func() {
+		user := createSampleUser(tb, "logoutinvalidcookie@test.com", "test-password")
+		// Login with the created user
+		loginResult := MakeRequest(&reqData{
+			handler: tb.R,
+			method:  "POST",
+			path:    "/login",
+			reqBody: &user,
+			cookie:  nil,
+		})
+		tb.G.Assert(loginResult.Code).Eql(http.StatusOK)
+
+		cookies := loginResult.Result().Cookies()
+		accessTokenVal := cookies[0].Value
+		valid := middlewares.ValidateToken(accessTokenVal, tb.P)
+
+		tb.G.Assert(cookies).IsNotNil()
+		tb.G.Assert(valid).IsNil()
+
+		// mingle the cookie
+		cookies[0].Value += "k"
+		values := Data{"email": user.Email}
+
+		makeInvalidReq(&errorTestCase{
+			tb,
+			values,
+			"POST",
+			"/logout",
+			"Unauthorized request. Token invalid.",
+			http.StatusUnauthorized,
+			cookies,
+		})
+	})
+
+	tb.G.It("POST /logout with no cookie should return error", func() {
+		user := createSampleUser(tb, "logoutnocookie@test.com", "test-password")
+		// Login with the created user
+		loginResult := MakeRequest(&reqData{
+			handler: tb.R,
+			method:  "POST",
+			path:    "/login",
+			reqBody: &user,
+			cookie:  nil,
+		})
+		tb.G.Assert(loginResult.Code).Eql(http.StatusOK)
+
+		cookies := loginResult.Result().Cookies()
+		accessTokenVal := cookies[0].Value
+		valid := middlewares.ValidateToken(accessTokenVal, tb.P)
+
+		tb.G.Assert(cookies).IsNotNil()
+		tb.G.Assert(valid).IsNil()
+
+		values := Data{"email": user.Email}
+
+		makeInvalidReq(&errorTestCase{
+			tb,
+			values,
+			"POST",
+			"/logout",
+			"Unauthorized request. Token not found.",
+			http.StatusUnauthorized,
+			nil,
+		})
+	})
 }
 
 func createSampleUser(tb *TestToolbox, email, pwd string) *dbtool.User {
