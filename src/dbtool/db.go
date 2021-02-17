@@ -54,9 +54,9 @@ func Migrate(db *DB) {
 }
 
 // GetUserByID returns a pointer to the user obj with the given ID and the error
-func (p *DB) GetUserByID(id int64) (*User, error) {
+func (db *DB) GetUserByID(id int64) (*User, error) {
 	var user User
-	query := p.First(&user, "id = ?", id)
+	query := db.First(&user, "id = ?", id)
 	if err := checkErr(query); err != nil {
 		return nil, err
 	}
@@ -64,28 +64,28 @@ func (p *DB) GetUserByID(id int64) (*User, error) {
 }
 
 // Query finds the given record in db
-func (p *DB) Query(obj interface{}, condition map[string]interface{}) error {
-	query := p.Where(condition).Find(obj)
+func (db *DB) Query(obj interface{}, condition map[string]interface{}) error {
+	query := db.Where(condition).Find(obj)
 	return checkErr(query)
 }
 
 // Insert creates a new record in db
-func (p *DB) Insert(obj interface{}) error {
-	query := p.Create(obj)
+func (db *DB) Insert(obj interface{}) error {
+	query := db.Create(obj)
 	return checkErr(query)
 }
 
 // Update updates the record in db
-func (p *DB) Update(obj interface{}) error {
-	query := p.Model(obj).Updates(obj)
+func (db *DB) Update(obj interface{}) error {
+	query := db.Model(obj).Updates(obj)
 	return checkErr(query)
 }
 
 // Delete hard deletes the record in db
-func (p *DB) Delete(obj interface{}, condition map[string]interface{}) error {
+func (db *DB) Delete(obj interface{}, condition map[string]interface{}) error {
 	// Soft delete the user
 	// query := p.Where(condition).Find(obj).Delete(obj)
-	query := p.Unscoped().Delete(obj)
+	query := db.Unscoped().Delete(obj)
 	return checkErr(query)
 }
 
