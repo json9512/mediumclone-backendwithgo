@@ -65,7 +65,7 @@ func createRegUser(cred credential) dbtool.User {
 	}
 }
 
-func createUserUpdate(u userUpdateForm) (dbtool.User, error) {
+func createUserWithNewData(u userUpdateForm) (dbtool.User, error) {
 	user := dbtool.User{
 		ID: u.ID,
 	}

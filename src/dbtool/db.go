@@ -53,14 +53,60 @@ func Migrate(db *DB) {
 	db.AutoMigrate(&User{})
 }
 
-// GetUserByID returns a pointer to the user obj with the given ID and the error
-func (db *DB) GetUserByID(id int64) (*User, error) {
+// GetUserByID gets the user from the database with the given ID
+func (db *DB) GetUserByID(id interface{}) (*User, error) {
 	var user User
 	query := db.First(&user, "id = ?", id)
+
 	if err := checkErr(query); err != nil {
 		return nil, err
 	}
 	return &user, nil
+}
+
+// CreateUser creates a user with the given credentials in the database
+func (db *DB) CreateUser(email, pwd string) (*User, error) {
+	user := User{Email: email, Password: pwd}
+	query := db.Create(&user)
+
+	if err := checkErr(query); err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+// CheckIfUserExists checks if the user with the given ID exists
+func (db *DB) CheckIfUserExists(id interface{}) bool {
+	_, err := db.GetUserByID(id)
+	if err != nil {
+		return false
+	}
+	return true
+}
+
+// UpdateUser updates the user with the provided data
+func (db *DB) UpdateUser(newData interface{}) (*User, error) {
+	var updatedUser User
+	query := db.Model(&updatedUser).Updates(newData)
+	if err := checkErr(query); err != nil {
+		return nil, err
+	}
+	return &updatedUser, nil
+}
+
+func (db *DB) DeleteUserWithID(id interface{}) (*User, error) {
+	user, err := db.GetUserByID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	query := db.Unscoped().Delete(user)
+	err = checkErr(query)
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
+
 }
 
 // Query finds the given record in db

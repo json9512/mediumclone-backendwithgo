@@ -21,17 +21,12 @@ func RetrieveUser(db *dbtool.DB) gin.HandlerFunc {
 			return
 		}
 
-		user, err := db.GetUserByID(idInt)
-		if err != nil {
+		if user, err := db.GetUserByID(idInt); err != nil {
 			msg := "User not found."
 			HandleError(c, http.StatusBadRequest, msg)
-			return
+		} else {
+			c.JSON(http.StatusOK, serializeUser(user))
 		}
-
-		c.JSON(
-			http.StatusOK,
-			serializeUser(user),
-		)
 	}
 }
 
@@ -50,20 +45,12 @@ func RegisterUser(db *dbtool.DB) gin.HandlerFunc {
 			return
 		}
 
-		user := dbtool.User{
-			Email:    userCred.Email,
-			Password: userCred.Password,
-		}
-
-		if err := db.Insert(&user); err != nil {
+		if user, err := db.CreateUser(userCred.Email, userCred.Password); err != nil {
 			msg := "User update failed. Saving data to database failed."
 			HandleError(c, http.StatusInternalServerError, msg)
-			return
+		} else {
+			c.JSON(http.StatusOK, serializeUser(user))
 		}
-
-		c.JSON(
-			http.StatusOK,
-			serializeUser(&user))
 	}
 }
 
@@ -82,31 +69,29 @@ func UpdateUser(db *dbtool.DB) gin.HandlerFunc {
 			return
 		}
 
-		user, err := createUserUpdate(reqBody)
+		user, err := createUserWithNewData(reqBody)
 		if err != nil {
 			HandleError(c, http.StatusBadRequest, err.Error())
 			return
 		}
 
-		err = db.Query(&dbtool.User{}, map[string]interface{}{"id": user.ID})
-		if err != nil {
+		if !db.CheckIfUserExists(user.ID) {
 			msg := "User update failed. Invalid ID."
 			HandleError(c, http.StatusBadRequest, msg)
 			return
 		}
 
-		if err = db.Update(&user); err != nil {
+		if updatedUser, err := db.UpdateUser(&user); err != nil {
 			msg := "User update failed. Saving data to database failed."
 			HandleError(c, http.StatusInternalServerError, msg)
-			return
+		} else {
+			c.JSON(http.StatusOK, serializeUser(updatedUser))
 		}
-
-		c.JSON(http.StatusOK, serializeUser(&user))
 	}
 }
 
 // DeleteUser deletes the user in db with its ID
-func DeleteUser(p *dbtool.DB) gin.HandlerFunc {
+func DeleteUser(db *dbtool.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 		idInt, err := strconv.ParseInt(id, 10, 64)
@@ -117,15 +102,13 @@ func DeleteUser(p *dbtool.DB) gin.HandlerFunc {
 			return
 		}
 
-		var user dbtool.User
-		err = p.Delete(&user, map[string]interface{}{"id": idInt})
-		if err != nil {
+		if _, err := db.DeleteUserWithID(idInt); err != nil {
 			msg := "Deleting user data from database failed. User not found"
 			HandleError(c, http.StatusBadRequest, msg)
-			return
+		} else {
+			c.Status(http.StatusOK)
 		}
 
-		c.Status(http.StatusOK)
 	}
 }
 
