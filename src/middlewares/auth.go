@@ -13,7 +13,7 @@ import (
 )
 
 // VerifyUser validates the access_token in the request cookie
-func VerifyUser(p *dbtool.Pool) gin.HandlerFunc {
+func VerifyUser(db *dbtool.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token, err := c.Cookie("access_token")
 
@@ -24,7 +24,7 @@ func VerifyUser(p *dbtool.Pool) gin.HandlerFunc {
 		}
 
 		// JWT verification here
-		if err := ValidateToken(token, p); err != nil {
+		if err := ValidateToken(token, db); err != nil {
 			api.HandleError(c, http.StatusUnauthorized, "Unauthorized request. Token invalid.")
 			c.Abort()
 			return
@@ -48,7 +48,7 @@ func VerifyToken(t string) (*jwt.Token, error) {
 	return token, nil
 }
 
-func ValidateToken(t string, p *dbtool.Pool) error {
+func ValidateToken(t string, db *dbtool.DB) error {
 	token, err := VerifyToken(t)
 
 	if err != nil {
@@ -72,7 +72,7 @@ func ValidateToken(t string, p *dbtool.Pool) error {
 	}
 
 	user := &dbtool.User{}
-	if err := p.Query(&user, nil); err != nil {
+	if err := db.Query(&user, nil); err != nil {
 		return fmt.Errorf("User does not exist in DB")
 	}
 

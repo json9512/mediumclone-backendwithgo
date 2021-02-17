@@ -50,7 +50,7 @@ func checkIfQueriesExist(v url.Values) bool {
 	return false
 }
 
-func serializeUser(u dbtool.User) userResponse {
+func serializeUser(u *dbtool.User) userResponse {
 	return userResponse{
 		ID:    u.ID,
 		Email: u.Email,

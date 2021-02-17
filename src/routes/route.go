@@ -9,7 +9,7 @@ import (
 )
 
 // AddRoutes adds available routes to the provided router
-func AddRoutes(router *gin.Engine, db *dbtool.Pool) {
+func AddRoutes(router *gin.Engine, db *dbtool.DB) {
 
 	router.POST("/login", api.Login(db))
 	router.POST("/logout", middlewares.VerifyUser(db), api.Logout(db))

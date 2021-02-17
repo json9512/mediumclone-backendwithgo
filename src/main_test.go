@@ -27,9 +27,9 @@ func Test(t *testing.T) {
 	g := goblin.Goblin(t)
 
 	toolBox := tests.TestToolbox{
-		G: g,
-		R: router,
-		P: pool,
+		Goblin: g,
+		Router: router,
+		DB:     pool,
 	}
 	tests.RunPostsTests(&toolBox)
 	tests.RunUsersTests(&toolBox)

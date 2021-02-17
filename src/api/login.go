@@ -13,7 +13,7 @@ import (
 
 // Login validates the user and distributes the tokens
 // Note: refactoring needed
-func Login(p *dbtool.Pool) gin.HandlerFunc {
+func Login(db *dbtool.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var userCred credential
 		if err := c.BindJSON(&userCred); err != nil {
@@ -37,7 +37,7 @@ func Login(p *dbtool.Pool) gin.HandlerFunc {
 		}
 
 		var user dbtool.User
-		err := p.Query(&user, map[string]interface{}{"email": userCred.Email})
+		err := db.Query(&user, map[string]interface{}{"email": userCred.Email})
 		if err != nil {
 			c.JSON(
 				http.StatusBadRequest,
@@ -61,7 +61,7 @@ func Login(p *dbtool.Pool) gin.HandlerFunc {
 		// Update the TokenCreatedAt time
 		expiryDate := time.Now().Add(time.Hour * 24).Unix()
 		user.TokenExpiryAt = expiryDate
-		if err := p.Update(&user); err != nil {
+		if err := db.Update(&user); err != nil {
 			c.JSON(
 				http.StatusInternalServerError,
 				&errorResponse{

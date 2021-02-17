@@ -17,9 +17,9 @@ type Data map[string]interface{}
 
 // TestToolbox contains router, db, and goblin
 type TestToolbox struct {
-	G *goblin.G
-	R *gin.Engine
-	P *dbtool.Pool
+	Goblin *goblin.G
+	Router *gin.Engine
+	DB     *dbtool.DB
 }
 
 type reqData struct {

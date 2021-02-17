@@ -11,13 +11,13 @@ import (
 	"github.com/json9512/mediumclone-backendwithgo/src/config"
 )
 
-// Pool manages the gorm.DB struct
-type Pool struct {
+// DB manages the gorm.DB struct
+type DB struct {
 	*gorm.DB
 }
 
 // Init returns the db when connected gracefully
-func Init() *Pool {
+func Init() *DB {
 	log := config.InitLogger()
 	config := createConfig()
 
@@ -42,37 +42,47 @@ func Init() *Pool {
 		log.Info("DB connection successful")
 	}
 
-	return &Pool{
+	return &DB{
 		db,
 	}
 }
 
 // Migrate creates necessary tables in db
-func Migrate(db *Pool) {
+func Migrate(db *DB) {
 	db.AutoMigrate(&Post{})
 	db.AutoMigrate(&User{})
 }
 
+// GetUserByID returns a pointer to the user obj with the given ID and the error
+func (p *DB) GetUserByID(id int64) (*User, error) {
+	var user User
+	query := p.First(&user, "id = ?", id)
+	if err := checkErr(query); err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
 // Query finds the given record in db
-func (p *Pool) Query(obj interface{}, condition map[string]interface{}) error {
+func (p *DB) Query(obj interface{}, condition map[string]interface{}) error {
 	query := p.Where(condition).Find(obj)
 	return checkErr(query)
 }
 
 // Insert creates a new record in db
-func (p *Pool) Insert(obj interface{}) error {
+func (p *DB) Insert(obj interface{}) error {
 	query := p.Create(obj)
 	return checkErr(query)
 }
 
 // Update updates the record in db
-func (p *Pool) Update(obj interface{}) error {
+func (p *DB) Update(obj interface{}) error {
 	query := p.Model(obj).Updates(obj)
 	return checkErr(query)
 }
 
 // Delete hard deletes the record in db
-func (p *Pool) Delete(obj interface{}, condition map[string]interface{}) error {
+func (p *DB) Delete(obj interface{}, condition map[string]interface{}) error {
 	// Soft delete the user
 	// query := p.Where(condition).Find(obj).Delete(obj)
 	query := p.Unscoped().Delete(obj)
