@@ -76,7 +76,7 @@ func ValidateToken(t string, db *dbtool.DB) error {
 		return fmt.Errorf("User does not exist in DB")
 	}
 
-	if user.TokenExpiryAt != int64(tokenExp) {
+	if user.TokenExpiryDate != int64(tokenExp) {
 		return fmt.Errorf("Token expired")
 	}
 

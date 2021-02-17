@@ -60,7 +60,7 @@ func Login(db *dbtool.DB) gin.HandlerFunc {
 
 		// Update the TokenCreatedAt time
 		expiryDate := time.Now().Add(time.Hour * 24).Unix()
-		user.TokenExpiryAt = expiryDate
+		user.TokenExpiryDate = expiryDate
 		if err := db.Update(&user); err != nil {
 			c.JSON(
 				http.StatusInternalServerError,

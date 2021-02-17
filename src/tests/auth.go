@@ -135,7 +135,7 @@ func testLogout(tb *TestToolbox) {
 		var userFromDB dbtool.User
 		err := tb.DB.Query(&userFromDB, map[string]interface{}{"email": user.Email})
 		tb.Goblin.Assert(err).IsNil()
-		tb.Goblin.Assert(userFromDB.TokenExpiryAt).Eql(userFromDB.TokenExpiryAt)
+		tb.Goblin.Assert(userFromDB.TokenExpiryDate).Eql(userFromDB.TokenExpiryDate)
 
 	})
 
@@ -319,7 +319,7 @@ func authWithInvalidCred(url string, tb *TestToolbox, testUser testCred) {
 		var userFrmDB dbtool.User
 		err := tb.DB.Query(&userFrmDB, map[string]interface{}{"email": testUser.userEmail})
 		tb.Goblin.Assert(err).IsNil()
-		tb.Goblin.Assert(userFrmDB.TokenExpiryAt).IsNotNil()
+		tb.Goblin.Assert(userFrmDB.TokenExpiryDate).IsNotNil()
 	}
 
 	tb.Goblin.Assert(response["message"]).Eql(testUser.expectedErr)
