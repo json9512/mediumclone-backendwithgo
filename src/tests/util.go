@@ -59,3 +59,41 @@ func MakeRequest(r *reqData) *httptest.ResponseRecorder {
 	r.handler.ServeHTTP(resRecorder, req)
 	return resRecorder
 }
+
+func CreateTestUser(tb *TestToolbox, email, pwd string) *dbtool.User {
+	// Create user
+	user := Data{
+		"email":    email,
+		"password": pwd,
+	}
+
+	createUserRes := MakeRequest(&reqData{
+		handler: tb.Router,
+		method:  "POST",
+		path:    "/users",
+		reqBody: &user,
+		cookie:  nil,
+	})
+	tb.Goblin.Assert(createUserRes.Code).Eql(http.StatusOK)
+
+	// Get user from DB
+	testUser, err := tb.DB.GetUserByEmail(email)
+	tb.Goblin.Assert(err).IsNil()
+	return testUser
+
+}
+
+func LoginUser(tb *TestToolbox, email, pwd string) []*http.Cookie {
+	cred := map[string]interface{}{"email": email, "password": pwd}
+
+	loginRes := MakeRequest(&reqData{
+		handler: tb.Router,
+		method:  "POST",
+		path:    "/login",
+		reqBody: &cred,
+		cookie:  nil,
+	})
+
+	tb.Goblin.Assert(loginRes.Code).Eql(http.StatusOK)
+	return loginRes.Result().Cookies()
+}

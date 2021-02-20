@@ -64,6 +64,17 @@ func (db *DB) GetUserByID(id interface{}) (*User, error) {
 	return &user, nil
 }
 
+// GetUserByEmail gets the user from the database with the given email
+func (db *DB) GetUserByEmail(email string) (*User, error) {
+	var user User
+	query := db.First(&user, "email = ?", email)
+
+	if err := checkErr(query); err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
 // CreateUser creates a user with the given credentials in the database
 func (db *DB) CreateUser(email, pwd string) (*User, error) {
 	user := User{Email: email, Password: pwd}

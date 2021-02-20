@@ -11,8 +11,11 @@ import (
 )
 
 type postReqData struct {
-	ID  string `json:"id"`
-	Doc string `json:"doc"`
+	ID       string `json:"id"`
+	Doc      string `json:"doc"`
+	Tags     string `json:"tags"`
+	Likes    uint   `json:"likes"`
+	Comments string `json:"comments"`
 }
 
 type userUpdateForm struct {
@@ -24,12 +27,6 @@ type userUpdateForm struct {
 type credential struct {
 	Email    string `json:"email" validate:"required,email"`
 	Password string `json:"password" validate:"required"`
-}
-
-type CustomError struct {
-	G    *gin.Context
-	Code int
-	Msg  string
 }
 
 type errorResponse struct {
@@ -99,6 +96,7 @@ func validateStruct(c interface{}) error {
 	return nil
 }
 
+// HandleError attaches error response to gin.Context
 func HandleError(c *gin.Context, code int, msg string) {
 	c.JSON(code, &errorResponse{Msg: msg})
 }

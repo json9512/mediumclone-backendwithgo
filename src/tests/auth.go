@@ -20,7 +20,7 @@ type testCred struct {
 func testLogin(tb *TestToolbox) {
 	tb.Goblin.It("POST /login should attempt to login with the test user", func() {
 		// Create sample user before login request
-		user := createSampleUser(tb, "login@test.com", "test-password")
+		user := CreateTestUser(tb, "login@test.com", "test-password")
 		// Successful login should populate tokens
 		postBody := Data{
 			"email":    user.Email,
@@ -46,7 +46,7 @@ func testLogin(tb *TestToolbox) {
 
 	tb.Goblin.It("POST /login with invalid credential should return error", func() {
 		invalidPwd := testCred{
-			userEmail:   "test@test.com",
+			userEmail:   "test @test.com",
 			userPwd:     "test-pwd",
 			testEmail:   "test@test.com",
 			testPwd:     "test-pwd-invalid",
@@ -58,7 +58,6 @@ func testLogin(tb *TestToolbox) {
 			tb,
 			invalidPwd,
 		)
-
 		invalidEmail := testCred{
 			userEmail:   "test1@test.com",
 			userPwd:     "test-pwd",
@@ -91,7 +90,7 @@ func testLogin(tb *TestToolbox) {
 func testLogout(tb *TestToolbox) {
 	tb.Goblin.It("POST /logout should invalidate token for the user", func() {
 		// Create new test user
-		user := createSampleUser(tb, "logout@test.com", "test-password")
+		user := CreateTestUser(tb, "logout@test.com", "test-password")
 
 		// Login with the created user
 		loginResult := MakeRequest(&reqData{
@@ -172,7 +171,7 @@ func testLogout(tb *TestToolbox) {
 	})
 
 	tb.Goblin.It("POST /logout with invalid cookie should return error", func() {
-		user := createSampleUser(tb, "logoutinvalidcookie@test.com", "test-password")
+		user := CreateTestUser(tb, "logoutinvalidcookie@test.com", "test-password")
 		// Login with the created user
 		loginResult := MakeRequest(&reqData{
 			handler: tb.Router,
@@ -206,7 +205,7 @@ func testLogout(tb *TestToolbox) {
 	})
 
 	tb.Goblin.It("POST /logout with no cookie should return error", func() {
-		user := createSampleUser(tb, "logoutnocookie@test.com", "test-password")
+		user := CreateTestUser(tb, "logoutnocookie@test.com", "test-password")
 		// Login with the created user
 		loginResult := MakeRequest(&reqData{
 			handler: tb.Router,
@@ -238,36 +237,11 @@ func testLogout(tb *TestToolbox) {
 	})
 }
 
-func createSampleUser(tb *TestToolbox, email, pwd string) *dbtool.User {
-	// Create sample user before login request
-	sampleUserData := Data{
-		"email":    email,
-		"password": pwd,
-	}
-
-	createSampleResult := MakeRequest(&reqData{
-		handler: tb.Router,
-		method:  "POST",
-		path:    "/users",
-		reqBody: &sampleUserData,
-		cookie:  nil,
-	})
-	tb.Goblin.Assert(createSampleResult.Code).Eql(http.StatusOK)
-
-	var user dbtool.User
-	err := tb.DB.Query(&user, map[string]interface{}{"email": email})
-	tb.Goblin.Assert(err).IsNil()
-	tb.Goblin.Assert(user.ID).IsNotNil()
-	tb.Goblin.Assert(user.Email).Eql(email)
-
-	return &user
-}
-
 // NOTE: mixing /login and /logout test logic can be confusing
 // although they share code. Need to separate the func
 // considering sustainability and readability.
 func authWithInvalidCred(url string, tb *TestToolbox, testUser testCred) {
-	createSampleUser(tb, testUser.userEmail, testUser.userPwd)
+	CreateTestUser(tb, testUser.userEmail, testUser.userPwd)
 	postBody := Data{
 		"email":    testUser.testEmail,
 		"password": testUser.testPwd,

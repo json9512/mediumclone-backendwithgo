@@ -4,16 +4,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-
-	"github.com/json9512/mediumclone-backendwithgo/src/dbtool"
 )
 
 func testGetUserWithID(tb *TestToolbox) {
 	tb.Goblin.It("GET /users/:id should return user with given id", func() {
+		testUser := CreateTestUser(tb, "test-get-user@test.com", "test-pwd")
+		url := fmt.Sprintf("/users/%d", testUser.ID)
+
 		result := MakeRequest(&reqData{
 			handler: tb.Router,
 			method:  "GET",
-			path:    "/users/1",
+			path:    url,
 			reqBody: nil,
 			cookie:  nil,
 		})
@@ -27,8 +28,8 @@ func testGetUserWithID(tb *TestToolbox) {
 
 		tb.Goblin.Assert(err).IsNil()
 		tb.Goblin.Assert(IDExists).IsTrue()
-		tb.Goblin.Assert(1).Eql(userID)
-		tb.Goblin.Assert("test@test.com").Eql(response["email"])
+		tb.Goblin.Assert(int(testUser.ID)).Eql(userID)
+		tb.Goblin.Assert("test-get-user@test.com").Eql(response["email"])
 	})
 
 	tb.Goblin.It("GET /users/:id with invalid type should return error", func() {
@@ -135,12 +136,12 @@ func testCreatUser(tb *TestToolbox) {
 
 func testUpdateUser(tb *TestToolbox) {
 	tb.Goblin.It("PUT /users should update a user in database", func() {
-		var user dbtool.User
-		cookies := userLogin(tb, &user)
+		testUser := CreateTestUser(tb, "test-update-user@test.com", "test-pwd")
+		cookies := LoginUser(tb, "test-update-user@test.com", "test-pwd")
 
 		// attempt to update
 		values := Data{
-			"id":    user.ID,
+			"id":    testUser.ID,
 			"email": "something@test.com",
 		}
 
@@ -171,11 +172,11 @@ func testUpdateUser(tb *TestToolbox) {
 	})
 
 	tb.Goblin.It("PUT /users with invalid ID should return error", func() {
-		var user dbtool.User
-		cookies := userLogin(tb, &user)
+		testUser := CreateTestUser(tb, "test-put-user@test.com", "test-pwd")
+		cookies := LoginUser(tb, "test-put-user@test.com", "test-pwd")
 
 		values := Data{
-			"id":    2,
+			"id":    testUser.ID + 999,
 			"email": "something@test.com",
 		}
 
@@ -191,8 +192,8 @@ func testUpdateUser(tb *TestToolbox) {
 	})
 
 	tb.Goblin.It("PUT /users without new data should return error", func() {
-		var user dbtool.User
-		cookies := userLogin(tb, &user)
+		_ = CreateTestUser(tb, "test-put-user2@test.com", "test-pwd")
+		cookies := LoginUser(tb, "test-put-user2@test.com", "test-pwd")
 
 		values := Data{
 			"id": 1,
@@ -210,11 +211,11 @@ func testUpdateUser(tb *TestToolbox) {
 	})
 
 	tb.Goblin.It("PUT /users with invalid email should return error", func() {
-		var user dbtool.User
-		cookies := userLogin(tb, &user)
+		testUser := CreateTestUser(tb, "test-put-user3@test.com", "test-pwd")
+		cookies := LoginUser(tb, "test-put-user3@test.com", "test-pwd")
 
 		values := Data{
-			"id":    user.ID,
+			"id":    testUser.ID,
 			"email": "somethingtest.com",
 		}
 
@@ -230,11 +231,11 @@ func testUpdateUser(tb *TestToolbox) {
 	})
 
 	tb.Goblin.It("PUT /users with invalid data type should return error", func() {
-		var user dbtool.User
-		cookies := userLogin(tb, &user)
+		testUser := CreateTestUser(tb, "test-put-user4@test.com", "test-pwd")
+		cookies := LoginUser(tb, "test-put-user4@test.com", "test-pwd")
 
 		values := []interface{}{
-			user.ID,
+			testUser.ID,
 			"somethingtest.com",
 		}
 
@@ -250,12 +251,12 @@ func testUpdateUser(tb *TestToolbox) {
 	})
 
 	tb.Goblin.It("PUT /users with invalid cookie should return error", func() {
-		var user dbtool.User
-		cookies := userLogin(tb, &user)
+		testUser := CreateTestUser(tb, "test-put-user5@test.com", "test-pwd")
+		cookies := LoginUser(tb, "test-put-user5@test.com", "test-pwd")
 		cookies[0].Value += "k"
 
 		values := Data{
-			"id":    user.ID,
+			"id":    testUser.ID,
 			"email": "something@test.com",
 		}
 
@@ -290,8 +291,8 @@ func testUpdateUser(tb *TestToolbox) {
 
 func testDeleteUser(tb *TestToolbox) {
 	tb.Goblin.It("DELETE /users/:id with invalid ID should return error", func() {
-		var user dbtool.User
-		cookies := userLogin(tb, &user)
+		_ = CreateTestUser(tb, "test-delete-user@test.com", "test-pwd")
+		cookies := LoginUser(tb, "test-delete-user@test.com", "test-pwd")
 
 		reqURL := fmt.Sprintf("/users/%d", -1)
 
@@ -307,11 +308,11 @@ func testDeleteUser(tb *TestToolbox) {
 	})
 
 	tb.Goblin.It("DELETE /users with invalid cookie should return error", func() {
-		var user dbtool.User
-		cookies := userLogin(tb, &user)
+		testUser := CreateTestUser(tb, "test-delete-user2@test.com", "test-pwd")
+		cookies := LoginUser(tb, "test-delete-user2@test.com", "test-pwd")
 		cookies[0].Value += "k"
 
-		reqURL := fmt.Sprintf("/users/%d", user.ID)
+		reqURL := fmt.Sprintf("/users/%d", testUser.ID)
 
 		makeInvalidReq(&errorTestCase{
 			tb,
@@ -339,10 +340,10 @@ func testDeleteUser(tb *TestToolbox) {
 	})
 
 	tb.Goblin.It("DELETE /users/:id should delete a user with the given ID", func() {
-		var user dbtool.User
-		cookies := userLogin(tb, &user)
+		testUser := CreateTestUser(tb, "test-delete-user4@test.com", "test-pwd")
+		cookies := LoginUser(tb, "test-delete-user4@test.com", "test-pwd")
 
-		reqURL := fmt.Sprintf("/users/%d", 1)
+		reqURL := fmt.Sprintf("/users/%d", testUser.ID)
 
 		// Perform DELETE request with ID
 		result := MakeRequest(&reqData{
@@ -400,29 +401,4 @@ func makeInvalidReq(e *errorTestCase) {
 
 	e.tb.Goblin.Assert(err).IsNil()
 	e.tb.Goblin.Assert(response["message"]).Eql(e.errMsg)
-}
-
-func userLogin(tb *TestToolbox, u *dbtool.User) []*http.Cookie {
-	qErr := tb.DB.Query(&u, map[string]interface{}{"id": 1})
-	tb.Goblin.Assert(qErr).IsNil()
-
-	// Login with the user to get access_token
-	values := Data{
-		"email":    u.Email,
-		"password": u.Password,
-	}
-
-	loginRes := MakeRequest(&reqData{
-		handler: tb.Router,
-		method:  "POST",
-		path:    "/login",
-		reqBody: &values,
-		cookie:  nil,
-	})
-	tb.Goblin.Assert(loginRes.Code).Eql(http.StatusOK)
-
-	tokenValue := loginRes.Result().Cookies()[0].Value
-	tb.Goblin.Assert(tokenValue).IsNotNil()
-
-	return loginRes.Result().Cookies()
 }

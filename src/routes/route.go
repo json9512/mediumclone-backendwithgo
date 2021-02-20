@@ -18,7 +18,7 @@ func AddRoutes(router *gin.Engine, db *dbtool.DB) {
 	postsRouter.GET("", api.GetAllPosts())
 	postsRouter.GET("/:id", api.GetPost())
 	postsRouter.GET("/:id/like", api.GetLikesForPost())
-	postsRouter.POST("", api.CreatePost())
+	postsRouter.POST("", middlewares.VerifyUser(db), api.CreatePost(db))
 	postsRouter.PUT("", api.UpdatePost())
 	postsRouter.DELETE("", api.DeletePost())
 
