@@ -102,7 +102,7 @@ func DeleteUser(db *dbtool.DB) gin.HandlerFunc {
 			return
 		}
 
-		if _, err := db.DeleteUserWithID(idInt); err != nil {
+		if _, err := db.DeleteUserByID(idInt); err != nil {
 			msg := "Deleting user data from database failed. User not found"
 			HandleError(c, http.StatusBadRequest, msg)
 		} else {
