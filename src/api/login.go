@@ -59,8 +59,8 @@ func Login(db *dbtool.DB) gin.HandlerFunc {
 		}
 
 		// Update the TokenCreatedAt time
-		expiryDate := time.Now().Add(time.Hour * 24).Unix()
-		user.TokenExpiryDate = expiryDate
+		expiresIn := time.Now().Add(time.Hour * 24).Unix()
+		user.TokenExpiresIn = expiresIn
 		if err := db.Update(&user); err != nil {
 			c.JSON(
 				http.StatusInternalServerError,
@@ -71,11 +71,9 @@ func Login(db *dbtool.DB) gin.HandlerFunc {
 			return
 		}
 
-		at, err := createAccessToken(user.Email, expiryDate)
-
+		at, err := createAccessToken(user.Email, expiresIn)
 		if err != nil {
-			msg := "Login failed. Unable to create token."
-			HandleError(c, http.StatusInternalServerError, msg)
+			HandleError(c, http.StatusInternalServerError, "Login failed. Unable to create token.")
 		}
 
 		c.SetCookie("access_token", at, 10, "/", "", false, true)
@@ -84,15 +82,11 @@ func Login(db *dbtool.DB) gin.HandlerFunc {
 }
 
 func createAccessToken(userEmail string, expiryDate int64) (string, error) {
-	var err error
 	claims := jwt.MapClaims{}
 	claims["authorized"] = true
 	claims["user_email"] = userEmail
 	claims["exp"] = expiryDate
 	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	token, err := accessToken.SignedString([]byte(os.Getenv("TOKEN_SECRET")))
-	if err != nil {
-		return "", err
-	}
-	return token, nil
+	token, err := accessToken.SignedString([]byte(os.Getenv("JWT_SECRET")))
+	return token, err
 }

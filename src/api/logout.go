@@ -26,7 +26,7 @@ func Logout(db *dbtool.DB) gin.HandlerFunc {
 			HandleError(c, http.StatusBadRequest, msg)
 			return
 		}
-		user.TokenExpiryDate = 0
+		user.TokenExpiresIn = 0
 		if err = db.Update(&user); err != nil {
 			msg := "Updating user information in DB failed."
 			HandleError(c, http.StatusInternalServerError, msg)

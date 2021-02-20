@@ -26,7 +26,7 @@ ARG DBHost
 ARG DBPort
 ARG DBName
 ARG DBPassword
-ARG TokenSecret
+ARG JWTSecret
 
 # Set env variables
 ENV DB_USERNAME ${DBUsername}
@@ -34,7 +34,7 @@ ENV DB_HOST ${DBHost}
 ENV DB_PORT ${DBPort}
 ENV DB_NAME ${DBName}
 ENV DB_PASSWORD ${DBPassword}
-ENV TOKEN_SECRET ${TokenSecret}}
+ENV JWT_SECRET ${JWTSecret}}
 
 RUN go build -o server
 

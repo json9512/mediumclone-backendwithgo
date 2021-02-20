@@ -33,12 +33,13 @@ func VerifyUser(db *dbtool.DB) gin.HandlerFunc {
 	}
 }
 
+// VerifyToken verifies the JWT token with the expected signing method
 func VerifyToken(t string) (*jwt.Token, error) {
 	token, err := jwt.Parse(t, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 		}
-		return []byte(os.Getenv("TOKEN_SECRET")), nil
+		return []byte(os.Getenv("JWT_SECRET")), nil
 	})
 
 	if err != nil {
@@ -48,6 +49,7 @@ func VerifyToken(t string) (*jwt.Token, error) {
 	return token, nil
 }
 
+// ValidateToken checks the validity of the provided JWT token
 func ValidateToken(t string, db *dbtool.DB) error {
 	token, err := VerifyToken(t)
 
@@ -76,7 +78,7 @@ func ValidateToken(t string, db *dbtool.DB) error {
 		return fmt.Errorf("User does not exist in DB")
 	}
 
-	if user.TokenExpiryDate != int64(tokenExp) {
+	if user.TokenExpiresIn != int64(tokenExp) {
 		return fmt.Errorf("Token expired")
 	}
 

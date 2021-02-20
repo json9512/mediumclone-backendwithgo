@@ -94,19 +94,18 @@ func (db *DB) UpdateUser(newData interface{}) (*User, error) {
 	return &updatedUser, nil
 }
 
-func (db *DB) DeleteUserWithID(id interface{}) (*User, error) {
+// DeleteUserByID deletes the user with the given ID in DB
+func (db *DB) DeleteUserByID(id interface{}) (*User, error) {
 	user, err := db.GetUserByID(id)
 	if err != nil {
 		return nil, err
 	}
 
 	query := db.Unscoped().Delete(user)
-	err = checkErr(query)
-	if err != nil {
+	if err = checkErr(query); err != nil {
 		return nil, err
 	}
 	return user, nil
-
 }
 
 // Query finds the given record in db
