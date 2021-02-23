@@ -38,6 +38,13 @@ type userResponse struct {
 	Email string `json:"email"`
 }
 
+type updateQuery struct {
+	ID             uint
+	Email          string
+	Password       string
+	TokenExpiresIn interface{}
+}
+
 type response map[string]interface{}
 
 func checkIfQueriesExist(v url.Values) bool {
@@ -54,38 +61,34 @@ func serializeUser(u *dbtool.User) userResponse {
 	}
 }
 
-func createRegUser(cred credential) dbtool.User {
-	return dbtool.User{
-		ID:       0,
-		Email:    cred.Email,
-		Password: cred.Password,
-	}
-}
-
-func createUserWithNewData(u userUpdateForm) (dbtool.User, error) {
-	user := dbtool.User{
-		ID: u.ID,
+func createUpdateQuery(id, email, password, tokenExpiresIn interface{}) (updateQuery, error) {
+	query := updateQuery{
+		ID: id.(uint),
 	}
 
-	if u.Email == "" && u.Password == "" {
-		return user, errors.New("User update failed. No new data")
+	if email == "" && password == "" {
+		return query, errors.New("User update failed. No new data")
 	}
 
-	if u.Email != "" {
+	if email != "" {
 		v := validator.New()
 
-		if err := v.Var(u.Email, "email"); err != nil {
-			return user, errors.New("User update failed. Invalid email")
+		if err := v.Var(email, "email"); err != nil {
+			return query, errors.New("User update failed. Invalid email")
 		}
 
-		user.Email = u.Email
+		query.Email = email.(string)
 	}
 
-	if u.Password != "" {
-		user.Password = u.Password
+	if password != "" {
+		query.Password = password.(string)
 	}
 
-	return user, nil
+	if tokenExpiresIn != nil {
+		query.TokenExpiresIn = tokenExpiresIn
+	}
+
+	return query, nil
 }
 
 func validateStruct(c interface{}) error {

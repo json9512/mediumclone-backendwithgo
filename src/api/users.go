@@ -16,14 +16,12 @@ func RetrieveUser(db *dbtool.DB) gin.HandlerFunc {
 		id := c.Param("id")
 		idInt, err := strconv.ParseInt(id, 10, 64)
 		if err != nil {
-			msg := "Invalid ID."
-			HandleError(c, http.StatusBadRequest, msg)
+			HandleError(c, http.StatusBadRequest, "Invalid ID.")
 			return
 		}
 
 		if user, err := db.GetUserByID(idInt); err != nil {
-			msg := "User not found."
-			HandleError(c, http.StatusBadRequest, msg)
+			HandleError(c, http.StatusBadRequest, "User not found.")
 		} else {
 			c.JSON(http.StatusOK, serializeUser(user))
 		}
@@ -34,20 +32,19 @@ func RetrieveUser(db *dbtool.DB) gin.HandlerFunc {
 func RegisterUser(db *dbtool.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var userCred credential
-		err := extractData(c, &userCred, "User registration failed. Invalid data type.")
+		err := extractData(c, &userCred)
 		if err != nil {
+			HandleError(c, http.StatusBadRequest, "User registration failed. Invalid data type.")
 			return
 		}
 
 		if err := validateStruct(&userCred); err != nil {
-			msg := "User registration failed. Invalid credential."
-			HandleError(c, http.StatusBadRequest, msg)
+			HandleError(c, http.StatusBadRequest, "User registration failed. Invalid credential.")
 			return
 		}
 
 		if user, err := db.CreateUser(userCred.Email, userCred.Password); err != nil {
-			msg := "User update failed. Saving data to database failed."
-			HandleError(c, http.StatusInternalServerError, msg)
+			HandleError(c, http.StatusInternalServerError, "User update failed. Saving data to database failed.")
 		} else {
 			c.JSON(http.StatusOK, serializeUser(user))
 		}
@@ -58,32 +55,30 @@ func RegisterUser(db *dbtool.DB) gin.HandlerFunc {
 func UpdateUser(db *dbtool.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var reqBody userUpdateForm
-		err := extractData(c, &reqBody, "User update failed. Invalid data type.")
+		err := extractData(c, &reqBody)
 		if err != nil {
+			HandleError(c, http.StatusBadRequest, "User update failed. Invalid data type.")
 			return
 		}
 
 		if err := validateStruct(reqBody); err != nil {
-			msg := "User update failed. Invalid data."
-			HandleError(c, http.StatusBadRequest, msg)
+			HandleError(c, http.StatusBadRequest, "User update failed. Invalid data.")
 			return
 		}
 
-		user, err := createUserWithNewData(reqBody)
+		query, err := createUpdateQuery(reqBody.ID, reqBody.Email, reqBody.Password, nil)
 		if err != nil {
 			HandleError(c, http.StatusBadRequest, err.Error())
 			return
 		}
 
-		if !db.CheckIfUserExists(user.ID) {
-			msg := "User update failed. Invalid ID."
-			HandleError(c, http.StatusBadRequest, msg)
+		if !db.CheckIfUserExists(query.ID) {
+			HandleError(c, http.StatusBadRequest, "User update failed. Invalid ID.")
 			return
 		}
 
-		if updatedUser, err := db.UpdateUser(&user); err != nil {
-			msg := "User update failed. Saving data to database failed."
-			HandleError(c, http.StatusInternalServerError, msg)
+		if updatedUser, err := db.UpdateUser(&query); err != nil {
+			HandleError(c, http.StatusInternalServerError, "User update failed. Saving data to database failed.")
 		} else {
 			c.JSON(http.StatusOK, serializeUser(updatedUser))
 		}
@@ -97,14 +92,12 @@ func DeleteUser(db *dbtool.DB) gin.HandlerFunc {
 		idInt, err := strconv.ParseInt(id, 10, 64)
 
 		if err != nil || idInt < 1 {
-			msg := "Invalid ID"
-			HandleError(c, http.StatusBadRequest, msg)
+			HandleError(c, http.StatusBadRequest, "Invalid ID")
 			return
 		}
 
 		if _, err := db.DeleteUserByID(idInt); err != nil {
-			msg := "Deleting user data from database failed. User not found"
-			HandleError(c, http.StatusBadRequest, msg)
+			HandleError(c, http.StatusBadRequest, "Deleting user data from database failed. User not found")
 		} else {
 			c.Status(http.StatusOK)
 		}
@@ -112,9 +105,8 @@ func DeleteUser(db *dbtool.DB) gin.HandlerFunc {
 	}
 }
 
-func extractData(c *gin.Context, reqBody interface{}, errorMsg string) error {
+func extractData(c *gin.Context, reqBody interface{}) error {
 	if err := c.BindJSON(&reqBody); err != nil {
-		HandleError(c, http.StatusBadRequest, errorMsg)
 		return err
 	}
 	return nil

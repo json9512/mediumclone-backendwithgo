@@ -36,8 +36,7 @@ func Login(db *dbtool.DB) gin.HandlerFunc {
 			return
 		}
 
-		var user dbtool.User
-		err := db.Query(&user, map[string]interface{}{"email": userCred.Email})
+		user, err := db.GetUserByEmail(userCred.Email)
 		if err != nil {
 			c.JSON(
 				http.StatusBadRequest,

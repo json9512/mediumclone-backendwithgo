@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/json9512/mediumclone-backendwithgo/src/dbtool"
+	"github.com/json9512/mediumclone-backendwithgo/src/middlewares"
 )
 
 // Data is for structuring req.body/res.body in json format
@@ -60,7 +61,7 @@ func MakeRequest(r *reqData) *httptest.ResponseRecorder {
 	return resRecorder
 }
 
-func CreateTestUser(tb *TestToolbox, email, pwd string) *dbtool.User {
+func createTestUser(tb *TestToolbox, email, pwd string) *dbtool.User {
 	// Create user
 	user := Data{
 		"email":    email,
@@ -83,17 +84,47 @@ func CreateTestUser(tb *TestToolbox, email, pwd string) *dbtool.User {
 
 }
 
-func LoginUser(tb *TestToolbox, email, pwd string) []*http.Cookie {
-	cred := map[string]interface{}{"email": email, "password": pwd}
+func extractBody(h *httptest.ResponseRecorder) map[string]interface{} {
+	var response map[string]interface{}
+	_ = json.Unmarshal(h.Body.Bytes(), &response)
+	return response
+}
 
-	loginRes := MakeRequest(&reqData{
+func testAccessToken(tb *TestToolbox, h *httptest.ResponseRecorder) {
+	cookies := h.Result().Cookies()
+	accessTokenVal := cookies[0].Value
+	valid := middlewares.ValidateToken(accessTokenVal, tb.DB)
+	tb.Goblin.Assert(cookies).IsNotNil()
+	tb.Goblin.Assert(valid).IsNil()
+}
+
+func login(tb *TestToolbox, email, password string) *httptest.ResponseRecorder {
+	loginBody := Data{
+		"email":    email,
+		"password": password,
+	}
+
+	result := MakeRequest(&reqData{
 		handler: tb.Router,
 		method:  "POST",
 		path:    "/login",
-		reqBody: &cred,
+		reqBody: &loginBody,
 		cookie:  nil,
 	})
+	return result
+}
 
-	tb.Goblin.Assert(loginRes.Code).Eql(http.StatusOK)
-	return loginRes.Result().Cookies()
+func logout(tb *TestToolbox, email string, cookies []*http.Cookie) *httptest.ResponseRecorder {
+	data := Data{
+		"email": email,
+	}
+
+	result := MakeRequest(&reqData{
+		handler: tb.Router,
+		method:  "POST",
+		path:    "/logout",
+		reqBody: &data,
+		cookie:  cookies,
+	})
+	return result
 }

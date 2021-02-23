@@ -129,8 +129,10 @@ func testGetPostWithQuery(tb *TestToolbox) {
 // testCreatePost tests /posts to create a new post in database
 func testCreatePost(tb *TestToolbox) {
 	tb.Goblin.It("POST /posts should create a new post in database", func() {
-		_ = CreateTestUser(tb, "test-create-post@test.com", "test-pwd")
-		cookies := LoginUser(tb, "test-create-post@test.com", "test-pwd")
+		_ = createTestUser(tb, "test-create-post@test.com", "test-pwd")
+		loginResult := login(tb, "test-create-post@test.com", "test-pwd")
+		tb.Goblin.Assert(loginResult.Code).Eql(http.StatusOK)
+		cookies := loginResult.Result().Cookies()
 
 		values := Data{"id": "5"}
 
