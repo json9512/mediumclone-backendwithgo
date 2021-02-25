@@ -6,6 +6,16 @@ import (
 	"net/http"
 )
 
+// RunUsersTests executes all tests for /users
+func RunUsersTests(tb *TestToolbox) {
+	tb.Goblin.Describe("/users endpoint test", func() {
+		testCreatUser(tb)
+		testGetUserWithID(tb)
+		testUpdateUser(tb)
+		testDeleteUser(tb)
+	})
+}
+
 func testGetUserWithID(tb *TestToolbox) {
 	tb.Goblin.It("GET /users/:id should return user with given id", func() {
 		testUser := createTestUser(tb, "test-get-user@test.com", "test-pwd")
@@ -86,51 +96,84 @@ func testCreatUser(tb *TestToolbox) {
 		tb.Goblin.Assert(email).Eql(values["email"])
 	})
 
-	tb.Goblin.It("POST /users with invalid credential should throw error", func() {
+	tb.Goblin.It("POST /users with no password should throw error", func() {
 		noPassword := Data{
 			"email":    "testUser@test.com",
 			"password": "",
 		}
-		createWithInvalidCred(
+		makeInvalidReq(&errorTestCase{
 			tb,
 			noPassword,
-			"User registration failed. Invalid credential.")
+			"POST",
+			"/users",
+			"User registration failed. Invalid credential.",
+			http.StatusBadRequest,
+			nil,
+		})
+	})
 
+	tb.Goblin.It("POST /users with no email should throw error", func() {
 		noEmail := Data{
 			"email":    "",
 			"password": "testing",
 		}
-		createWithInvalidCred(
+		makeInvalidReq(&errorTestCase{
 			tb,
 			noEmail,
-			"User registration failed. Invalid credential.")
+			"POST",
+			"/users",
+			"User registration failed. Invalid credential.",
+			http.StatusBadRequest,
+			nil,
+		})
+	})
 
+	tb.Goblin.It("POST /users with invalid email should throw error", func() {
 		invalidEmail := Data{
-			"email":    "",
+			"email":    "testtest.com",
 			"password": "testing",
 		}
-		createWithInvalidCred(
+		makeInvalidReq(&errorTestCase{
 			tb,
 			invalidEmail,
-			"User registration failed. Invalid credential.")
+			"POST",
+			"/users",
+			"User registration failed. Invalid credential.",
+			http.StatusBadRequest,
+			nil,
+		})
+	})
 
+	tb.Goblin.It("POST /users with no credential should throw error", func() {
 		noCred := Data{
 			"email":    "",
 			"password": "",
 		}
-		createWithInvalidCred(
+		makeInvalidReq(&errorTestCase{
 			tb,
 			noCred,
-			"User registration failed. Invalid credential.")
+			"POST",
+			"/users",
+			"User registration failed. Invalid credential.",
+			http.StatusBadRequest,
+			nil,
+		})
+	})
 
+	tb.Goblin.It("POST /users with invalid data type should throw error", func() {
 		invalidData := []string{
 			"test@test.com",
 			"hello",
 		}
-		createWithInvalidCred(
+		makeInvalidReq(&errorTestCase{
 			tb,
 			invalidData,
-			"User registration failed. Invalid data type.")
+			"POST",
+			"/users",
+			"User registration failed. Invalid data type.",
+			http.StatusBadRequest,
+			nil,
+		})
 	})
 }
 
@@ -373,33 +416,6 @@ func testDeleteUser(tb *TestToolbox) {
 		})
 		tb.Goblin.Assert(result.Code).Eql(http.StatusOK)
 	})
-}
-
-// RunUsersTests executes all tests for /users
-func RunUsersTests(tb *TestToolbox) {
-	tb.Goblin.Describe("/users endpoint test", func() {
-		testCreatUser(tb)
-		testGetUserWithID(tb)
-		testUpdateUser(tb)
-		testDeleteUser(tb)
-	})
-}
-
-func createWithInvalidCred(tb *TestToolbox, d interface{}, errorMsg string) {
-	result := MakeRequest(&reqData{
-		handler: tb.Router,
-		method:  "POST",
-		path:    "/users",
-		reqBody: &d,
-		cookie:  nil,
-	})
-
-	tb.Goblin.Assert(result.Code).Eql(http.StatusBadRequest)
-
-	var response map[string]interface{}
-	err := json.Unmarshal(result.Body.Bytes(), &response)
-	tb.Goblin.Assert(err).IsNil()
-	tb.Goblin.Assert(response["message"]).Eql(errorMsg)
 }
 
 func makeInvalidReq(e *errorTestCase) {
