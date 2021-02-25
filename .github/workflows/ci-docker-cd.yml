@@ -65,6 +65,7 @@ jobs:
           DBPort=${{ secrets.DB_PORT }}
           DBName=${{ secrets.DB_NAME }}
           DBPassword=${{ secrets.DB_PASSWORD }}
+          JWTSecret=${{ secrets.JWT_SECRET }}
 
     - name: Push
       run: docker push json9512/mediumclone-go:latest

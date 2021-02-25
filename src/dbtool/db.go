@@ -11,13 +11,13 @@ import (
 	"github.com/json9512/mediumclone-backendwithgo/src/config"
 )
 
-// Pool manages the gorm.DB struct
-type Pool struct {
+// DB manages the gorm.DB struct
+type DB struct {
 	*gorm.DB
 }
 
 // Init returns the db when connected gracefully
-func Init() *Pool {
+func Init() *DB {
 	log := config.InitLogger()
 	config := createConfig()
 
@@ -42,40 +42,106 @@ func Init() *Pool {
 		log.Info("DB connection successful")
 	}
 
-	return &Pool{
+	return &DB{
 		db,
 	}
 }
 
 // Migrate creates necessary tables in db
-func Migrate(db *Pool) {
+func Migrate(db *DB) {
 	db.AutoMigrate(&Post{})
 	db.AutoMigrate(&User{})
 }
 
+// GetUserByID gets the user from the database with the given ID
+func (db *DB) GetUserByID(id interface{}) (*User, error) {
+	var user User
+	query := db.First(&user, "id = ?", id)
+
+	if err := checkErr(query); err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+// GetUserByEmail gets the user from the database with the given email
+func (db *DB) GetUserByEmail(email string) (*User, error) {
+	var user User
+	query := db.First(&user, "email = ?", email)
+
+	if err := checkErr(query); err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+// CreateUser creates a user with the given credentials in the database
+func (db *DB) CreateUser(email, pwd string) (*User, error) {
+	user := User{Email: email, Password: pwd}
+	query := db.Create(&user)
+
+	if err := checkErr(query); err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+// CheckIfUserExists checks if the user with the given ID exists
+func (db *DB) CheckIfUserExists(id interface{}) bool {
+	_, err := db.GetUserByID(id)
+	if err != nil {
+		return false
+	}
+	return true
+}
+
+// UpdateUser updates the user with the provided data
+func (db *DB) UpdateUser(newData interface{}) (*User, error) {
+	var updatedUser User
+	query := db.Model(&updatedUser).Updates(newData)
+	if err := checkErr(query); err != nil {
+		return nil, err
+	}
+	return &updatedUser, nil
+}
+
+// DeleteUserByID deletes the user with the given ID in DB
+func (db *DB) DeleteUserByID(id interface{}) (*User, error) {
+	user, err := db.GetUserByID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	query := db.Unscoped().Delete(user)
+	if err = checkErr(query); err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
 // Query finds the given record in db
-func (p *Pool) Query(obj interface{}, condition map[string]interface{}) error {
-	query := p.Where(condition).Find(obj)
+func (db *DB) Query(obj interface{}, condition map[string]interface{}) error {
+	query := db.Where(condition).Find(obj)
 	return checkErr(query)
 }
 
 // Insert creates a new record in db
-func (p *Pool) Insert(obj interface{}) error {
-	query := p.Create(obj)
+func (db *DB) Insert(obj interface{}) error {
+	query := db.Create(obj)
 	return checkErr(query)
 }
 
 // Update updates the record in db
-func (p *Pool) Update(obj interface{}) error {
-	query := p.Model(obj).Updates(obj)
+func (db *DB) Update(obj interface{}) error {
+	query := db.Model(obj).Updates(obj)
 	return checkErr(query)
 }
 
 // Delete hard deletes the record in db
-func (p *Pool) Delete(obj interface{}, condition map[string]interface{}) error {
+func (db *DB) Delete(obj interface{}, condition map[string]interface{}) error {
 	// Soft delete the user
 	// query := p.Where(condition).Find(obj).Delete(obj)
-	query := p.Unscoped().Delete(obj)
+	query := db.Unscoped().Delete(obj)
 	return checkErr(query)
 }
 

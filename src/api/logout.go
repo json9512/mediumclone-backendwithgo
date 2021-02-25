@@ -2,7 +2,6 @@ package api
 
 import (
 	"net/http"
-	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -10,27 +9,25 @@ import (
 )
 
 // Logout invalidates the tokens for the user
-func Logout(p *dbtool.Pool) gin.HandlerFunc {
+func Logout(db *dbtool.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var userInfo map[string]interface{}
 
 		if err := c.BindJSON(&userInfo); err != nil {
-			msg := "Logout failed. Invalid data type."
-			HandleError(c, http.StatusBadRequest, msg)
+			HandleError(c, http.StatusBadRequest, "Logout failed. Invalid data type.")
 			return
 		}
 
-		var user dbtool.User
-		err := p.Query(&user, map[string]interface{}{"email": userInfo["email"]})
+		email := userInfo["email"]
+		user, err := db.GetUserByEmail(email.(string))
 		if err != nil {
-			msg := "Logout failed. User does not exist."
-			HandleError(c, http.StatusBadRequest, msg)
+			HandleError(c, http.StatusBadRequest, "Logout failed. User does not exist.")
 			return
 		}
-		user.TokenCreatedAt = &time.Time{}
-		if err = p.Update(&user); err != nil {
-			msg := "Updating user information in DB failed."
-			HandleError(c, http.StatusInternalServerError, msg)
+
+		query, err := createUpdateQuery(user.ID, user.Email, user.Password, 0)
+		if _, err = db.UpdateUser(query); err != nil {
+			HandleError(c, http.StatusInternalServerError, "Updating user information in DB failed.")
 			return
 		}
 

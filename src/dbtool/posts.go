@@ -20,7 +20,7 @@ type Post struct {
 }
 
 // CreateSamplePost creates a post sample in the database
-func CreateSamplePost(db *Pool) {
+func CreateSamplePost(db *DB) {
 	// test if post creation works
 	doc := JSONB{"testing": "test123"}
 	comments := JSONB{"comments-test": "testing 321"}

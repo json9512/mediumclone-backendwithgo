@@ -4,6 +4,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+
+	"github.com/json9512/mediumclone-backendwithgo/src/dbtool"
 )
 
 // GetAllPosts returns all posts
@@ -48,7 +50,7 @@ func GetLikesForPost() gin.HandlerFunc {
 }
 
 // CreatePost creates a post in db
-func CreatePost() gin.HandlerFunc {
+func CreatePost(db *dbtool.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var reqBody postReqData
 		c.BindJSON(&reqBody)

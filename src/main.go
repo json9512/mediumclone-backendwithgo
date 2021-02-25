@@ -11,9 +11,10 @@ import (
 )
 
 // SetupRouter returns the API server
-func SetupRouter(mode string, db *dbtool.Pool) *gin.Engine {
+func SetupRouter(mode string, db *dbtool.DB) *gin.Engine {
 	var router *gin.Engine
 	log := config.InitLogger()
+	envVars := config.LoadEnvVars()
 
 	if mode != "debug" {
 		gin.SetMode(gin.ReleaseMode)
@@ -26,7 +27,7 @@ func SetupRouter(mode string, db *dbtool.Pool) *gin.Engine {
 	}
 
 	router.Use(gin.Recovery())
-	routes.AddRoutes(router, db)
+	routes.AddRoutes(router, db, &envVars)
 	return router
 }
 

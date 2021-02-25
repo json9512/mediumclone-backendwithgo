@@ -8,6 +8,11 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// EnvVars holds environment variables necessary for the server
+type EnvVars struct {
+	JWTSecret string
+}
+
 // InitLogger returns a formatted logger
 func InitLogger() *logrus.Logger {
 	log := logrus.StandardLogger()
@@ -43,4 +48,12 @@ func ReadVariablesFromFile(filename string) {
 			break
 		}
 	}
+}
+
+// LoadEnvVars load environment variables necessary for the server
+func LoadEnvVars() EnvVars {
+	return EnvVars{
+		JWTSecret: os.Getenv("JWT_SECRET"),
+	}
+
 }
