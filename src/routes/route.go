@@ -4,14 +4,15 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/json9512/mediumclone-backendwithgo/src/api"
+	"github.com/json9512/mediumclone-backendwithgo/src/config"
 	"github.com/json9512/mediumclone-backendwithgo/src/dbtool"
 	"github.com/json9512/mediumclone-backendwithgo/src/middlewares"
 )
 
 // AddRoutes adds available routes to the provided router
-func AddRoutes(router *gin.Engine, db *dbtool.DB) {
+func AddRoutes(router *gin.Engine, db *dbtool.DB, envVars *config.EnvVars) {
 
-	router.POST("/login", api.Login(db))
+	router.POST("/login", api.Login(db, envVars))
 	router.POST("/logout", middlewares.VerifyUser(db), api.Logout(db))
 
 	postsRouter := router.Group("/posts")
