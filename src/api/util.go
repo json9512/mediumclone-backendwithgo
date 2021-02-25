@@ -11,7 +11,7 @@ import (
 )
 
 type postReqData struct {
-	ID       string `json:"id"`
+	ID       uint   `json:"id"`
 	Doc      string `json:"doc"`
 	Tags     string `json:"tags"`
 	Likes    uint   `json:"likes"`

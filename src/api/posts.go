@@ -59,7 +59,7 @@ func CreatePost(db *dbtool.DB) gin.HandlerFunc {
 }
 
 // UpdatePost updates a post in db
-func UpdatePost() gin.HandlerFunc {
+func UpdatePost(db *dbtool.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var reqBody postReqData
 		c.BindJSON(&reqBody)
@@ -71,7 +71,7 @@ func UpdatePost() gin.HandlerFunc {
 }
 
 // DeletePost deletes a post with given ID in db
-func DeletePost() gin.HandlerFunc {
+func DeletePost(db *dbtool.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var reqBody postReqData
 		c.BindJSON(&reqBody)

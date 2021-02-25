@@ -2,6 +2,7 @@ package tests
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 )
 
@@ -23,7 +24,7 @@ func testGetPosts(tb *TestToolbox) {
 		tb.Goblin.Assert(result.Code).Eql(http.StatusOK)
 
 		var response map[string][]string
-		err := json.Unmarshal([]byte(result.Body.String()), &response)
+		err := json.Unmarshal([]byte(result.Body.Bytes()), &response)
 
 		value, exists := response["result"]
 
@@ -51,7 +52,7 @@ func testGetPost(tb *TestToolbox) {
 		tb.Goblin.Assert(result.Code).Eql(http.StatusOK)
 
 		var response map[string]string
-		err := json.Unmarshal([]byte(result.Body.String()), &response)
+		err := json.Unmarshal([]byte(result.Body.Bytes()), &response)
 
 		value, exists := response["result"]
 
@@ -80,7 +81,7 @@ func testGetLikeOfPost(tb *TestToolbox) {
 		tb.Goblin.Assert(result.Code).Eql(http.StatusOK)
 
 		var response map[string]int
-		err := json.Unmarshal([]byte(result.Body.String()), &response)
+		err := json.Unmarshal([]byte(result.Body.Bytes()), &response)
 
 		value, exists := response["result"]
 
@@ -134,7 +135,7 @@ func testCreatePost(tb *TestToolbox) {
 		tb.Goblin.Assert(loginResult.Code).Eql(http.StatusOK)
 		cookies := loginResult.Result().Cookies()
 
-		values := Data{"id": "5"}
+		values := Data{"id": uint(5)}
 
 		result := MakeRequest(&reqData{
 			handler: tb.Router,
@@ -146,41 +147,47 @@ func testCreatePost(tb *TestToolbox) {
 
 		tb.Goblin.Assert(result.Code).Eql(http.StatusOK)
 
-		var response map[string]string
-		err := json.Unmarshal([]byte(result.Body.String()), &response)
+		var response map[string]interface{}
+		err := json.Unmarshal([]byte(result.Body.Bytes()), &response)
 
 		value, exists := response["id"]
 
 		tb.Goblin.Assert(err).IsNil()
 		tb.Goblin.Assert(exists).IsTrue()
-		tb.Goblin.Assert(values["id"]).Eql(value)
+		tb.Goblin.Assert(values["id"]).Eql(uint(value.(float64)))
 	})
 }
 
 // testUpdatePost tests /posts to update a post in database
 func testUpdatePost(tb *TestToolbox) {
 	tb.Goblin.It("PUT /posts should update a post in database", func() {
-		values := Data{"id": "5", "doc": "something"}
+		sampleUser := createTestUser(tb, "test-update-post@test.com", "test-pwd")
+		loginResult := login(tb, "test-update-post@test.com", "test-pwd")
+		tb.Goblin.Assert(loginResult.Code).Eql(http.StatusOK)
+		cookies := loginResult.Result().Cookies()
+		fmt.Println(sampleUser.ID)
+
+		values := Data{"id": sampleUser.ID, "doc": "something"}
 
 		result := MakeRequest(&reqData{
 			handler: tb.Router,
 			method:  "PUT",
 			path:    "/posts",
 			reqBody: &values,
-			cookie:  nil,
+			cookie:  cookies,
 		})
-
+		fmt.Println(result)
 		tb.Goblin.Assert(result.Code).Eql(http.StatusOK)
 
-		var response map[string]string
-		err := json.Unmarshal([]byte(result.Body.String()), &response)
+		var response map[string]interface{}
+		err := json.Unmarshal([]byte(result.Body.Bytes()), &response)
 
 		postID, IDExists := response["id"]
 		postDoc, docExists := response["doc"]
 
 		tb.Goblin.Assert(err).IsNil()
 		tb.Goblin.Assert(IDExists).IsTrue()
-		tb.Goblin.Assert(values["id"]).Eql(postID)
+		tb.Goblin.Assert(values["id"]).Eql(uint(postID.(float64)))
 		tb.Goblin.Assert(docExists).IsTrue()
 		tb.Goblin.Assert(values["doc"]).Eql(postDoc)
 	})
@@ -189,26 +196,30 @@ func testUpdatePost(tb *TestToolbox) {
 // testDeletePost tests /posts/:id to delete a post in database
 func testDeletePost(tb *TestToolbox) {
 	tb.Goblin.It("DELETE /posts/:id should delete a post with the given ID", func() {
-		values := Data{"id": "5"}
+		sampleUser := createTestUser(tb, "test-delete-post@test.com", "test-pwd")
+		loginResult := login(tb, "test-delete-post@test.com", "test-pwd")
+		tb.Goblin.Assert(loginResult.Code).Eql(http.StatusOK)
+		cookies := loginResult.Result().Cookies()
+		values := Data{"id": sampleUser.ID}
 
 		result := MakeRequest(&reqData{
 			handler: tb.Router,
 			method:  "DELETE",
 			path:    "/posts",
 			reqBody: &values,
-			cookie:  nil,
+			cookie:  cookies,
 		})
 
 		tb.Goblin.Assert(result.Code).Eql(http.StatusOK)
 
-		var response map[string]string
-		err := json.Unmarshal([]byte(result.Body.String()), &response)
+		var response map[string]interface{}
+		err := json.Unmarshal([]byte(result.Body.Bytes()), &response)
 
 		postID, IDExists := response["id"]
 
 		tb.Goblin.Assert(err).IsNil()
 		tb.Goblin.Assert(IDExists).IsTrue()
-		tb.Goblin.Assert(values["id"]).Eql(postID)
+		tb.Goblin.Assert(values["id"]).Eql(uint(postID.(float64)))
 	})
 }
 
