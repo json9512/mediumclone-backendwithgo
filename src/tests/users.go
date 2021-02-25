@@ -43,8 +43,7 @@ func testGetUserWithID(tb *TestToolbox) {
 	})
 
 	tb.Goblin.It("GET /users/:id with invalid type should return error", func() {
-		makeInvalidReq(&errorTestCase{
-			tb,
+		tb.makeInvalidReq(&errorTestCase{
 			nil,
 			"GET",
 			"/users/2@",
@@ -55,8 +54,7 @@ func testGetUserWithID(tb *TestToolbox) {
 	})
 
 	tb.Goblin.It("GET /users/:id with invalid ID should return error", func() {
-		makeInvalidReq(&errorTestCase{
-			tb,
+		tb.makeInvalidReq(&errorTestCase{
 			nil,
 			"GET",
 			"/users/-1",
@@ -101,8 +99,7 @@ func testCreatUser(tb *TestToolbox) {
 			"email":    "testUser@test.com",
 			"password": "",
 		}
-		makeInvalidReq(&errorTestCase{
-			tb,
+		tb.makeInvalidReq(&errorTestCase{
 			noPassword,
 			"POST",
 			"/users",
@@ -117,8 +114,7 @@ func testCreatUser(tb *TestToolbox) {
 			"email":    "",
 			"password": "testing",
 		}
-		makeInvalidReq(&errorTestCase{
-			tb,
+		tb.makeInvalidReq(&errorTestCase{
 			noEmail,
 			"POST",
 			"/users",
@@ -133,8 +129,7 @@ func testCreatUser(tb *TestToolbox) {
 			"email":    "testtest.com",
 			"password": "testing",
 		}
-		makeInvalidReq(&errorTestCase{
-			tb,
+		tb.makeInvalidReq(&errorTestCase{
 			invalidEmail,
 			"POST",
 			"/users",
@@ -149,8 +144,7 @@ func testCreatUser(tb *TestToolbox) {
 			"email":    "",
 			"password": "",
 		}
-		makeInvalidReq(&errorTestCase{
-			tb,
+		tb.makeInvalidReq(&errorTestCase{
 			noCred,
 			"POST",
 			"/users",
@@ -165,8 +159,7 @@ func testCreatUser(tb *TestToolbox) {
 			"test@test.com",
 			"hello",
 		}
-		makeInvalidReq(&errorTestCase{
-			tb,
+		tb.makeInvalidReq(&errorTestCase{
 			invalidData,
 			"POST",
 			"/users",
@@ -227,8 +220,7 @@ func testUpdateUser(tb *TestToolbox) {
 			"email": "something@test.com",
 		}
 
-		makeInvalidReq(&errorTestCase{
-			tb,
+		tb.makeInvalidReq(&errorTestCase{
 			values,
 			"PUT",
 			"/users",
@@ -248,8 +240,7 @@ func testUpdateUser(tb *TestToolbox) {
 			"id": 1,
 		}
 
-		makeInvalidReq(&errorTestCase{
-			tb,
+		tb.makeInvalidReq(&errorTestCase{
 			values,
 			"PUT",
 			"/users",
@@ -270,8 +261,7 @@ func testUpdateUser(tb *TestToolbox) {
 			"email": "somethingtest.com",
 		}
 
-		makeInvalidReq(&errorTestCase{
-			tb,
+		tb.makeInvalidReq(&errorTestCase{
 			values,
 			"PUT",
 			"/users",
@@ -292,8 +282,7 @@ func testUpdateUser(tb *TestToolbox) {
 			"somethingtest.com",
 		}
 
-		makeInvalidReq(&errorTestCase{
-			tb,
+		tb.makeInvalidReq(&errorTestCase{
 			values,
 			"PUT",
 			"/users",
@@ -315,8 +304,7 @@ func testUpdateUser(tb *TestToolbox) {
 			"email": "something@test.com",
 		}
 
-		makeInvalidReq(&errorTestCase{
-			tb,
+		tb.makeInvalidReq(&errorTestCase{
 			values,
 			"PUT",
 			"/users",
@@ -332,8 +320,7 @@ func testUpdateUser(tb *TestToolbox) {
 			"email": "something@test.com",
 		}
 
-		makeInvalidReq(&errorTestCase{
-			tb,
+		tb.makeInvalidReq(&errorTestCase{
 			values,
 			"PUT",
 			"/users",
@@ -353,8 +340,7 @@ func testDeleteUser(tb *TestToolbox) {
 
 		reqURL := fmt.Sprintf("/users/%d", -1)
 
-		makeInvalidReq(&errorTestCase{
-			tb,
+		tb.makeInvalidReq(&errorTestCase{
 			nil,
 			"DELETE",
 			reqURL,
@@ -373,8 +359,7 @@ func testDeleteUser(tb *TestToolbox) {
 
 		reqURL := fmt.Sprintf("/users/%d", testUser.ID)
 
-		makeInvalidReq(&errorTestCase{
-			tb,
+		tb.makeInvalidReq(&errorTestCase{
 			nil,
 			"DELETE",
 			reqURL,
@@ -387,8 +372,7 @@ func testDeleteUser(tb *TestToolbox) {
 	tb.Goblin.It("DELETE /users with no cookie should return error", func() {
 		reqURL := fmt.Sprintf("/users/%d", 1)
 
-		makeInvalidReq(&errorTestCase{
-			tb,
+		tb.makeInvalidReq(&errorTestCase{
 			nil,
 			"DELETE",
 			reqURL,
@@ -416,23 +400,4 @@ func testDeleteUser(tb *TestToolbox) {
 		})
 		tb.Goblin.Assert(result.Code).Eql(http.StatusOK)
 	})
-}
-
-func makeInvalidReq(e *errorTestCase) {
-
-	result := MakeRequest(&reqData{
-		handler: e.tb.Router,
-		method:  e.method,
-		path:    e.url,
-		reqBody: &e.data,
-		cookie:  e.cookies,
-	})
-
-	e.tb.Goblin.Assert(result.Code).Eql(e.errCode)
-
-	var response map[string]interface{}
-	err := json.Unmarshal(result.Body.Bytes(), &response)
-
-	e.tb.Goblin.Assert(err).IsNil()
-	e.tb.Goblin.Assert(response["message"]).Eql(e.errMsg)
 }

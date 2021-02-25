@@ -32,7 +32,6 @@ type reqData struct {
 }
 
 type errorTestCase struct {
-	tb      *TestToolbox
 	data    interface{}
 	method  string
 	url     string
@@ -127,4 +126,22 @@ func logout(tb *TestToolbox, email string, cookies []*http.Cookie) *httptest.Res
 		cookie:  cookies,
 	})
 	return result
+}
+
+func (tb TestToolbox) makeInvalidReq(e *errorTestCase) {
+	result := MakeRequest(&reqData{
+		handler: tb.Router,
+		method:  e.method,
+		path:    e.url,
+		reqBody: &e.data,
+		cookie:  e.cookies,
+	})
+
+	tb.Goblin.Assert(result.Code).Eql(e.errCode)
+
+	var response map[string]interface{}
+	err := json.Unmarshal(result.Body.Bytes(), &response)
+
+	tb.Goblin.Assert(err).IsNil()
+	tb.Goblin.Assert(response["message"]).Eql(e.errMsg)
 }
