@@ -10,8 +10,8 @@ import (
 type Post struct {
 	ID        uint   `gorm:"primary_key"`
 	Author    string `gorm:"column:author"`
-	Document  JSONB  `gorm:"type:jsonb"`
-	Comments  JSONB  `gorm:"type:jsonb"`
+	Document  string `gorm:"column:document"`
+	Comments  string `gorm:"column:comments"`
 	Tags      string `gorm:"column:tags"`
 	Likes     uint   `gorm:"column:likes"`
 	CreatedAt time.Time
@@ -19,17 +19,23 @@ type Post struct {
 	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
 
-// CreateSamplePost creates a post sample in the database
-func CreateSamplePost(db *DB) {
-	// test if post creation works
-	doc := JSONB{"testing": "test123"}
-	comments := JSONB{"comments-test": "testing 321"}
+func (db *DB) CreatePost(doc, tags, author string) (*Post, error) {
+	post := Post{Author: author, Document: doc, Tags: tags}
+	query := db.Create(&post)
 
-	post := Post{
-		Author:   "test-author",
-		Document: doc,
-		Comments: comments,
-		Likes:    0,
+	if err := checkErr(query); err != nil {
+		return nil, err
 	}
-	db.Insert(&post)
+	return &post, nil
+}
+
+func (db *DB) GetPostByAuthor(author string) (*Post, error) {
+	var post Post
+	query := db.First(&post, "author = ?", author)
+
+	if err := checkErr(query); err != nil {
+		return nil, err
+	}
+
+	return &post, nil
 }

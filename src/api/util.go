@@ -10,8 +10,15 @@ import (
 	"github.com/json9512/mediumclone-backendwithgo/src/dbtool"
 )
 
-type postReqData struct {
-	ID       uint   `json:"id"`
+type postData struct {
+	Doc      string `json:"doc" validate:"required"`
+	Tags     string `json:"tags"`
+	Likes    uint   `json:"likes"`
+	Comments string `json:"comments"`
+}
+
+type newPostData struct {
+	ID       uint   `json:"id" validate:"required"`
 	Doc      string `json:"doc"`
 	Tags     string `json:"tags"`
 	Likes    uint   `json:"likes"`
@@ -33,12 +40,7 @@ type errorResponse struct {
 	Msg string `json:"message"`
 }
 
-type userResponse struct {
-	ID    uint   `json:"id"`
-	Email string `json:"email"`
-}
-
-type updateQuery struct {
+type userUpdateQuery struct {
 	ID             uint
 	Email          string
 	Password       string
@@ -54,16 +56,27 @@ func checkIfQueriesExist(v url.Values) bool {
 	return false
 }
 
-func serializeUser(u *dbtool.User) userResponse {
-	return userResponse{
-		ID:    u.ID,
-		Email: u.Email,
+func serializeUser(u *dbtool.User) response {
+	return response{
+		"id":    u.ID,
+		"email": u.Email,
 	}
 }
 
-func createUpdateQuery(id, email, password, tokenExpiresIn interface{}) (updateQuery, error) {
-	query := updateQuery{
-		ID: id.(uint),
+func serializePost(p *dbtool.Post) response {
+	return response{
+		"id":       p.ID,
+		"author":   p.Author,
+		"doc":      p.Document,
+		"tags":     p.Tags,
+		"comments": p.Comments,
+		"likes":    p.Likes,
+	}
+}
+
+func createUserUpdateQuery(id uint, email, password string, tokenExpiresIn interface{}) (userUpdateQuery, error) {
+	query := userUpdateQuery{
+		ID: id,
 	}
 
 	if email == "" && password == "" {
@@ -77,11 +90,11 @@ func createUpdateQuery(id, email, password, tokenExpiresIn interface{}) (updateQ
 			return query, errors.New("User update failed. Invalid email")
 		}
 
-		query.Email = email.(string)
+		query.Email = email
 	}
 
 	if password != "" {
-		query.Password = password.(string)
+		query.Password = password
 	}
 
 	if tokenExpiresIn != nil {

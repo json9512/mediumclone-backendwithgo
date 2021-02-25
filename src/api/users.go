@@ -66,7 +66,7 @@ func UpdateUser(db *dbtool.DB) gin.HandlerFunc {
 			return
 		}
 
-		query, err := createUpdateQuery(reqBody.ID, reqBody.Email, reqBody.Password, nil)
+		query, err := createUserUpdateQuery(reqBody.ID, reqBody.Email, reqBody.Password, nil)
 		if err != nil {
 			HandleError(c, http.StatusBadRequest, err.Error())
 			return

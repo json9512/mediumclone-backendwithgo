@@ -52,17 +52,46 @@ func GetLikesForPost() gin.HandlerFunc {
 // CreatePost creates a post in db
 func CreatePost(db *dbtool.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var reqBody postReqData
-		c.BindJSON(&reqBody)
-		c.JSON(http.StatusOK, &response{"id": reqBody.ID})
+		var reqBody postData
+		if err := extractData(c, &reqBody); err != nil {
+			HandleError(c, http.StatusBadRequest, "Failed to create post. Invalid data")
+			return
+		}
+
+		if err := validateStruct(&reqBody); err != nil && reqBody.Doc == "" {
+			HandleError(c, http.StatusBadRequest, "Failed to create post. Required information not found: ID, Doc")
+			return
+		}
+
+		// Serialize
+		username, exists := c.Get("username")
+		if !exists {
+			HandleError(c, http.StatusBadRequest, "Failed to create post.")
+			return
+		}
+
+		post, err := db.CreatePost(reqBody.Doc, reqBody.Tags, username.(string))
+		if err != nil {
+			HandleError(c, http.StatusInternalServerError, "Failed to create post in DB.")
+			return
+		}
+
+		c.JSON(http.StatusOK, serializePost(post))
 	}
 }
 
 // UpdatePost updates a post in db
 func UpdatePost(db *dbtool.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var reqBody postReqData
-		c.BindJSON(&reqBody)
+		var reqBody newPostData
+		if err := extractData(c, &reqBody); err != nil {
+			HandleError(c, http.StatusBadRequest, "Failed to update post. Invalid data")
+		}
+
+		if err := validateStruct(&reqBody); err != nil && reqBody.Doc == "" {
+			HandleError(c, http.StatusBadRequest, "Failed to update post. Required information not found: ID, Doc")
+		}
+
 		c.JSON(
 			http.StatusOK,
 			&response{"id": reqBody.ID, "doc": reqBody.Doc},
@@ -73,8 +102,14 @@ func UpdatePost(db *dbtool.DB) gin.HandlerFunc {
 // DeletePost deletes a post with given ID in db
 func DeletePost(db *dbtool.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var reqBody postReqData
-		c.BindJSON(&reqBody)
+		var reqBody newPostData
+		if err := extractData(c, &reqBody); err != nil {
+			HandleError(c, http.StatusBadRequest, "Failed to update post. Invalid data")
+		}
+
+		if err := validateStruct(&reqBody); err != nil {
+			HandleError(c, http.StatusBadRequest, "Failed to update post. Required information not found: ID")
+		}
 		c.JSON(
 			http.StatusOK,
 			&response{"id": reqBody.ID},

@@ -2,7 +2,6 @@ package tests
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 )
 
@@ -135,7 +134,7 @@ func testCreatePost(tb *TestToolbox) {
 		tb.Goblin.Assert(loginResult.Code).Eql(http.StatusOK)
 		cookies := loginResult.Result().Cookies()
 
-		values := Data{"id": uint(5)}
+		values := Data{"doc": "something"}
 
 		result := MakeRequest(&reqData{
 			handler: tb.Router,
@@ -144,18 +143,64 @@ func testCreatePost(tb *TestToolbox) {
 			reqBody: &values,
 			cookie:  cookies,
 		})
-
 		tb.Goblin.Assert(result.Code).Eql(http.StatusOK)
 
 		var response map[string]interface{}
 		err := json.Unmarshal([]byte(result.Body.Bytes()), &response)
 
-		value, exists := response["id"]
+		id, exists := response["id"]
+		author, exists := response["author"]
+		likes, exists := response["likes"]
+		document, exists := response["doc"]
+		tags, exists := response["tags"]
+		comments, exists := response["comments"]
 
 		tb.Goblin.Assert(err).IsNil()
 		tb.Goblin.Assert(exists).IsTrue()
-		tb.Goblin.Assert(values["id"]).Eql(uint(value.(float64)))
+		tb.Goblin.Assert(values["doc"]).Eql(document)
+		tb.Goblin.Assert(id).IsNotNil()
+		tb.Goblin.Assert(author).Eql("test-create-post")
+		tb.Goblin.Assert(int(likes.(float64))).Eql(0)
+		tb.Goblin.Assert(tags).Eql("")
+		tb.Goblin.Assert(comments).Eql("")
 	})
+
+	tb.Goblin.It("POST /posts with invalid doc should return error", func() {
+		_ = createTestUser(tb, "test-badID-post@test.com", "test-pwd")
+		loginResult := login(tb, "test-badID-post@test.com", "test-pwd")
+		tb.Goblin.Assert(loginResult.Code).Eql(http.StatusOK)
+		cookies := loginResult.Result().Cookies()
+
+		values := Data{"doc": 131313}
+
+		tb.makeInvalidReq(&errorTestCase{
+			values,
+			"POST",
+			"/posts",
+			"Failed to create post. Invalid data",
+			http.StatusBadRequest,
+			cookies,
+		})
+	})
+
+	tb.Goblin.It("POST /posts with no doc should return error", func() {
+		_ = createTestUser(tb, "test-noID-post@test.com", "test-pwd")
+		loginResult := login(tb, "test-noID-post@test.com", "test-pwd")
+		tb.Goblin.Assert(loginResult.Code).Eql(http.StatusOK)
+		cookies := loginResult.Result().Cookies()
+
+		values := Data{"id": "123"}
+
+		tb.makeInvalidReq(&errorTestCase{
+			values,
+			"POST",
+			"/posts",
+			"Failed to create post. Required information not found: ID, Doc",
+			http.StatusBadRequest,
+			cookies,
+		})
+	})
+
 }
 
 // testUpdatePost tests /posts to update a post in database
@@ -165,7 +210,6 @@ func testUpdatePost(tb *TestToolbox) {
 		loginResult := login(tb, "test-update-post@test.com", "test-pwd")
 		tb.Goblin.Assert(loginResult.Code).Eql(http.StatusOK)
 		cookies := loginResult.Result().Cookies()
-		fmt.Println(sampleUser.ID)
 
 		values := Data{"id": sampleUser.ID, "doc": "something"}
 
@@ -176,7 +220,7 @@ func testUpdatePost(tb *TestToolbox) {
 			reqBody: &values,
 			cookie:  cookies,
 		})
-		fmt.Println(result)
+
 		tb.Goblin.Assert(result.Code).Eql(http.StatusOK)
 
 		var response map[string]interface{}
@@ -224,28 +268,28 @@ func testDeletePost(tb *TestToolbox) {
 }
 
 // RunPostsTests executes all tests for /posts
-func RunPostsTests(toolBox *TestToolbox) {
-	toolBox.Goblin.Describe("/posts endpoint tests", func() {
+func RunPostsTests(toolbox *TestToolbox) {
+	toolbox.Goblin.Describe("/posts endpoint tests", func() {
 
 		// GET /posts
-		testGetPosts(toolBox)
+		testGetPosts(toolbox)
 
 		// GET /posts/:id
-		testGetPost(toolBox)
+		testGetPost(toolbox)
 
 		// GET /posts/:id/like
-		testGetLikeOfPost(toolBox)
+		testGetLikeOfPost(toolbox)
 
 		// GET /posts?tag=rabbit
-		testGetPostWithQuery(toolBox)
+		testGetPostWithQuery(toolbox)
 
 		// POST /posts with json {id: 5}
-		testCreatePost(toolBox)
+		testCreatePost(toolbox)
 
 		// PUT /posts with json {id: 5, doc: something}
-		testUpdatePost(toolBox)
+		testUpdatePost(toolbox)
 
 		// DELETE /posts/:id  with json {id: 5}
-		testDeletePost(toolBox)
+		testDeletePost(toolbox)
 	})
 }

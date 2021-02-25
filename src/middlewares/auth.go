@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/dgrijalva/jwt-go/v4"
 	"github.com/gin-gonic/gin"
@@ -30,6 +31,9 @@ func VerifyUser(db *dbtool.DB) gin.HandlerFunc {
 			return
 		}
 
+		verifiedToken, _ := VerifyToken(token)
+		username := extractUsername(verifiedToken)
+		c.Set("username", username)
 	}
 }
 
@@ -62,7 +66,7 @@ func ValidateToken(t string, db *dbtool.DB) error {
 		return err
 	}
 
-	_, ok = claims["user_email"]
+	email, ok := claims["user_email"]
 
 	if !ok {
 		return fmt.Errorf("User email not valid")
@@ -73,8 +77,8 @@ func ValidateToken(t string, db *dbtool.DB) error {
 		return fmt.Errorf("Expiry date not valid")
 	}
 
-	user := &dbtool.User{}
-	if err := db.Query(&user, nil); err != nil {
+	user, err := db.GetUserByEmail(email.(string))
+	if err != nil {
 		return fmt.Errorf("User does not exist in DB")
 	}
 
@@ -83,4 +87,10 @@ func ValidateToken(t string, db *dbtool.DB) error {
 	}
 
 	return nil
+}
+
+func extractUsername(t *jwt.Token) string {
+	claims, _ := t.Claims.(jwt.MapClaims)
+	email, _ := claims["user_email"]
+	return strings.Split(email.(string), "@")[0]
 }
