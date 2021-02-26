@@ -83,6 +83,7 @@ func ValidateToken(t string, db *dbtool.DB) error {
 	}
 
 	if user.TokenExpiresIn != int64(tokenExp) {
+		// This should refresh the token for the user
 		return fmt.Errorf("Token expired")
 	}
 

@@ -2,7 +2,9 @@ package api
 
 import (
 	"errors"
+	"fmt"
 	"net/url"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -45,6 +47,16 @@ type userUpdateQuery struct {
 	Email          string
 	Password       string
 	TokenExpiresIn interface{}
+}
+
+type postUpdateQuery struct {
+	ID        uint
+	Author    string
+	Document  string
+	Tags      string
+	Comments  string
+	Likes     uint
+	CreatedAt time.Time
 }
 
 type response map[string]interface{}
@@ -115,4 +127,52 @@ func validateStruct(c interface{}) error {
 // HandleError attaches error response to gin.Context
 func HandleError(c *gin.Context, code int, msg string) {
 	c.JSON(code, &errorResponse{Msg: msg})
+}
+
+func compareWithOldData(new, old interface{}, isString bool) (interface{}, bool) {
+	changed := false
+	if isString {
+		if new != "" && new != old {
+			changed = true
+			return new, changed
+		}
+		return old, changed
+	}
+
+	if new != old {
+		changed = true
+		return new, changed
+	}
+	return old, changed
+
+}
+
+func createPostQuery(d *newPostData, currPost *dbtool.Post) (*postUpdateQuery, error) {
+	doc, docChanged := compareWithOldData(d.Doc, currPost.Document, true)
+	comments, comChanged := compareWithOldData(d.Comments, currPost.Comments, true)
+	tags, tagsChanged := compareWithOldData(d.Tags, currPost.Tags, true)
+	likes, likesChanged := compareWithOldData(d.Likes, currPost.Likes, false)
+	query := postUpdateQuery{
+		ID:        d.ID,
+		Author:    currPost.Author,
+		CreatedAt: currPost.CreatedAt,
+		Document:  doc.(string),
+		Comments:  comments.(string),
+		Tags:      tags.(string),
+		Likes:     likes.(uint),
+	}
+
+	if !docChanged && !comChanged && !tagsChanged && !likesChanged {
+		return nil, fmt.Errorf("No new data to update")
+	}
+	return &query, nil
+}
+
+func checkIfUserIsAuthor(c *gin.Context, author string) bool {
+	username, exists := c.Get("username")
+	if !exists {
+		return false
+
+	}
+	return username == author
 }

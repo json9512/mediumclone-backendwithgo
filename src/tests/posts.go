@@ -200,19 +200,18 @@ func testCreatePost(tb *TestToolbox) {
 			cookies,
 		})
 	})
-
 }
 
 // testUpdatePost tests /posts to update a post in database
 func testUpdatePost(tb *TestToolbox) {
 	tb.Goblin.It("PUT /posts should update a post in database", func() {
-		sampleUser := createTestUser(tb, "test-update-post@test.com", "test-pwd")
+		_ = createTestUser(tb, "test-update-post@test.com", "test-pwd")
 		loginResult := login(tb, "test-update-post@test.com", "test-pwd")
 		tb.Goblin.Assert(loginResult.Code).Eql(http.StatusOK)
 		cookies := loginResult.Result().Cookies()
+		postID := createSamplePost(tb, "sample-post", cookies)
 
-		values := Data{"id": sampleUser.ID, "doc": "something"}
-
+		values := Data{"id": postID, "doc": "something-changed"}
 		result := MakeRequest(&reqData{
 			handler: tb.Router,
 			method:  "PUT",
@@ -222,18 +221,117 @@ func testUpdatePost(tb *TestToolbox) {
 		})
 
 		tb.Goblin.Assert(result.Code).Eql(http.StatusOK)
+	})
 
-		var response map[string]interface{}
-		err := json.Unmarshal([]byte(result.Body.Bytes()), &response)
+	tb.Goblin.It("PUT /posts with no new content should return error", func() {
+		_ = createTestUser(tb, "test-update-post-no-content@test.com", "test-pwd")
+		loginResult := login(tb, "test-update-post-no-content@test.com", "test-pwd")
+		tb.Goblin.Assert(loginResult.Code).Eql(http.StatusOK)
+		cookies := loginResult.Result().Cookies()
+		postID := createSamplePost(tb, "sample-post", cookies)
 
-		postID, IDExists := response["id"]
-		postDoc, docExists := response["doc"]
+		values := Data{"id": postID}
+		tb.makeInvalidReq(&errorTestCase{
+			values,
+			"PUT",
+			"/posts",
+			"Failed to update post. No new content",
+			http.StatusBadRequest,
+			cookies,
+		})
+	})
 
-		tb.Goblin.Assert(err).IsNil()
-		tb.Goblin.Assert(IDExists).IsTrue()
-		tb.Goblin.Assert(values["id"]).Eql(uint(postID.(float64)))
-		tb.Goblin.Assert(docExists).IsTrue()
-		tb.Goblin.Assert(values["doc"]).Eql(postDoc)
+	tb.Goblin.It("PUT /posts with invalid user should return error", func() {
+		_ = createTestUser(tb, "test-update-post-wrong-author@test.com", "test-pwd")
+		loginResult := login(tb, "test-update-post-wrong-author@test.com", "test-pwd")
+		tb.Goblin.Assert(loginResult.Code).Eql(http.StatusOK)
+		cookies := loginResult.Result().Cookies()
+		postID := createSamplePost(tb, "sample-posts", cookies)
+
+		_ = createTestUser(tb, "test-update-post-wrong-author2@test.com", "test-pwd")
+		loginResult = login(tb, "test-update-post-wrong-author2@test.com", "test-pwd")
+		tb.Goblin.Assert(loginResult.Code).Eql(http.StatusOK)
+		cookies = loginResult.Result().Cookies()
+
+		values := Data{"id": postID, "doc": "you are not the author"}
+		tb.makeInvalidReq(&errorTestCase{
+			values,
+			"PUT",
+			"/posts",
+			"Failed to update post. User not post author",
+			http.StatusBadRequest,
+			cookies,
+		})
+	})
+
+	tb.Goblin.It("PUT /posts with invalid post ID should return error", func() {
+		_ = createTestUser(tb, "test-update-post-id@test.com", "test-pwd")
+		loginResult := login(tb, "test-update-post-id@test.com", "test-pwd")
+		tb.Goblin.Assert(loginResult.Code).Eql(http.StatusOK)
+		cookies := loginResult.Result().Cookies()
+		postID := createSamplePost(tb, "sample-post", cookies)
+
+		values := Data{"id": postID + 3}
+		tb.makeInvalidReq(&errorTestCase{
+			values,
+			"PUT",
+			"/posts",
+			"Failed to update post. Post not found",
+			http.StatusBadRequest,
+			cookies,
+		})
+	})
+
+	tb.Goblin.It("PUT /posts with no post ID should return error", func() {
+		_ = createTestUser(tb, "test-update-nopost-id@test.com", "test-pwd")
+		loginResult := login(tb, "test-update-nopost-id@test.com", "test-pwd")
+		tb.Goblin.Assert(loginResult.Code).Eql(http.StatusOK)
+		cookies := loginResult.Result().Cookies()
+		_ = createSamplePost(tb, "sample-post", cookies)
+
+		values := Data{"doc": "yahoo", "tags": "internet of things"}
+		tb.makeInvalidReq(&errorTestCase{
+			values,
+			"PUT",
+			"/posts",
+			"Failed to update post. Required information not found: ID",
+			http.StatusBadRequest,
+			cookies,
+		})
+	})
+
+	tb.Goblin.It("PUT /posts with no request body should return error", func() {
+		_ = createTestUser(tb, "test-update-nobody@test.com", "test-pwd")
+		loginResult := login(tb, "test-update-nobody@test.com", "test-pwd")
+		tb.Goblin.Assert(loginResult.Code).Eql(http.StatusOK)
+		cookies := loginResult.Result().Cookies()
+
+		tb.makeInvalidReq(&errorTestCase{
+			nil,
+			"PUT",
+			"/posts",
+			"Failed to update post. Required information not found: ID",
+			http.StatusBadRequest,
+			cookies,
+		})
+	})
+
+	tb.Goblin.It("PUT /posts with invalid data type should return error", func() {
+		_ = createTestUser(tb, "test-update-datatype@test.com", "test-pwd")
+		loginResult := login(tb, "test-update-datatype@test.com", "test-pwd")
+		tb.Goblin.Assert(loginResult.Code).Eql(http.StatusOK)
+		cookies := loginResult.Result().Cookies()
+		postID := createSamplePost(tb, "sample-post", cookies)
+
+		values := Data{"id": postID, "likes": "abs"}
+		tb.makeInvalidReq(&errorTestCase{
+			values,
+			"PUT",
+			"/posts",
+			"Failed to update post. Invalid data",
+			http.StatusBadRequest,
+			cookies,
+		})
 	})
 }
 

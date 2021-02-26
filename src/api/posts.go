@@ -63,7 +63,6 @@ func CreatePost(db *dbtool.DB) gin.HandlerFunc {
 			return
 		}
 
-		// Serialize
 		username, exists := c.Get("username")
 		if !exists {
 			HandleError(c, http.StatusBadRequest, "Failed to create post.")
@@ -86,16 +85,38 @@ func UpdatePost(db *dbtool.DB) gin.HandlerFunc {
 		var reqBody newPostData
 		if err := extractData(c, &reqBody); err != nil {
 			HandleError(c, http.StatusBadRequest, "Failed to update post. Invalid data")
+			return
 		}
 
-		if err := validateStruct(&reqBody); err != nil && reqBody.Doc == "" {
-			HandleError(c, http.StatusBadRequest, "Failed to update post. Required information not found: ID, Doc")
+		if err := validateStruct(&reqBody); err != nil {
+			HandleError(c, http.StatusBadRequest, "Failed to update post. Required information not found: ID")
+			return
 		}
 
-		c.JSON(
-			http.StatusOK,
-			&response{"id": reqBody.ID, "doc": reqBody.Doc},
-		)
+		post, err := db.GetPostByID(reqBody.ID)
+		if err != nil {
+			HandleError(c, http.StatusBadRequest, "Failed to update post. Post not found")
+			return
+		}
+
+		if !checkIfUserIsAuthor(c, post.Author) {
+			HandleError(c, http.StatusBadRequest, "Failed to update post. User not post author")
+			return
+		}
+
+		query, err := createPostQuery(&reqBody, post)
+		if err != nil {
+			HandleError(c, http.StatusBadRequest, "Failed to update post. No new content")
+			return
+		}
+
+		if _, err := db.UpdatePost(query); err != nil {
+			HandleError(c, http.StatusInternalServerError, "Failed to update post in DB.")
+			return
+		}
+
+		// Check that the post's author is this user
+		c.Status(http.StatusOK)
 	}
 }
 
