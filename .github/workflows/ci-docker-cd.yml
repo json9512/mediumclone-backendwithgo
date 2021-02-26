@@ -29,7 +29,7 @@ jobs:
     
     - name: Test
       working-directory: ./src
-      run: go test -v ./... -timeout=10s
+      run: go test -v ./...
 
   push-docker-image:
     # run when build is successful

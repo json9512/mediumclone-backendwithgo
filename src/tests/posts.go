@@ -242,6 +242,7 @@ func testUpdatePost(tb *TestToolbox) {
 	})
 
 	tb.Goblin.It("PUT /posts with invalid user should return error", func() {
+		// takes too long
 		_ = createTestUser(tb, "test-update-post-wrong-author@test.com", "test-pwd")
 		loginResult := login(tb, "test-update-post-wrong-author@test.com", "test-pwd")
 		tb.Goblin.Assert(loginResult.Code).Eql(http.StatusOK)
