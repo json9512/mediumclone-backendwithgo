@@ -31,7 +31,7 @@ func (db *DB) CreatePost(doc, tags, author string) (*Post, error) {
 }
 
 // GetPostByID returns the post with the provided id from DB
-func (db *DB) GetPostByID(id uint) (*Post, error) {
+func (db *DB) GetPostByID(id interface{}) (*Post, error) {
 	var post Post
 	query := db.First(&post, "id = ?", id)
 	if err := checkErr(query); err != nil {
@@ -60,4 +60,18 @@ func (db *DB) UpdatePost(newData interface{}) (*Post, error) {
 		return nil, err
 	}
 	return &updatedPost, nil
+}
+
+// DeletePostByID deletes the post by the given ID
+func (db *DB) DeletePostByID(id interface{}) (*Post, error) {
+	post, err := db.GetPostByID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	query := db.Unscoped().Delete(post)
+	if err = checkErr(query); err != nil {
+		return nil, err
+	}
+	return post, nil
 }

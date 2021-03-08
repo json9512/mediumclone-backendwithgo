@@ -2,6 +2,7 @@ package tests
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 )
 
@@ -177,7 +178,7 @@ func testCreatePost(tb *TestToolbox) {
 			values,
 			"POST",
 			"/posts",
-			"Failed to create post. Invalid data",
+			"Invalid request data",
 			http.StatusBadRequest,
 			cookies,
 		})
@@ -195,7 +196,7 @@ func testCreatePost(tb *TestToolbox) {
 			values,
 			"POST",
 			"/posts",
-			"Failed to create post. Required information not found: ID, Doc",
+			"ID, Doc required",
 			http.StatusBadRequest,
 			cookies,
 		})
@@ -235,7 +236,7 @@ func testUpdatePost(tb *TestToolbox) {
 			values,
 			"PUT",
 			"/posts",
-			"Failed to update post. No new content",
+			"No new content",
 			http.StatusBadRequest,
 			cookies,
 		})
@@ -259,7 +260,7 @@ func testUpdatePost(tb *TestToolbox) {
 			values,
 			"PUT",
 			"/posts",
-			"Failed to update post. User not post author",
+			"User is not the author of the post",
 			http.StatusBadRequest,
 			cookies,
 		})
@@ -277,7 +278,7 @@ func testUpdatePost(tb *TestToolbox) {
 			values,
 			"PUT",
 			"/posts",
-			"Failed to update post. Post not found",
+			"Post not found",
 			http.StatusBadRequest,
 			cookies,
 		})
@@ -295,7 +296,7 @@ func testUpdatePost(tb *TestToolbox) {
 			values,
 			"PUT",
 			"/posts",
-			"Failed to update post. Required information not found: ID",
+			"ID required",
 			http.StatusBadRequest,
 			cookies,
 		})
@@ -311,7 +312,7 @@ func testUpdatePost(tb *TestToolbox) {
 			nil,
 			"PUT",
 			"/posts",
-			"Failed to update post. Required information not found: ID",
+			"ID required",
 			http.StatusBadRequest,
 			cookies,
 		})
@@ -329,7 +330,7 @@ func testUpdatePost(tb *TestToolbox) {
 			values,
 			"PUT",
 			"/posts",
-			"Failed to update post. Invalid data",
+			"Invalid request data",
 			http.StatusBadRequest,
 			cookies,
 		})
@@ -339,30 +340,26 @@ func testUpdatePost(tb *TestToolbox) {
 // testDeletePost tests /posts/:id to delete a post in database
 func testDeletePost(tb *TestToolbox) {
 	tb.Goblin.It("DELETE /posts/:id should delete a post with the given ID", func() {
-		sampleUser := createTestUser(tb, "test-delete-post@test.com", "test-pwd")
+		_ = createTestUser(tb, "test-delete-post@test.com", "test-pwd")
 		loginResult := login(tb, "test-delete-post@test.com", "test-pwd")
 		tb.Goblin.Assert(loginResult.Code).Eql(http.StatusOK)
 		cookies := loginResult.Result().Cookies()
-		values := Data{"id": sampleUser.ID}
+
+		// Create sample post
+		postID := createSamplePost(tb, "some-content", cookies)
+
+		// Delete
+		url := fmt.Sprintf("/posts/%d", postID)
 
 		result := MakeRequest(&reqData{
 			handler: tb.Router,
 			method:  "DELETE",
-			path:    "/posts",
-			reqBody: &values,
+			path:    url,
+			reqBody: nil,
 			cookie:  cookies,
 		})
-
 		tb.Goblin.Assert(result.Code).Eql(http.StatusOK)
 
-		var response map[string]interface{}
-		err := json.Unmarshal([]byte(result.Body.Bytes()), &response)
-
-		postID, IDExists := response["id"]
-
-		tb.Goblin.Assert(err).IsNil()
-		tb.Goblin.Assert(IDExists).IsTrue()
-		tb.Goblin.Assert(values["id"]).Eql(uint(postID.(float64)))
 	})
 }
 

@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 
@@ -54,18 +55,18 @@ func CreatePost(db *dbtool.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var reqBody postData
 		if err := extractData(c, &reqBody); err != nil {
-			HandleError(c, http.StatusBadRequest, "Failed to create post. Invalid data")
+			HandleError(c, http.StatusBadRequest, "Invalid request data")
 			return
 		}
 
 		if err := validateStruct(&reqBody); err != nil && reqBody.Doc == "" {
-			HandleError(c, http.StatusBadRequest, "Failed to create post. Required information not found: ID, Doc")
+			HandleError(c, http.StatusBadRequest, "ID, Doc required")
 			return
 		}
 
 		username, exists := c.Get("username")
 		if !exists {
-			HandleError(c, http.StatusBadRequest, "Failed to create post.")
+			HandleError(c, http.StatusBadRequest, "Username not found")
 			return
 		}
 
@@ -84,29 +85,29 @@ func UpdatePost(db *dbtool.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var reqBody newPostData
 		if err := extractData(c, &reqBody); err != nil {
-			HandleError(c, http.StatusBadRequest, "Failed to update post. Invalid data")
+			HandleError(c, http.StatusBadRequest, "Invalid request data")
 			return
 		}
 
 		if err := validateStruct(&reqBody); err != nil {
-			HandleError(c, http.StatusBadRequest, "Failed to update post. Required information not found: ID")
+			HandleError(c, http.StatusBadRequest, "ID required")
 			return
 		}
 
 		post, err := db.GetPostByID(reqBody.ID)
 		if err != nil {
-			HandleError(c, http.StatusBadRequest, "Failed to update post. Post not found")
+			HandleError(c, http.StatusBadRequest, "Post not found")
 			return
 		}
 
 		if !checkIfUserIsAuthor(c, post.Author) {
-			HandleError(c, http.StatusBadRequest, "Failed to update post. User not post author")
+			HandleError(c, http.StatusBadRequest, "User is not the author of the post")
 			return
 		}
 
 		query, err := createPostQuery(&reqBody, post)
 		if err != nil {
-			HandleError(c, http.StatusBadRequest, "Failed to update post. No new content")
+			HandleError(c, http.StatusBadRequest, "No new content")
 			return
 		}
 
@@ -123,17 +124,18 @@ func UpdatePost(db *dbtool.DB) gin.HandlerFunc {
 // DeletePost deletes a post with given ID in db
 func DeletePost(db *dbtool.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var reqBody newPostData
-		if err := extractData(c, &reqBody); err != nil {
-			HandleError(c, http.StatusBadRequest, "Failed to update post. Invalid data")
+		id := c.Param("id")
+		idInt, err := strconv.ParseInt(id, 10, 64)
+
+		if err != nil || idInt < 1 {
+			HandleError(c, http.StatusBadRequest, "Invalid ID")
+			return
 		}
 
-		if err := validateStruct(&reqBody); err != nil {
-			HandleError(c, http.StatusBadRequest, "Failed to update post. Required information not found: ID")
+		if _, err := db.DeletePostByID(idInt); err != nil {
+			HandleError(c, http.StatusBadRequest, "Post not found")
+		} else {
+			c.Status(http.StatusOK)
 		}
-		c.JSON(
-			http.StatusOK,
-			&response{"id": reqBody.ID},
-		)
 	}
 }
