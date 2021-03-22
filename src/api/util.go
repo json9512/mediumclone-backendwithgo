@@ -9,7 +9,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/lib/pq"
 
-	"github.com/json9512/mediumclone-backendwithgo/src/dbtool"
+	"github.com/json9512/mediumclone-backendwithgo/src/models"
 )
 
 type postForm struct {
@@ -60,14 +60,14 @@ func checkIfQueriesExist(v url.Values) bool {
 	return false
 }
 
-func serializeUser(u *dbtool.User) response {
+func serializeUser(u *models.User) response {
 	return response{
 		"id":    u.ID,
 		"email": u.Email,
 	}
 }
 
-func serializePost(p *dbtool.Post) response {
+func serializePost(p *models.Post) response {
 	return response{
 		"id":       p.ID,
 		"author":   p.Author,

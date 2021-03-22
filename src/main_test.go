@@ -11,7 +11,7 @@ import (
 	"github.com/json9512/mediumclone-backendwithgo/src/tests"
 )
 
-func Test(t *testing.T) {
+func createTestContainer(t *testing.T) *tests.Container {
 	config.ReadVariablesFromFile(".env")
 	// Setup test_db for local use only
 	logger := config.InitLogger()
@@ -20,20 +20,26 @@ func Test(t *testing.T) {
 	router := SetupRouter("test", logger, container.DB)
 	g := goblin.Goblin(t)
 
-	toolBox := tests.TestToolbox{
+	testContainer := tests.Container{
 		Goblin: g,
 		Router: router,
 		DB:     container.DB,
 	}
-	tests.RunPostsTests(&toolBox)
-	tests.RunUsersTests(&toolBox)
-	tests.RunAuthTests(&toolBox)
+	return &testContainer
+}
+
+func Test(t *testing.T) {
+	testContainer := createTestContainer(t)
+
+	tests.RunPostsTests(testContainer)
+	tests.RunUsersTests(testContainer)
+	tests.RunAuthTests(testContainer)
 
 	// Environment setup test
-	g.Describe("Environment variables test", func() {
-		g.It("os.Getenv('DB_NAME') should return $DB_NAME", func() {
+	testContainer.Goblin.Describe("Environment variables test", func() {
+		testContainer.Goblin.It("os.Getenv('DB_NAME') should return $DB_NAME", func() {
 			env := os.Getenv("DB_NAME")
-			g.Assert(env).Equal("mediumclone")
+			testContainer.Goblin.Assert(env).Equal("mediumclone")
 		})
 	})
 }

@@ -54,7 +54,7 @@ func VerifyToken(t string) (*jwt.Token, error) {
 }
 
 // ValidateToken checks the validity of the provided JWT token
-func ValidateToken(t string, db *dbtool.DB) error {
+func ValidateToken(t string, db *sql.DB) error {
 	token, err := VerifyToken(t)
 
 	if err != nil {

@@ -1,19 +1,19 @@
 package api
 
 import (
-	"fmt"
+	"database/sql"
 	"net/http"
 	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/json9512/mediumclone-backendwithgo/src/dbtool"
+	"github.com/json9512/mediumclone-backendwithgo/src/db"
 )
 
-// GetAllPosts returns all posts
+// GetPosts returns all posts
 // optional: with tags or/and author
-func GetAllPosts(db *dbtool.DB) gin.HandlerFunc {
+func GetPosts(pool *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
 		queries := c.Request.URL.Query()
@@ -35,12 +35,17 @@ func GetAllPosts(db *dbtool.DB) gin.HandlerFunc {
 			}
 			// 3. both exist
 			if len(tags) > 0 && author != "" {
-				query, _ := db.GetPostsByTags(tags)
-				fmt.Println(query)
+				// 	query, _ := db.GetPostsByTags(tags)
+				// 	fmt.Println(query)
+				//
+			}
+			posts, err := db.GetPosts(c, pool)
+			if err != nil {
+				HandleError(c, http.StatusBadRequest, "No posts in db")
 			}
 
 			c.JSON(200, &response{
-				"result": queries,
+				"result": posts,
 			})
 		} else {
 			c.JSON(200, &response{
@@ -63,17 +68,25 @@ func GetPost() gin.HandlerFunc {
 
 // GetLikesForPost returns the total like count
 // of a post with given ID
-func GetLikesForPost() gin.HandlerFunc {
+func GetLikesForPost(pool *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		_ = c.Param("id")
-		c.JSON(200, &response{
-			"result": 10,
-		})
+		id := c.Param("id")
+		idInt, err := strconv.ParseInt(id, 10, 64)
+		if err != nil {
+			HandleError(c, http.StatusBadRequest, "Invalid ID.")
+			return
+		}
+
+		if likes, err := db.GetLikesForPost(c, pool, idInt); err != nil {
+			HandleError(c, http.StatusBadRequest, "Invalid Request.")
+		} else {
+			c.JSON(http.StatusOK, likes)
+		}
 	}
 }
 
 // CreatePost creates a post in db
-func CreatePost(db *dbtool.DB) gin.HandlerFunc {
+func CreatePost(pool *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var reqBody postForm
 		if err := extractData(c, &reqBody); err != nil {
@@ -103,7 +116,7 @@ func CreatePost(db *dbtool.DB) gin.HandlerFunc {
 }
 
 // UpdatePost updates a post in db
-func UpdatePost(db *dbtool.DB) gin.HandlerFunc {
+func UpdatePost(pool *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var reqBody dbtool.UpdatePostForm
 		if err := extractData(c, &reqBody); err != nil {
@@ -138,7 +151,7 @@ func UpdatePost(db *dbtool.DB) gin.HandlerFunc {
 }
 
 // DeletePost deletes a post with given ID in db
-func DeletePost(db *dbtool.DB) gin.HandlerFunc {
+func DeletePost(pool *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 		idInt, err := strconv.ParseInt(id, 10, 64)

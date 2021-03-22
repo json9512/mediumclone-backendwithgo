@@ -11,6 +11,7 @@ import (
 
 type Container struct {
 	DB         *sql.DB
+	logger     *logrus.Logger
 	JWT_SECRET string
 }
 
@@ -35,11 +36,11 @@ func Init(l *logrus.Logger) *Container {
 
 	container.DB = db
 
-	return &Container{db, getEnv("JWT_SECRET", "")}
+	return &Container{db, l, getEnv("JWT_SECRET", "")}
 }
 
 // Migrate performs db migration located in db/migration dir
-func (c *Container) Migrate(l *logrus.Logger, method string) error {
+func (c *Container) Migrate(method string) error {
 	migrations := &migrate.FileMigrationSource{
 		Dir: "db/migration",
 	}
@@ -51,9 +52,9 @@ func (c *Container) Migrate(l *logrus.Logger, method string) error {
 
 	n, err := migrate.Exec(c.DB, "postgres", migrations, migrationMethod)
 	if err != nil {
-		l.Error(err)
+		c.logger.Error(err)
 	}
 
-	l.Infof("Applied %d migrations\n", n)
+	c.logger.Infof("Applied %d migrations\n", n)
 	return nil
 }

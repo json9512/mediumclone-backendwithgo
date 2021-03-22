@@ -39,7 +39,7 @@ func main() {
 	config.ReadVariablesFromFile(".env")
 
 	dbContainer := DBProvider.Init(logger)
-	err := dbContainer.Migrate(logger, "up")
+	err := dbContainer.Migrate("up")
 	if err != nil {
 		logger.Error(err)
 	}

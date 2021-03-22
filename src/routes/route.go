@@ -17,7 +17,7 @@ func AddRoutes(router *gin.Engine, db *sql.DB, env *config.EnvVars) {
 	router.POST("/logout", middlewares.VerifyUser(db), api.Logout(db))
 
 	postsRouter := router.Group("/posts")
-	postsRouter.GET("", api.GetAllPosts(db))
+	postsRouter.GET("", api.GetPosts(db))
 	postsRouter.GET("/:id", api.GetPost())
 	postsRouter.GET("/:id/like", api.GetLikesForPost())
 	postsRouter.POST("", middlewares.VerifyUser(db), api.CreatePost(db))

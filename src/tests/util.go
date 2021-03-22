@@ -16,8 +16,8 @@ import (
 // Data is for structuring req.body/res.body in json format
 type Data map[string]interface{}
 
-// TestToolbox contains router, db, and goblin
-type TestToolbox struct {
+// Container contains router, db, and goblin
+type Container struct {
 	Goblin *goblin.G
 	Router *gin.Engine
 	DB     *sql.DB
@@ -60,7 +60,7 @@ func MakeRequest(r *reqData) *httptest.ResponseRecorder {
 	return resRecorder
 }
 
-func createTestUser(tb *TestToolbox, email, pwd string) *dbtool.User {
+func createTestUser(tb *Container, email, pwd string) *dbtool.User {
 	// Create user
 	user := Data{
 		"email":    email,
@@ -80,7 +80,6 @@ func createTestUser(tb *TestToolbox, email, pwd string) *dbtool.User {
 	testUser, err := tb.DB.GetUserByEmail(email)
 	tb.Goblin.Assert(err).IsNil()
 	return testUser
-
 }
 
 func extractBody(h *httptest.ResponseRecorder) map[string]interface{} {
@@ -89,7 +88,7 @@ func extractBody(h *httptest.ResponseRecorder) map[string]interface{} {
 	return response
 }
 
-func testAccessToken(tb *TestToolbox, h *httptest.ResponseRecorder) {
+func testAccessToken(tb *Container, h *httptest.ResponseRecorder) {
 	cookies := h.Result().Cookies()
 	accessTokenVal := cookies[0].Value
 	valid := middlewares.ValidateToken(accessTokenVal, tb.DB)
@@ -97,7 +96,7 @@ func testAccessToken(tb *TestToolbox, h *httptest.ResponseRecorder) {
 	tb.Goblin.Assert(valid).IsNil()
 }
 
-func login(tb *TestToolbox, email, password string) *httptest.ResponseRecorder {
+func login(tb *Container, email, password string) *httptest.ResponseRecorder {
 	loginBody := Data{
 		"email":    email,
 		"password": password,
@@ -113,7 +112,7 @@ func login(tb *TestToolbox, email, password string) *httptest.ResponseRecorder {
 	return result
 }
 
-func logout(tb *TestToolbox, email string, cookies []*http.Cookie) *httptest.ResponseRecorder {
+func logout(tb *Container, email string, cookies []*http.Cookie) *httptest.ResponseRecorder {
 	data := Data{
 		"email": email,
 	}
@@ -128,7 +127,7 @@ func logout(tb *TestToolbox, email string, cookies []*http.Cookie) *httptest.Res
 	return result
 }
 
-func (tb TestToolbox) makeInvalidReq(e *errorTestCase) {
+func (tb Container) makeInvalidReq(e *errorTestCase) {
 	result := MakeRequest(&reqData{
 		handler: tb.Router,
 		method:  e.method,
@@ -146,7 +145,7 @@ func (tb TestToolbox) makeInvalidReq(e *errorTestCase) {
 	tb.Goblin.Assert(response["message"]).Eql(e.errMsg)
 }
 
-func createSamplePost(tb *TestToolbox, doc string, cookies []*http.Cookie) uint {
+func createSamplePost(tb *Container, doc string, cookies []*http.Cookie) uint {
 	values := Data{"doc": doc}
 
 	result := MakeRequest(&reqData{
