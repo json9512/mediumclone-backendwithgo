@@ -1,8 +1,10 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 
@@ -11,12 +13,32 @@ import (
 
 // GetAllPosts returns all posts
 // optional: with tags or/and author
-func GetAllPosts() gin.HandlerFunc {
+func GetAllPosts(db *dbtool.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
 		queries := c.Request.URL.Query()
 
 		if checkIfQueriesExist(queries) {
+			// extract tags
+			// fmt.Println(queries)
+			// 3 condition
+			// 1. only tags exist
+			tags, tagsExist := queries["tags"]
+			if tagsExist && strings.Contains(tags[0], ",") {
+				tags = strings.Split(tags[0], ",")
+			}
+			// 2. only author exists (atmost 1)
+			var author string
+			rawAuthor, _ := queries["author"]
+			if len(rawAuthor) > 0 {
+				author = rawAuthor[0]
+			}
+			// 3. both exist
+			if len(tags) > 0 && author != "" {
+				query, _ := db.GetPostsByTags(tags)
+				fmt.Println(query)
+			}
+
 			c.JSON(200, &response{
 				"result": queries,
 			})
@@ -53,7 +75,7 @@ func GetLikesForPost() gin.HandlerFunc {
 // CreatePost creates a post in db
 func CreatePost(db *dbtool.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var reqBody postData
+		var reqBody postForm
 		if err := extractData(c, &reqBody); err != nil {
 			HandleError(c, http.StatusBadRequest, "Invalid request data")
 			return
@@ -70,7 +92,7 @@ func CreatePost(db *dbtool.DB) gin.HandlerFunc {
 			return
 		}
 
-		post, err := db.CreatePost(reqBody.Doc, reqBody.Tags, username.(string))
+		post, err := db.CreatePost(reqBody.Doc, username.(string), strings.Split(reqBody.Tags, ","))
 		if err != nil {
 			HandleError(c, http.StatusInternalServerError, "Failed to create post in DB.")
 			return
@@ -83,7 +105,7 @@ func CreatePost(db *dbtool.DB) gin.HandlerFunc {
 // UpdatePost updates a post in db
 func UpdatePost(db *dbtool.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var reqBody newPostData
+		var reqBody dbtool.UpdatePostForm
 		if err := extractData(c, &reqBody); err != nil {
 			HandleError(c, http.StatusBadRequest, "Invalid request data")
 			return
@@ -105,13 +127,7 @@ func UpdatePost(db *dbtool.DB) gin.HandlerFunc {
 			return
 		}
 
-		query, err := createPostQuery(&reqBody, post)
-		if err != nil {
-			HandleError(c, http.StatusBadRequest, "No new content")
-			return
-		}
-
-		if _, err := db.UpdatePost(query); err != nil {
+		if _, err := db.UpdatePost(post.ID, reqBody); err != nil {
 			HandleError(c, http.StatusInternalServerError, "Failed to update post in DB.")
 			return
 		}

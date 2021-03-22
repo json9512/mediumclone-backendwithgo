@@ -1,65 +1,32 @@
 package main
 
 import (
-	"errors"
 	"os"
 	"testing"
 
 	"github.com/franela/goblin"
 
 	"github.com/json9512/mediumclone-backendwithgo/src/config"
-	"github.com/json9512/mediumclone-backendwithgo/src/dbtool"
+	"github.com/json9512/mediumclone-backendwithgo/src/db"
 	"github.com/json9512/mediumclone-backendwithgo/src/tests"
 )
 
 func Test(t *testing.T) {
 	config.ReadVariablesFromFile(".env")
 	// Setup test_db for local use only
-	pool := dbtool.Init()
+	logger := config.InitLogger()
+	container := db.Init(logger)
 
-	// NOTE: need to copy existing data to temp table
-	// Drop the tables
-	pool.Exec("DROP TABLE users")
-	pool.Exec("DROP TABLE posts")
-
-	dbtool.Migrate(pool)
-	router := SetupRouter("test", pool)
+	router := SetupRouter("test", logger, container.DB)
 	g := goblin.Goblin(t)
 
 	toolBox := tests.TestToolbox{
 		Goblin: g,
 		Router: router,
-		DB:     pool,
+		DB:     container.DB,
 	}
 	tests.RunPostsTests(&toolBox)
 	tests.RunUsersTests(&toolBox)
-
-	// NOTE for future me: For testing only,
-	// - all the test cases in DB should move to each endpoint
-	// - CRUD on endpoints should test the interaction with DB
-	// - no separate DB test is required
-	g.Describe("DB test", func() {
-		g.It("CreateSamplePost should create a sample post in DB", func() {
-			post, _ := pool.CreatePost("something", "tags-something", "test-author")
-			postFrmDB, err := pool.GetPostByAuthor("test-author")
-
-			g.Assert(err).IsNil()
-			g.Assert(post.Author).Eql(postFrmDB.Author)
-			g.Assert(post.Comments).Eql(postFrmDB.Comments)
-			g.Assert(post.Document).Eql(postFrmDB.Document)
-		})
-
-		g.It("Delete the sample post created in DB", func() {
-			var post dbtool.Post
-			var ID int64
-			ID = 1
-			dbErr := pool.Delete(&post, map[string]interface{}{"id": ID})
-			queryErr := pool.Query(&post, map[string]interface{}{"id": ID})
-			g.Assert(dbErr).IsNil()
-			g.Assert(queryErr).Eql(errors.New("record not found"))
-		})
-	})
-
 	tests.RunAuthTests(&toolBox)
 
 	// Environment setup test
@@ -69,11 +36,4 @@ func Test(t *testing.T) {
 			g.Assert(env).Equal("mediumclone")
 		})
 	})
-
-	// Drop the tables
-	pool.Exec("DROP TABLE users")
-	pool.Exec("DROP TABLE posts")
-	// Need to create users and posts && copy the data from the temp table
-
-	// Note: should separate the test db and production db
 }

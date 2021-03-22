@@ -2,6 +2,7 @@ package tests
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -9,7 +10,6 @@ import (
 	"github.com/franela/goblin"
 	"github.com/gin-gonic/gin"
 
-	"github.com/json9512/mediumclone-backendwithgo/src/dbtool"
 	"github.com/json9512/mediumclone-backendwithgo/src/middlewares"
 )
 
@@ -20,7 +20,7 @@ type Data map[string]interface{}
 type TestToolbox struct {
 	Goblin *goblin.G
 	Router *gin.Engine
-	DB     *dbtool.DB
+	DB     *sql.DB
 }
 
 type reqData struct {

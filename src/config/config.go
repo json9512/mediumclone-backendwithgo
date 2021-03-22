@@ -51,8 +51,8 @@ func ReadVariablesFromFile(filename string) {
 }
 
 // LoadEnvVars load environment variables necessary for the server
-func LoadEnvVars() EnvVars {
-	return EnvVars{
+func LoadEnvVars() *EnvVars {
+	return &EnvVars{
 		JWTSecret: os.Getenv("JWT_SECRET"),
 	}
 

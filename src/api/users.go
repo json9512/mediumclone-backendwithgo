@@ -54,7 +54,7 @@ func RegisterUser(db *dbtool.DB) gin.HandlerFunc {
 // UpdateUser updates the user with provided info
 func UpdateUser(db *dbtool.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var reqBody userUpdateForm
+		var reqBody updateUserForm
 		err := extractData(c, &reqBody)
 		if err != nil {
 			HandleError(c, http.StatusBadRequest, "User update failed. Invalid data type.")

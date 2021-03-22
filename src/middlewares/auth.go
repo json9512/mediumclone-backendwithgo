@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"database/sql"
 	"fmt"
 	"net/http"
 	"os"
@@ -10,11 +11,10 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/json9512/mediumclone-backendwithgo/src/api"
-	"github.com/json9512/mediumclone-backendwithgo/src/dbtool"
 )
 
 // VerifyUser validates the access_token in the request cookie
-func VerifyUser(db *dbtool.DB) gin.HandlerFunc {
+func VerifyUser(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token, err := c.Cookie("access_token")
 

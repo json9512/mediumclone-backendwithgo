@@ -1,6 +1,7 @@
 package api
 
 import (
+	"database/sql"
 	"net/http"
 	"time"
 
@@ -8,11 +9,10 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/json9512/mediumclone-backendwithgo/src/config"
-	"github.com/json9512/mediumclone-backendwithgo/src/dbtool"
 )
 
 // Login validates the user and distributes the tokens
-func Login(db *dbtool.DB, envVars *config.EnvVars) gin.HandlerFunc {
+func Login(db *sql.DB, env *config.EnvVars) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var userCred credential
 		if err := c.BindJSON(&userCred); err != nil {
@@ -68,7 +68,7 @@ func Login(db *dbtool.DB, envVars *config.EnvVars) gin.HandlerFunc {
 			return
 		}
 
-		at, err := createAccessToken(user.Email, envVars.JWTSecret, expiresIn)
+		at, err := createAccessToken(user.Email, env.JWTSecret, expiresIn)
 		if err != nil {
 			HandleError(c, http.StatusInternalServerError, "Login failed. Unable to create token.")
 		}
