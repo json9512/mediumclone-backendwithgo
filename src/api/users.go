@@ -66,7 +66,7 @@ func UpdateUser(db *dbtool.DB) gin.HandlerFunc {
 			return
 		}
 
-		query, err := createUpdateQuery(reqBody.ID, reqBody.Email, reqBody.Password, nil)
+		query, err := createUserUpdateQuery(reqBody.ID, reqBody.Email, reqBody.Password, nil)
 		if err != nil {
 			HandleError(c, http.StatusBadRequest, err.Error())
 			return
@@ -77,10 +77,10 @@ func UpdateUser(db *dbtool.DB) gin.HandlerFunc {
 			return
 		}
 
-		if updatedUser, err := db.UpdateUser(&query); err != nil {
+		if _, err := db.UpdateUser(&query); err != nil {
 			HandleError(c, http.StatusInternalServerError, "User update failed. Saving data to database failed.")
 		} else {
-			c.JSON(http.StatusOK, serializeUser(updatedUser))
+			c.Status(http.StatusOK)
 		}
 	}
 }

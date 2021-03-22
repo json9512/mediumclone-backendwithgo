@@ -145,3 +145,22 @@ func (tb TestToolbox) makeInvalidReq(e *errorTestCase) {
 	tb.Goblin.Assert(err).IsNil()
 	tb.Goblin.Assert(response["message"]).Eql(e.errMsg)
 }
+
+func createSamplePost(tb *TestToolbox, doc string, cookies []*http.Cookie) uint {
+	values := Data{"doc": doc}
+
+	result := MakeRequest(&reqData{
+		handler: tb.Router,
+		method:  "POST",
+		path:    "/posts",
+		reqBody: &values,
+		cookie:  cookies,
+	})
+	tb.Goblin.Assert(result.Code).Eql(http.StatusOK)
+	var response map[string]interface{}
+	_ = json.Unmarshal([]byte(result.Body.Bytes()), &response)
+
+	id, exists := response["id"]
+	tb.Goblin.Assert(exists).IsTrue()
+	return uint(id.(float64))
+}

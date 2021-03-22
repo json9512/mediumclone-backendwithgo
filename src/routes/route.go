@@ -20,8 +20,8 @@ func AddRoutes(router *gin.Engine, db *dbtool.DB, envVars *config.EnvVars) {
 	postsRouter.GET("/:id", api.GetPost())
 	postsRouter.GET("/:id/like", api.GetLikesForPost())
 	postsRouter.POST("", middlewares.VerifyUser(db), api.CreatePost(db))
-	postsRouter.PUT("", api.UpdatePost())
-	postsRouter.DELETE("", api.DeletePost())
+	postsRouter.PUT("", middlewares.VerifyUser(db), api.UpdatePost(db))
+	postsRouter.DELETE("/:id", middlewares.VerifyUser(db), api.DeletePost(db))
 
 	usersRouter := router.Group("/users")
 	usersRouter.GET("/:id", api.RetrieveUser(db))

@@ -40,17 +40,13 @@ func Test(t *testing.T) {
 	// - no separate DB test is required
 	g.Describe("DB test", func() {
 		g.It("CreateSamplePost should create a sample post in DB", func() {
-			var post dbtool.Post
-			dbtool.CreateSamplePost(pool)
-			dbErr := pool.Query(
-				&post,
-				map[string]interface{}{"author": "test-author"},
-			)
+			post, _ := pool.CreatePost("something", "tags-something", "test-author")
+			postFrmDB, err := pool.GetPostByAuthor("test-author")
 
-			g.Assert(dbErr).IsNil()
-			g.Assert(post.Author).Eql("test-author")
-			g.Assert(post.Comments).Eql(dbtool.JSONB{"comments-test": "testing 321"})
-			g.Assert(post.Document).Eql(dbtool.JSONB{"testing": "test123"})
+			g.Assert(err).IsNil()
+			g.Assert(post.Author).Eql(postFrmDB.Author)
+			g.Assert(post.Comments).Eql(postFrmDB.Comments)
+			g.Assert(post.Document).Eql(postFrmDB.Document)
 		})
 
 		g.It("Delete the sample post created in DB", func() {

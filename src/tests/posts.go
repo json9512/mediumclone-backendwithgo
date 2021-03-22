@@ -2,6 +2,7 @@ package tests
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 )
 
@@ -23,7 +24,7 @@ func testGetPosts(tb *TestToolbox) {
 		tb.Goblin.Assert(result.Code).Eql(http.StatusOK)
 
 		var response map[string][]string
-		err := json.Unmarshal([]byte(result.Body.String()), &response)
+		err := json.Unmarshal([]byte(result.Body.Bytes()), &response)
 
 		value, exists := response["result"]
 
@@ -51,7 +52,7 @@ func testGetPost(tb *TestToolbox) {
 		tb.Goblin.Assert(result.Code).Eql(http.StatusOK)
 
 		var response map[string]string
-		err := json.Unmarshal([]byte(result.Body.String()), &response)
+		err := json.Unmarshal([]byte(result.Body.Bytes()), &response)
 
 		value, exists := response["result"]
 
@@ -80,7 +81,7 @@ func testGetLikeOfPost(tb *TestToolbox) {
 		tb.Goblin.Assert(result.Code).Eql(http.StatusOK)
 
 		var response map[string]int
-		err := json.Unmarshal([]byte(result.Body.String()), &response)
+		err := json.Unmarshal([]byte(result.Body.Bytes()), &response)
 
 		value, exists := response["result"]
 
@@ -134,7 +135,7 @@ func testCreatePost(tb *TestToolbox) {
 		tb.Goblin.Assert(loginResult.Code).Eql(http.StatusOK)
 		cookies := loginResult.Result().Cookies()
 
-		values := Data{"id": "5"}
+		values := Data{"doc": "something"}
 
 		result := MakeRequest(&reqData{
 			handler: tb.Router,
@@ -143,98 +144,248 @@ func testCreatePost(tb *TestToolbox) {
 			reqBody: &values,
 			cookie:  cookies,
 		})
-
 		tb.Goblin.Assert(result.Code).Eql(http.StatusOK)
 
-		var response map[string]string
-		err := json.Unmarshal([]byte(result.Body.String()), &response)
+		var response map[string]interface{}
+		err := json.Unmarshal([]byte(result.Body.Bytes()), &response)
 
-		value, exists := response["id"]
+		id, exists := response["id"]
+		author, exists := response["author"]
+		likes, exists := response["likes"]
+		document, exists := response["doc"]
+		tags, exists := response["tags"]
+		comments, exists := response["comments"]
 
 		tb.Goblin.Assert(err).IsNil()
 		tb.Goblin.Assert(exists).IsTrue()
-		tb.Goblin.Assert(values["id"]).Eql(value)
+		tb.Goblin.Assert(values["doc"]).Eql(document)
+		tb.Goblin.Assert(id).IsNotNil()
+		tb.Goblin.Assert(author).Eql("test-create-post")
+		tb.Goblin.Assert(int(likes.(float64))).Eql(0)
+		tb.Goblin.Assert(tags).Eql("")
+		tb.Goblin.Assert(comments).Eql("")
+	})
+
+	tb.Goblin.It("POST /posts with invalid doc should return error", func() {
+		_ = createTestUser(tb, "test-badID-post@test.com", "test-pwd")
+		loginResult := login(tb, "test-badID-post@test.com", "test-pwd")
+		tb.Goblin.Assert(loginResult.Code).Eql(http.StatusOK)
+		cookies := loginResult.Result().Cookies()
+
+		values := Data{"doc": 131313}
+
+		tb.makeInvalidReq(&errorTestCase{
+			values,
+			"POST",
+			"/posts",
+			"Invalid request data",
+			http.StatusBadRequest,
+			cookies,
+		})
+	})
+
+	tb.Goblin.It("POST /posts with no doc should return error", func() {
+		_ = createTestUser(tb, "test-noID-post@test.com", "test-pwd")
+		loginResult := login(tb, "test-noID-post@test.com", "test-pwd")
+		tb.Goblin.Assert(loginResult.Code).Eql(http.StatusOK)
+		cookies := loginResult.Result().Cookies()
+
+		values := Data{"id": "123"}
+
+		tb.makeInvalidReq(&errorTestCase{
+			values,
+			"POST",
+			"/posts",
+			"ID, Doc required",
+			http.StatusBadRequest,
+			cookies,
+		})
 	})
 }
 
 // testUpdatePost tests /posts to update a post in database
 func testUpdatePost(tb *TestToolbox) {
 	tb.Goblin.It("PUT /posts should update a post in database", func() {
-		values := Data{"id": "5", "doc": "something"}
+		_ = createTestUser(tb, "test-update-post@test.com", "test-pwd")
+		loginResult := login(tb, "test-update-post@test.com", "test-pwd")
+		tb.Goblin.Assert(loginResult.Code).Eql(http.StatusOK)
+		cookies := loginResult.Result().Cookies()
+		postID := createSamplePost(tb, "sample-post", cookies)
 
+		values := Data{"id": postID, "doc": "something-changed"}
 		result := MakeRequest(&reqData{
 			handler: tb.Router,
 			method:  "PUT",
 			path:    "/posts",
 			reqBody: &values,
-			cookie:  nil,
+			cookie:  cookies,
 		})
 
 		tb.Goblin.Assert(result.Code).Eql(http.StatusOK)
+	})
 
-		var response map[string]string
-		err := json.Unmarshal([]byte(result.Body.String()), &response)
+	tb.Goblin.It("PUT /posts with no new content should return error", func() {
+		_ = createTestUser(tb, "test-update-post-no-content@test.com", "test-pwd")
+		loginResult := login(tb, "test-update-post-no-content@test.com", "test-pwd")
+		tb.Goblin.Assert(loginResult.Code).Eql(http.StatusOK)
+		cookies := loginResult.Result().Cookies()
+		postID := createSamplePost(tb, "sample-post", cookies)
 
-		postID, IDExists := response["id"]
-		postDoc, docExists := response["doc"]
+		values := Data{"id": postID}
+		tb.makeInvalidReq(&errorTestCase{
+			values,
+			"PUT",
+			"/posts",
+			"No new content",
+			http.StatusBadRequest,
+			cookies,
+		})
+	})
 
-		tb.Goblin.Assert(err).IsNil()
-		tb.Goblin.Assert(IDExists).IsTrue()
-		tb.Goblin.Assert(values["id"]).Eql(postID)
-		tb.Goblin.Assert(docExists).IsTrue()
-		tb.Goblin.Assert(values["doc"]).Eql(postDoc)
+	tb.Goblin.It("PUT /posts with invalid user should return error", func() {
+		// takes too long
+		_ = createTestUser(tb, "test-update-post-wrong-author@test.com", "test-pwd")
+		loginResult := login(tb, "test-update-post-wrong-author@test.com", "test-pwd")
+		tb.Goblin.Assert(loginResult.Code).Eql(http.StatusOK)
+		cookies := loginResult.Result().Cookies()
+		postID := createSamplePost(tb, "sample-posts", cookies)
+
+		_ = createTestUser(tb, "test-update-post-wrong-author2@test.com", "test-pwd")
+		loginResult = login(tb, "test-update-post-wrong-author2@test.com", "test-pwd")
+		tb.Goblin.Assert(loginResult.Code).Eql(http.StatusOK)
+		cookies = loginResult.Result().Cookies()
+
+		values := Data{"id": postID, "doc": "you are not the author"}
+		tb.makeInvalidReq(&errorTestCase{
+			values,
+			"PUT",
+			"/posts",
+			"User is not the author of the post",
+			http.StatusBadRequest,
+			cookies,
+		})
+	})
+
+	tb.Goblin.It("PUT /posts with invalid post ID should return error", func() {
+		_ = createTestUser(tb, "test-update-post-id@test.com", "test-pwd")
+		loginResult := login(tb, "test-update-post-id@test.com", "test-pwd")
+		tb.Goblin.Assert(loginResult.Code).Eql(http.StatusOK)
+		cookies := loginResult.Result().Cookies()
+		postID := createSamplePost(tb, "sample-post", cookies)
+
+		values := Data{"id": postID + 3}
+		tb.makeInvalidReq(&errorTestCase{
+			values,
+			"PUT",
+			"/posts",
+			"Post not found",
+			http.StatusBadRequest,
+			cookies,
+		})
+	})
+
+	tb.Goblin.It("PUT /posts with no post ID should return error", func() {
+		_ = createTestUser(tb, "test-update-nopost-id@test.com", "test-pwd")
+		loginResult := login(tb, "test-update-nopost-id@test.com", "test-pwd")
+		tb.Goblin.Assert(loginResult.Code).Eql(http.StatusOK)
+		cookies := loginResult.Result().Cookies()
+		_ = createSamplePost(tb, "sample-post", cookies)
+
+		values := Data{"doc": "yahoo", "tags": "internet of things"}
+		tb.makeInvalidReq(&errorTestCase{
+			values,
+			"PUT",
+			"/posts",
+			"ID required",
+			http.StatusBadRequest,
+			cookies,
+		})
+	})
+
+	tb.Goblin.It("PUT /posts with no request body should return error", func() {
+		_ = createTestUser(tb, "test-update-nobody@test.com", "test-pwd")
+		loginResult := login(tb, "test-update-nobody@test.com", "test-pwd")
+		tb.Goblin.Assert(loginResult.Code).Eql(http.StatusOK)
+		cookies := loginResult.Result().Cookies()
+
+		tb.makeInvalidReq(&errorTestCase{
+			nil,
+			"PUT",
+			"/posts",
+			"ID required",
+			http.StatusBadRequest,
+			cookies,
+		})
+	})
+
+	tb.Goblin.It("PUT /posts with invalid data type should return error", func() {
+		_ = createTestUser(tb, "test-update-datatype@test.com", "test-pwd")
+		loginResult := login(tb, "test-update-datatype@test.com", "test-pwd")
+		tb.Goblin.Assert(loginResult.Code).Eql(http.StatusOK)
+		cookies := loginResult.Result().Cookies()
+		postID := createSamplePost(tb, "sample-post", cookies)
+
+		values := Data{"id": postID, "likes": "abs"}
+		tb.makeInvalidReq(&errorTestCase{
+			values,
+			"PUT",
+			"/posts",
+			"Invalid request data",
+			http.StatusBadRequest,
+			cookies,
+		})
 	})
 }
 
 // testDeletePost tests /posts/:id to delete a post in database
 func testDeletePost(tb *TestToolbox) {
 	tb.Goblin.It("DELETE /posts/:id should delete a post with the given ID", func() {
-		values := Data{"id": "5"}
+		_ = createTestUser(tb, "test-delete-post@test.com", "test-pwd")
+		loginResult := login(tb, "test-delete-post@test.com", "test-pwd")
+		tb.Goblin.Assert(loginResult.Code).Eql(http.StatusOK)
+		cookies := loginResult.Result().Cookies()
+
+		// Create sample post
+		postID := createSamplePost(tb, "some-content", cookies)
+
+		// Delete
+		url := fmt.Sprintf("/posts/%d", postID)
 
 		result := MakeRequest(&reqData{
 			handler: tb.Router,
 			method:  "DELETE",
-			path:    "/posts",
-			reqBody: &values,
-			cookie:  nil,
+			path:    url,
+			reqBody: nil,
+			cookie:  cookies,
 		})
-
 		tb.Goblin.Assert(result.Code).Eql(http.StatusOK)
 
-		var response map[string]string
-		err := json.Unmarshal([]byte(result.Body.String()), &response)
-
-		postID, IDExists := response["id"]
-
-		tb.Goblin.Assert(err).IsNil()
-		tb.Goblin.Assert(IDExists).IsTrue()
-		tb.Goblin.Assert(values["id"]).Eql(postID)
 	})
 }
 
 // RunPostsTests executes all tests for /posts
-func RunPostsTests(toolBox *TestToolbox) {
-	toolBox.Goblin.Describe("/posts endpoint tests", func() {
+func RunPostsTests(toolbox *TestToolbox) {
+	toolbox.Goblin.Describe("/posts endpoint tests", func() {
 
 		// GET /posts
-		testGetPosts(toolBox)
+		testGetPosts(toolbox)
 
 		// GET /posts/:id
-		testGetPost(toolBox)
+		testGetPost(toolbox)
 
 		// GET /posts/:id/like
-		testGetLikeOfPost(toolBox)
+		testGetLikeOfPost(toolbox)
 
 		// GET /posts?tag=rabbit
-		testGetPostWithQuery(toolBox)
+		testGetPostWithQuery(toolbox)
 
 		// POST /posts with json {id: 5}
-		testCreatePost(toolBox)
+		testCreatePost(toolbox)
 
 		// PUT /posts with json {id: 5, doc: something}
-		testUpdatePost(toolBox)
+		testUpdatePost(toolbox)
 
 		// DELETE /posts/:id  with json {id: 5}
-		testDeletePost(toolBox)
+		testDeletePost(toolbox)
 	})
 }

@@ -25,7 +25,7 @@ func Logout(db *dbtool.DB) gin.HandlerFunc {
 			return
 		}
 
-		query, err := createUpdateQuery(user.ID, user.Email, user.Password, 0)
+		query, err := createUserUpdateQuery(user.ID, user.Email, user.Password, 0)
 		if _, err = db.UpdateUser(query); err != nil {
 			HandleError(c, http.StatusInternalServerError, "Updating user information in DB failed.")
 			return

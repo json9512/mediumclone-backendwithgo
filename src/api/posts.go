@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 
@@ -52,32 +53,89 @@ func GetLikesForPost() gin.HandlerFunc {
 // CreatePost creates a post in db
 func CreatePost(db *dbtool.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var reqBody postReqData
-		c.BindJSON(&reqBody)
-		c.JSON(http.StatusOK, &response{"id": reqBody.ID})
+		var reqBody postData
+		if err := extractData(c, &reqBody); err != nil {
+			HandleError(c, http.StatusBadRequest, "Invalid request data")
+			return
+		}
+
+		if err := validateStruct(&reqBody); err != nil && reqBody.Doc == "" {
+			HandleError(c, http.StatusBadRequest, "ID, Doc required")
+			return
+		}
+
+		username, exists := c.Get("username")
+		if !exists {
+			HandleError(c, http.StatusBadRequest, "Username not found")
+			return
+		}
+
+		post, err := db.CreatePost(reqBody.Doc, reqBody.Tags, username.(string))
+		if err != nil {
+			HandleError(c, http.StatusInternalServerError, "Failed to create post in DB.")
+			return
+		}
+
+		c.JSON(http.StatusOK, serializePost(post))
 	}
 }
 
 // UpdatePost updates a post in db
-func UpdatePost() gin.HandlerFunc {
+func UpdatePost(db *dbtool.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var reqBody postReqData
-		c.BindJSON(&reqBody)
-		c.JSON(
-			http.StatusOK,
-			&response{"id": reqBody.ID, "doc": reqBody.Doc},
-		)
+		var reqBody newPostData
+		if err := extractData(c, &reqBody); err != nil {
+			HandleError(c, http.StatusBadRequest, "Invalid request data")
+			return
+		}
+
+		if err := validateStruct(&reqBody); err != nil {
+			HandleError(c, http.StatusBadRequest, "ID required")
+			return
+		}
+
+		post, err := db.GetPostByID(reqBody.ID)
+		if err != nil {
+			HandleError(c, http.StatusBadRequest, "Post not found")
+			return
+		}
+
+		if !checkIfUserIsAuthor(c, post.Author) {
+			HandleError(c, http.StatusBadRequest, "User is not the author of the post")
+			return
+		}
+
+		query, err := createPostQuery(&reqBody, post)
+		if err != nil {
+			HandleError(c, http.StatusBadRequest, "No new content")
+			return
+		}
+
+		if _, err := db.UpdatePost(query); err != nil {
+			HandleError(c, http.StatusInternalServerError, "Failed to update post in DB.")
+			return
+		}
+
+		// Check that the post's author is this user
+		c.Status(http.StatusOK)
 	}
 }
 
 // DeletePost deletes a post with given ID in db
-func DeletePost() gin.HandlerFunc {
+func DeletePost(db *dbtool.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var reqBody postReqData
-		c.BindJSON(&reqBody)
-		c.JSON(
-			http.StatusOK,
-			&response{"id": reqBody.ID},
-		)
+		id := c.Param("id")
+		idInt, err := strconv.ParseInt(id, 10, 64)
+
+		if err != nil || idInt < 1 {
+			HandleError(c, http.StatusBadRequest, "Invalid ID")
+			return
+		}
+
+		if _, err := db.DeletePostByID(idInt); err != nil {
+			HandleError(c, http.StatusBadRequest, "Post not found")
+		} else {
+			c.Status(http.StatusOK)
+		}
 	}
 }

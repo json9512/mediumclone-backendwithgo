@@ -193,20 +193,11 @@ func testUpdateUser(tb *TestToolbox) {
 
 		tb.Goblin.Assert(result.Code).Eql(http.StatusOK)
 
-		var response map[string]interface{}
-		err := json.Unmarshal(result.Body.Bytes(), &response)
-
-		userID, IDExists := response["id"]
-		userEmail, emailExists := response["email"]
-
-		// Convert type float64 to uint
-		userID = uint(userID.(float64))
+		updatedUser, err := tb.DB.GetUserByID(testUser.ID)
 
 		tb.Goblin.Assert(err).IsNil()
-		tb.Goblin.Assert(IDExists).IsTrue()
-		tb.Goblin.Assert(values["id"]).Eql(userID)
-		tb.Goblin.Assert(emailExists).IsTrue()
-		tb.Goblin.Assert(values["email"]).Eql(userEmail)
+		tb.Goblin.Assert(values["id"]).Eql(updatedUser.ID)
+		tb.Goblin.Assert(values["email"]).Eql(updatedUser.Email)
 	})
 
 	tb.Goblin.It("PUT /users with invalid ID should return error", func() {
