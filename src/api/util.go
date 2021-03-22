@@ -3,12 +3,13 @@ package api
 import (
 	"errors"
 	"net/url"
-	"time"
+	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
-	"github.com/lib/pq"
 
+	"github.com/json9512/mediumclone-backendwithgo/src/db"
 	"github.com/json9512/mediumclone-backendwithgo/src/models"
 )
 
@@ -17,6 +18,11 @@ type postForm struct {
 	Tags     string `json:"tags"`
 	Likes    uint   `json:"likes"`
 	Comments string `json:"comments"`
+}
+
+type postUpdateForm struct {
+	id int64 `json:"id" validate:"required"`
+	*postForm
 }
 
 type updateUserForm struct {
@@ -32,23 +38,6 @@ type credential struct {
 
 type errorResponse struct {
 	Msg string `json:"message"`
-}
-
-type userUpdateQuery struct {
-	ID             uint
-	Email          string
-	Password       string
-	TokenExpiresIn interface{}
-}
-
-type postUpdateQuery struct {
-	ID        uint
-	Author    string
-	Document  string
-	Tags      pq.StringArray
-	Comments  string
-	Likes     uint
-	CreatedAt time.Time
 }
 
 type response map[string]interface{}
@@ -127,4 +116,35 @@ func checkIfUserIsAuthor(c *gin.Context, author string) bool {
 		return false
 	}
 	return username == author
+}
+
+func convertToInt(id string) int64 {
+	idInt, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		return -1
+	}
+	return idInt
+}
+
+func bindFormToPost(f interface{}, author string) *db.Post {
+	if postUpdateForm, ok := f.(postUpdateForm); ok {
+		return &db.Post{
+			Author:   author,
+			Doc:      postUpdateForm.Doc,
+			Comments: postUpdateForm.Comments,
+			Tags:     strings.Split(postUpdateForm.Tags, ","),
+			Likes:    int(postUpdateForm.Likes),
+		}
+	}
+
+	if postForm, ok := f.(postForm); ok {
+		return &db.Post{
+			Author:   author,
+			Doc:      postForm.Doc,
+			Comments: postForm.Comments,
+			Tags:     strings.Split(postForm.Tags, ","),
+			Likes:    int(postForm.Likes),
+		}
+	}
+	return nil
 }

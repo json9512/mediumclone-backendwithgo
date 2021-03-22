@@ -59,38 +59,38 @@ func GetLikesForPost(ctx context.Context, db *sql.DB, id int64) (int, error) {
 }
 
 // InsertPost inserts new post into db with given Post struct
-func InsertPost(ctx context.Context, db *sql.DB, p *Post) (bool, error) {
+func InsertPost(ctx context.Context, db *sql.DB, p *Post) (*models.Post, error) {
 	post := bindDataToPostModel(p)
 	if err := post.Insert(ctx, db, boil.Infer()); err != nil {
-		return false, err
+		return nil, err
 	}
-	return true, nil
+	return post, nil
 }
 
 // DeletePostByID deletes the post by its ID
-func DeletePostByID(ctx context.Context, db *sql.DB, id int64) (bool, error) {
+func DeletePostByID(ctx context.Context, db *sql.DB, id int64) (*models.Post, error) {
 	post, err := GetPostByID(ctx, db, id)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 	if _, err = post.Delete(ctx, db); err != nil {
-		return false, err
+		return nil, err
 	}
-	return true, nil
+	return post, nil
 }
 
 // UpdatePost updates a post with the provided ID and Post struct
-func UpdatePost(ctx context.Context, db *sql.DB, id int64, p *Post) (bool, error) {
+func UpdatePost(ctx context.Context, db *sql.DB, id int64, p *Post) (*models.Post, error) {
 	post, err := GetPostByID(ctx, db, id)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 	updatePostModel(post, p)
 
 	if _, err := post.Update(ctx, db, boil.Infer()); err != nil {
-		return false, err
+		return nil, err
 	}
-	return true, nil
+	return post, nil
 }
 
 func updatePostModel(post *models.Post, p *Post) {

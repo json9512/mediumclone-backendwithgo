@@ -3,7 +3,6 @@ package api
 import (
 	"database/sql"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -56,13 +55,23 @@ func GetPosts(pool *sql.DB) gin.HandlerFunc {
 }
 
 // GetPost returns a post with given ID
-func GetPost() gin.HandlerFunc {
+func GetPost(pool *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		id := c.Param("id")
+		idStr := c.Param("id")
+		id := convertToInt(idStr)
+		if id < 1 {
+			HandleError(c, http.StatusBadRequest, "Invalid ID.")
+			return
+		}
 
-		c.JSON(200, &response{
-			"result": id,
-		})
+		if post, err := db.GetPostByID(c, pool, id); err != nil {
+			HandleError(c, http.StatusBadRequest, "Invalid Request.")
+			return
+		} else {
+			c.JSON(http.StatusOK, &response{
+				"result": post, // need serialize
+			})
+		}
 	}
 }
 
@@ -70,17 +79,17 @@ func GetPost() gin.HandlerFunc {
 // of a post with given ID
 func GetLikesForPost(pool *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		id := c.Param("id")
-		idInt, err := strconv.ParseInt(id, 10, 64)
-		if err != nil {
+		idStr := c.Param("id")
+		id := convertToInt(idStr)
+		if id < 1 {
 			HandleError(c, http.StatusBadRequest, "Invalid ID.")
 			return
 		}
 
-		if likes, err := db.GetLikesForPost(c, pool, idInt); err != nil {
+		if likes, err := db.GetLikesForPost(c, pool, id); err != nil {
 			HandleError(c, http.StatusBadRequest, "Invalid Request.")
 		} else {
-			c.JSON(http.StatusOK, likes)
+			c.JSON(http.StatusOK, likes) // need serialize of some sort
 		}
 	}
 }
@@ -105,20 +114,20 @@ func CreatePost(pool *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		post, err := db.CreatePost(reqBody.Doc, username.(string), strings.Split(reqBody.Tags, ","))
-		if err != nil {
+		post := bindFormToPost(&reqBody, username.(string))
+		if createdPost, err := db.InsertPost(c, pool, post); err != nil {
 			HandleError(c, http.StatusInternalServerError, "Failed to create post in DB.")
 			return
+		} else {
+			c.JSON(http.StatusOK, serializePost(createdPost))
 		}
-
-		c.JSON(http.StatusOK, serializePost(post))
 	}
 }
 
 // UpdatePost updates a post in db
 func UpdatePost(pool *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var reqBody dbtool.UpdatePostForm
+		var reqBody postUpdateForm
 		if err := extractData(c, &reqBody); err != nil {
 			HandleError(c, http.StatusBadRequest, "Invalid request data")
 			return
@@ -129,39 +138,38 @@ func UpdatePost(pool *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		post, err := db.GetPostByID(reqBody.ID)
+		queriedPost, err := db.GetPostByID(c, pool, reqBody.id)
 		if err != nil {
 			HandleError(c, http.StatusBadRequest, "Post not found")
 			return
 		}
 
-		if !checkIfUserIsAuthor(c, post.Author) {
+		if !checkIfUserIsAuthor(c, queriedPost.Author) {
 			HandleError(c, http.StatusBadRequest, "User is not the author of the post")
 			return
 		}
 
-		if _, err := db.UpdatePost(post.ID, reqBody); err != nil {
+		post := bindFormToPost(reqBody, queriedPost.Author)
+		if createdPost, err := db.UpdatePost(c, pool, reqBody.id, post); err != nil {
 			HandleError(c, http.StatusInternalServerError, "Failed to update post in DB.")
 			return
+		} else {
+			c.JSON(http.StatusOK, serializePost(createdPost))
 		}
-
-		// Check that the post's author is this user
-		c.Status(http.StatusOK)
 	}
 }
 
 // DeletePost deletes a post with given ID in db
 func DeletePost(pool *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		id := c.Param("id")
-		idInt, err := strconv.ParseInt(id, 10, 64)
-
-		if err != nil || idInt < 1 {
-			HandleError(c, http.StatusBadRequest, "Invalid ID")
+		idStr := c.Param("id")
+		id := convertToInt(idStr)
+		if id < 1 {
+			HandleError(c, http.StatusBadRequest, "Invalid ID.")
 			return
 		}
 
-		if _, err := db.DeletePostByID(idInt); err != nil {
+		if _, err := db.DeletePostByID(c, pool, id); err != nil {
 			HandleError(c, http.StatusBadRequest, "Post not found")
 		} else {
 			c.Status(http.StatusOK)
