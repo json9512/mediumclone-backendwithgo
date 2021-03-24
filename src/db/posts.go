@@ -5,7 +5,6 @@ import (
 	"database/sql"
 
 	"github.com/volatiletech/null"
-	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/boil"
 	"github.com/volatiletech/sqlboiler/types"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
