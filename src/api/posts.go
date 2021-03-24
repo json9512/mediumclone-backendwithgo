@@ -117,7 +117,6 @@ func CreatePost(pool *sql.DB) gin.HandlerFunc {
 		post := bindFormToPost(&reqBody, username.(string))
 		if createdPost, err := db.InsertPost(c, pool, post); err != nil {
 			HandleError(c, http.StatusInternalServerError, "Failed to create post in DB.")
-			return
 		} else {
 			c.JSON(http.StatusOK, serializePost(createdPost))
 		}

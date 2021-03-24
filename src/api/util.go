@@ -8,6 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	"github.com/volatiletech/null"
 
 	"github.com/json9512/mediumclone-backendwithgo/src/db"
 	"github.com/json9512/mediumclone-backendwithgo/src/models"
@@ -25,10 +26,11 @@ type postUpdateForm struct {
 	*postForm
 }
 
-type updateUserForm struct {
-	ID       uint   `json:"id" validate:"required"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
+type userUpdateForm struct {
+	ID             uint   `json:"id" validate:"required"`
+	Email          string `json:"email"`
+	Password       string `json:"password"`
+	TokenExpiresIn int64  `json:"token_expires_in"`
 }
 
 type credential struct {
@@ -41,6 +43,11 @@ type errorResponse struct {
 }
 
 type response map[string]interface{}
+
+// HandleError attaches error response to gin.Context
+func HandleError(c *gin.Context, code int, msg string) {
+	c.JSON(code, &errorResponse{Msg: msg})
+}
 
 func checkIfQueriesExist(v url.Values) bool {
 	if len(v) > 0 {
@@ -67,34 +74,11 @@ func serializePost(p *models.Post) response {
 	}
 }
 
-func createUserUpdateQuery(id uint, email, password string, tokenExpiresIn interface{}) (userUpdateQuery, error) {
-	query := userUpdateQuery{
-		ID: id,
+func extractData(c *gin.Context, reqBody interface{}) error {
+	if err := c.BindJSON(&reqBody); err != nil {
+		return err
 	}
-
-	if email == "" && password == "" {
-		return query, errors.New("User update failed. No new data")
-	}
-
-	if email != "" {
-		v := validator.New()
-
-		if err := v.Var(email, "email"); err != nil {
-			return query, errors.New("User update failed. Invalid email")
-		}
-
-		query.Email = email
-	}
-
-	if password != "" {
-		query.Password = password
-	}
-
-	if tokenExpiresIn != nil {
-		query.TokenExpiresIn = tokenExpiresIn
-	}
-
-	return query, nil
+	return nil
 }
 
 func validateStruct(c interface{}) error {
@@ -103,11 +87,6 @@ func validateStruct(c interface{}) error {
 		return err
 	}
 	return nil
-}
-
-// HandleError attaches error response to gin.Context
-func HandleError(c *gin.Context, code int, msg string) {
-	c.JSON(code, &errorResponse{Msg: msg})
 }
 
 func checkIfUserIsAuthor(c *gin.Context, author string) bool {
@@ -147,4 +126,46 @@ func bindFormToPost(f interface{}, author string) *db.Post {
 		}
 	}
 	return nil
+}
+
+func bindFormToUser(f interface{}) *db.User {
+	if userForm, ok := f.(credential); ok {
+		return &db.User{
+			Email:          userForm.Email,
+			Password:       userForm.Password,
+			TokenExpiresIn: 0,
+		}
+	}
+	return nil
+}
+
+func bindUpdateFormToUser(b *userUpdateForm) (*db.User, error) {
+	var user db.User
+	if b.ID < 0 {
+		return nil, errors.New("ID required.")
+	}
+
+	if b.Email == "" && b.Password == "" && b.TokenExpiresIn < 0 {
+		return nil, errors.New("No new data.")
+	}
+
+	if b.Email != "" {
+		v := validator.New()
+
+		if err := v.Var(b.Email, "email"); err != nil {
+			return nil, errors.New("Invalid email.")
+		}
+
+		user.Email = null.StringFrom(b.Email)
+	}
+
+	if b.Password != "" {
+		user.Password = null.StringFrom(b.Password)
+	}
+
+	if b.TokenExpiresIn > -1 {
+		user.TokenExpiresIn = null.Int64From(b.TokenExpiresIn)
+	}
+
+	return &user, nil
 }
