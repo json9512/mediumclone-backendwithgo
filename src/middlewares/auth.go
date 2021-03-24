@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"net/http"
@@ -11,10 +12,11 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/json9512/mediumclone-backendwithgo/src/api"
+	"github.com/json9512/mediumclone-backendwithgo/src/db"
 )
 
 // VerifyUser validates the access_token in the request cookie
-func VerifyUser(db *sql.DB) gin.HandlerFunc {
+func VerifyUser(pool *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token, err := c.Cookie("access_token")
 
@@ -25,7 +27,7 @@ func VerifyUser(db *sql.DB) gin.HandlerFunc {
 		}
 
 		// JWT verification here
-		if err := ValidateToken(token, db); err != nil {
+		if err := ValidateToken(c, token, pool); err != nil {
 			api.HandleError(c, http.StatusUnauthorized, "Unauthorized request. Token invalid.")
 			c.Abort()
 			return
@@ -54,7 +56,7 @@ func VerifyToken(t string) (*jwt.Token, error) {
 }
 
 // ValidateToken checks the validity of the provided JWT token
-func ValidateToken(t string, db *sql.DB) error {
+func ValidateToken(c context.Context, t string, pool *sql.DB) error {
 	token, err := VerifyToken(t)
 
 	if err != nil {
@@ -77,7 +79,7 @@ func ValidateToken(t string, db *sql.DB) error {
 		return fmt.Errorf("Expiry date not valid")
 	}
 
-	user, err := db.GetUserByEmail(email.(string))
+	user, err := db.GetUserByEmail(c, pool, email.(string))
 	if err != nil {
 		return fmt.Errorf("User does not exist in DB")
 	}
