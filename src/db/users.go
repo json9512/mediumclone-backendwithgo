@@ -3,9 +3,10 @@ package db
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
-	"github.com/volatiletech/null"
-	"github.com/volatiletech/sqlboiler/boil"
+	"github.com/volatiletech/null/v8"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 
 	"github.com/json9512/mediumclone-backendwithgo/src/models"
@@ -38,6 +39,8 @@ func GetUserByEmail(ctx context.Context, db *sql.DB, email string) (*models.User
 // InsertUser creates a new user in db
 func InsertUser(ctx context.Context, db *sql.DB, u *User) (*models.User, error) {
 	user := bindDataToUserModel(u)
+	fmt.Println(user)
+
 	if err := user.Insert(ctx, db, boil.Infer()); err != nil {
 		return nil, err
 	}
@@ -68,6 +71,15 @@ func UpdateUser(ctx context.Context, db *sql.DB, id int64, u *User) (*models.Use
 		return nil, err
 	}
 	return user, nil
+}
+
+// UpdateTokenExpiresIn updates the TokenExpiresIn column of the given user
+func UpdateTokenExpiresIn(ctx context.Context, db *sql.DB, u *models.User, tokenExpiresIn int64) (*models.User, error) {
+	u.TokenExpiresIn = null.Int64From(tokenExpiresIn)
+	if _, err := u.Update(ctx, db, boil.Infer()); err != nil {
+		return nil, err
+	}
+	return u, nil
 }
 
 func updateUserModel(user *models.User, u *User) {

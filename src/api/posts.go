@@ -2,6 +2,7 @@ package api
 
 import (
 	"database/sql"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -97,7 +98,7 @@ func GetLikesForPost(pool *sql.DB) gin.HandlerFunc {
 // CreatePost creates a post in db
 func CreatePost(pool *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var reqBody postForm
+		var reqBody postInsertForm
 		if err := extractData(c, &reqBody); err != nil {
 			HandleError(c, http.StatusBadRequest, "Invalid request data")
 			return
@@ -131,25 +132,30 @@ func UpdatePost(pool *sql.DB) gin.HandlerFunc {
 			HandleError(c, http.StatusBadRequest, "Invalid request data")
 			return
 		}
-
+		fmt.Println(reqBody)
 		if err := validateStruct(&reqBody); err != nil {
 			HandleError(c, http.StatusBadRequest, "ID required")
 			return
 		}
-
-		queriedPost, err := db.GetPostByID(c, pool, reqBody.id)
+		postID, _ := reqBody.ID.Int64()
+		queriedPost, err := db.GetPostByID(c, pool, postID)
 		if err != nil {
 			HandleError(c, http.StatusBadRequest, "Post not found")
 			return
 		}
 
-		if !checkIfUserIsAuthor(c, queriedPost.Author) {
+		if !checkIfUserIsAuthor(c, queriedPost.Author.String) {
 			HandleError(c, http.StatusBadRequest, "User is not the author of the post")
 			return
 		}
 
-		post := bindFormToPost(reqBody, queriedPost.Author)
-		if createdPost, err := db.UpdatePost(c, pool, reqBody.id, post); err != nil {
+		post, err := bindUpdateFormToPost(&reqBody, queriedPost.Author.String)
+		if err != nil {
+			HandleError(c, http.StatusBadRequest, "Update form not valid.")
+			return
+		}
+
+		if createdPost, err := db.UpdatePost(c, pool, postID, post); err != nil {
 			HandleError(c, http.StatusInternalServerError, "Failed to update post in DB.")
 			return
 		} else {

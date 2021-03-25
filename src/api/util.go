@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"errors"
 	"net/url"
 	"strconv"
@@ -8,13 +9,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
-	"github.com/volatiletech/null"
 
 	"github.com/json9512/mediumclone-backendwithgo/src/db"
 	"github.com/json9512/mediumclone-backendwithgo/src/models"
 )
 
-type postForm struct {
+type postInsertForm struct {
 	Doc      string `json:"doc" validate:"required"`
 	Tags     string `json:"tags"`
 	Likes    uint   `json:"likes"`
@@ -22,18 +22,21 @@ type postForm struct {
 }
 
 type postUpdateForm struct {
-	id int64 `json:"id" validate:"required"`
-	*postForm
+	ID       json.Number `json:"id" validate:"required"`
+	Doc      string      `json:"doc"`
+	Tags     string      `json:"tags"`
+	Likes    uint        `json:"likes"`
+	Comments string      `json:"comments"`
 }
 
 type userUpdateForm struct {
-	ID             uint   `json:"id" validate:"required"`
-	Email          string `json:"email"`
-	Password       string `json:"password"`
-	TokenExpiresIn int64  `json:"token_expires_in"`
+	ID             json.Number `json:"id" validate:"required"`
+	Email          string      `json:"email"`
+	Password       string      `json:"password"`
+	TokenExpiresIn int64       `json:"token_expires_in"`
 }
 
-type credential struct {
+type userInsertForm struct {
 	Email    string `json:"email" validate:"required,email"`
 	Password string `json:"password" validate:"required"`
 }
@@ -105,43 +108,57 @@ func convertToInt(id string) int64 {
 	return idInt
 }
 
-func bindFormToPost(f interface{}, author string) *db.Post {
-	if postUpdateForm, ok := f.(postUpdateForm); ok {
-		return &db.Post{
-			Author:   author,
-			Doc:      postUpdateForm.Doc,
-			Comments: postUpdateForm.Comments,
-			Tags:     strings.Split(postUpdateForm.Tags, ","),
-			Likes:    int(postUpdateForm.Likes),
-		}
+func bindFormToPost(f *postInsertForm, author string) *db.Post {
+	return &db.Post{
+		Author:   author,
+		Doc:      f.Doc,
+		Comments: f.Comments,
+		Tags:     strings.Split(f.Tags, ","),
+		Likes:    int(f.Likes),
 	}
-
-	if postForm, ok := f.(postForm); ok {
-		return &db.Post{
-			Author:   author,
-			Doc:      postForm.Doc,
-			Comments: postForm.Comments,
-			Tags:     strings.Split(postForm.Tags, ","),
-			Likes:    int(postForm.Likes),
-		}
-	}
-	return nil
 }
 
-func bindFormToUser(f interface{}) *db.User {
-	if userForm, ok := f.(credential); ok {
-		return &db.User{
-			Email:          userForm.Email,
-			Password:       userForm.Password,
-			TokenExpiresIn: 0,
-		}
+func bindUpdateFormToPost(f *postUpdateForm, author string) (*db.Post, error) {
+	var post db.Post
+	postID, _ := f.ID.Int64()
+	if postID < 0 {
+		return nil, errors.New("ID required.")
 	}
-	return nil
+
+	if f.Comments == "" && f.Doc == "" && f.Likes < 0 && f.Tags == "" {
+		return nil, errors.New("No new data.")
+	}
+
+	if f.Comments != "" {
+		post.Comments = f.Comments
+	}
+	if f.Doc != "" {
+		post.Comments = f.Comments
+	}
+	if f.Likes >= 0 {
+		post.Likes = int(f.Likes)
+	}
+	if f.Tags != "" {
+		post.Tags = strings.Split(f.Tags, ",")
+	}
+	post.Author = author
+
+	return &post, nil
+}
+
+func bindFormToUser(f *userInsertForm) *db.User {
+	return &db.User{
+		Email:          f.Email,
+		Password:       f.Password,
+		TokenExpiresIn: 0,
+	}
+
 }
 
 func bindUpdateFormToUser(b *userUpdateForm) (*db.User, error) {
 	var user db.User
-	if b.ID < 0 {
+	userID, _ := b.ID.Int64()
+	if userID < 0 {
 		return nil, errors.New("ID required.")
 	}
 
@@ -156,15 +173,15 @@ func bindUpdateFormToUser(b *userUpdateForm) (*db.User, error) {
 			return nil, errors.New("Invalid email.")
 		}
 
-		user.Email = null.StringFrom(b.Email)
+		user.Email = b.Email
 	}
 
 	if b.Password != "" {
-		user.Password = null.StringFrom(b.Password)
+		user.Password = b.Password
 	}
 
 	if b.TokenExpiresIn > -1 {
-		user.TokenExpiresIn = null.Int64From(b.TokenExpiresIn)
+		user.TokenExpiresIn = b.TokenExpiresIn
 	}
 
 	return &user, nil

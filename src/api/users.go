@@ -2,6 +2,7 @@ package api
 
 import (
 	"database/sql"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -29,7 +30,7 @@ func RetrieveUser(pool *sql.DB) gin.HandlerFunc {
 // RegisterUser creates a new user in db
 func RegisterUser(pool *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var userCred credential
+		var userCred userInsertForm
 		err := extractData(c, &userCred)
 		if err != nil {
 			HandleError(c, http.StatusBadRequest, "Invalid data type.")
@@ -40,8 +41,9 @@ func RegisterUser(pool *sql.DB) gin.HandlerFunc {
 			HandleError(c, http.StatusBadRequest, "Invalid credential.")
 			return
 		}
-		user := bindFormToUser(userCred)
+		user := bindFormToUser(&userCred)
 		if user, err := db.InsertUser(c, pool, user); err != nil {
+			fmt.Println(err)
 			HandleError(c, http.StatusInternalServerError, "Saving data to database failed.")
 		} else {
 			c.JSON(http.StatusOK, serializeUser(user))
@@ -70,7 +72,8 @@ func UpdateUser(pool *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		if user, err := db.UpdateUser(c, pool, int64(reqBody.ID), user); err != nil {
+		userID, _ := reqBody.ID.Int64()
+		if user, err := db.UpdateUser(c, pool, userID, user); err != nil {
 			HandleError(c, http.StatusInternalServerError, "Saving data to database failed.")
 		} else {
 			c.JSON(http.StatusOK, serializeUser(user))

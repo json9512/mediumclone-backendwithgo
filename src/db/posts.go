@@ -3,11 +3,12 @@ package db
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
-	"github.com/volatiletech/null"
-	"github.com/volatiletech/sqlboiler/boil"
-	"github.com/volatiletech/sqlboiler/types"
+	"github.com/volatiletech/null/v8"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
+	"github.com/volatiletech/sqlboiler/v4/types"
 
 	"github.com/json9512/mediumclone-backendwithgo/src/models"
 )
@@ -54,7 +55,7 @@ func GetLikesForPost(ctx context.Context, db *sql.DB, id int64) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	return post.Likes, err
+	return post.Likes.Int, err
 }
 
 // InsertPost inserts new post into db with given Post struct
@@ -111,6 +112,7 @@ func updatePostModel(post *models.Post, p *Post) {
 }
 
 func bindDataToPostModel(p *Post) *models.Post {
+	fmt.Println(p)
 	return &models.Post{
 		Author:   null.StringFrom(p.Author),
 		Document: null.StringFrom(p.Doc),

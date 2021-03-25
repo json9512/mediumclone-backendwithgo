@@ -21,14 +21,14 @@ func VerifyUser(pool *sql.DB) gin.HandlerFunc {
 		token, err := c.Cookie("access_token")
 
 		if err != nil {
-			api.HandleError(c, http.StatusUnauthorized, "Unauthorized request. Token not found.")
+			api.HandleError(c, http.StatusUnauthorized, "Token not found.")
 			c.Abort()
 			return
 		}
 
 		// JWT verification here
 		if err := ValidateToken(c, token, pool); err != nil {
-			api.HandleError(c, http.StatusUnauthorized, "Unauthorized request. Token invalid.")
+			api.HandleError(c, http.StatusUnauthorized, "Token invalid.")
 			c.Abort()
 			return
 		}
@@ -49,6 +49,7 @@ func VerifyToken(t string) (*jwt.Token, error) {
 	})
 
 	if err != nil {
+		fmt.Println(err)
 		return nil, err
 	}
 
@@ -71,22 +72,22 @@ func ValidateToken(c context.Context, t string, pool *sql.DB) error {
 	email, ok := claims["user_email"]
 
 	if !ok {
-		return fmt.Errorf("User email not valid")
+		return fmt.Errorf("User email not valid.")
 	}
 
 	tokenExp, ok := claims["exp"].(float64)
 	if !ok {
-		return fmt.Errorf("Expiry date not valid")
+		return fmt.Errorf("Expiry date not valid.")
 	}
 
 	user, err := db.GetUserByEmail(c, pool, email.(string))
 	if err != nil {
-		return fmt.Errorf("User does not exist in DB")
+		return fmt.Errorf("User does not exist in DB.")
 	}
 
-	if user.TokenExpiresIn != int64(tokenExp) {
+	if user.TokenExpiresIn.Int64 != int64(tokenExp) {
 		// This should refresh the token for the user
-		return fmt.Errorf("Token expired")
+		return fmt.Errorf("Token expired.")
 	}
 
 	return nil

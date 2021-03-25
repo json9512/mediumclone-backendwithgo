@@ -21,7 +21,7 @@ func Init(l *logrus.Logger) *Container {
 	var container Container
 
 	psqlInfo := fmt.Sprintf(
-		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
 		config.DBHost,
 		config.DBPort,
 		config.DBUsername,
@@ -42,7 +42,7 @@ func Init(l *logrus.Logger) *Container {
 // Migrate performs db migration located in db/migration dir
 func (c *Container) Migrate(method string) error {
 	migrations := &migrate.FileMigrationSource{
-		Dir: "db/migration",
+		Dir: "db/migrations",
 	}
 
 	migrationMethod := migrate.Up
