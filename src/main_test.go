@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"os"
 	"testing"
 
@@ -13,23 +14,25 @@ import (
 
 func createTestContainer(t *testing.T) *tests.Container {
 	config.ReadVariablesFromFile(".env")
-	// Setup test_db for local use only
 	logger := config.InitLogger()
 	container := db.Init(logger)
+	container.Migrate("up")
 
 	router := SetupRouter("test", logger, container.DB)
 	g := goblin.Goblin(t)
 
 	testContainer := tests.Container{
-		Goblin: g,
-		Router: router,
-		DB:     container.DB,
+		Goblin:  g,
+		Router:  router,
+		DB:      container.DB,
+		Context: context.Background(),
 	}
 	return &testContainer
 }
 
 func Test(t *testing.T) {
 	testContainer := createTestContainer(t)
+	defer testContainer.DB.Exec("DROP TABLE gorp_migrations;DROP TABLE users;DROP TABLE posts;")
 
 	tests.RunPostsTests(testContainer)
 	tests.RunUsersTests(testContainer)

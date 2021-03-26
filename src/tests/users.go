@@ -103,7 +103,7 @@ func testCreatUser(c *Container) {
 			noPassword,
 			"POST",
 			"/users",
-			"User registration failed. Invalid credential.",
+			"Invalid credential.",
 			http.StatusBadRequest,
 			nil,
 		})
@@ -118,7 +118,7 @@ func testCreatUser(c *Container) {
 			noEmail,
 			"POST",
 			"/users",
-			"User registration failed. Invalid credential.",
+			"Invalid credential.",
 			http.StatusBadRequest,
 			nil,
 		})
@@ -133,7 +133,7 @@ func testCreatUser(c *Container) {
 			invalidEmail,
 			"POST",
 			"/users",
-			"User registration failed. Invalid credential.",
+			"Invalid credential.",
 			http.StatusBadRequest,
 			nil,
 		})
@@ -148,7 +148,7 @@ func testCreatUser(c *Container) {
 			noCred,
 			"POST",
 			"/users",
-			"User registration failed. Invalid credential.",
+			"Invalid credential.",
 			http.StatusBadRequest,
 			nil,
 		})
@@ -163,7 +163,7 @@ func testCreatUser(c *Container) {
 			invalidData,
 			"POST",
 			"/users",
-			"User registration failed. Invalid data type.",
+			"Invalid data type.",
 			http.StatusBadRequest,
 			nil,
 		})
@@ -192,12 +192,9 @@ func testUpdateUser(c *Container) {
 		})
 
 		c.Goblin.Assert(result.Code).Eql(http.StatusOK)
-
-		updatedUser, err := c.DB.GetUserByID(testUser.ID)
-
-		c.Goblin.Assert(err).IsNil()
+		updatedUser := getUserFromDBByID(c, testUser.ID)
 		c.Goblin.Assert(values["id"]).Eql(updatedUser.ID)
-		c.Goblin.Assert(values["email"]).Eql(updatedUser.Email)
+		c.Goblin.Assert(values["email"]).Eql(updatedUser.Email.String)
 	})
 
 	c.Goblin.It("PUT /users with invalid ID should return error", func() {
@@ -215,7 +212,7 @@ func testUpdateUser(c *Container) {
 			values,
 			"PUT",
 			"/users",
-			"User update failed. Invalid ID.",
+			"Invalid ID.",
 			http.StatusBadRequest,
 			cookies,
 		})
@@ -235,7 +232,7 @@ func testUpdateUser(c *Container) {
 			values,
 			"PUT",
 			"/users",
-			"User update failed. No new data",
+			"No new data",
 			http.StatusBadRequest,
 			cookies,
 		})
@@ -256,7 +253,7 @@ func testUpdateUser(c *Container) {
 			values,
 			"PUT",
 			"/users",
-			"User update failed. Invalid email",
+			"Invalid email",
 			http.StatusBadRequest,
 			cookies,
 		})
@@ -277,7 +274,7 @@ func testUpdateUser(c *Container) {
 			values,
 			"PUT",
 			"/users",
-			"User update failed. Invalid data type.",
+			"Invalid data type.",
 			http.StatusBadRequest,
 			cookies,
 		})
@@ -299,7 +296,7 @@ func testUpdateUser(c *Container) {
 			values,
 			"PUT",
 			"/users",
-			"Unauthorized request. Token invalid.",
+			"Token invalid.",
 			http.StatusUnauthorized,
 			cookies,
 		})
@@ -315,7 +312,7 @@ func testUpdateUser(c *Container) {
 			values,
 			"PUT",
 			"/users",
-			"Unauthorized request. Token not found.",
+			"Token not found.",
 			http.StatusUnauthorized,
 			nil,
 		})
@@ -335,7 +332,7 @@ func testDeleteUser(c *Container) {
 			nil,
 			"DELETE",
 			reqURL,
-			"Invalid ID",
+			"Invalid ID.",
 			http.StatusBadRequest,
 			cookies,
 		})
@@ -354,7 +351,7 @@ func testDeleteUser(c *Container) {
 			nil,
 			"DELETE",
 			reqURL,
-			"Unauthorized request. Token invalid.",
+			"Token invalid.",
 			http.StatusUnauthorized,
 			cookies,
 		})
@@ -367,7 +364,7 @@ func testDeleteUser(c *Container) {
 			nil,
 			"DELETE",
 			reqURL,
-			"Unauthorized request. Token not found.",
+			"Token not found.",
 			http.StatusUnauthorized,
 			nil,
 		})
