@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"github.com/json9512/mediumclone-backendwithgo/src/db"
 )
 
 // testGetPosts tests /posts to retrieve all posts
@@ -36,6 +38,7 @@ func testGetPosts(c *Container) {
 
 // testGetPost tests /posts/:id to retrieve single post with id
 func testGetPost(c *Container) {
+	// Need to make a post before
 	c.Goblin.It("GET /posts/:id should return post with given id", func() {
 		body := Data{
 			"result": "5",
@@ -48,7 +51,7 @@ func testGetPost(c *Container) {
 			reqBody: nil,
 			cookie:  nil,
 		})
-
+		fmt.Println(result)
 		c.Goblin.Assert(result.Code).Eql(http.StatusOK)
 
 		var response map[string]string
@@ -206,13 +209,11 @@ func testCreatePost(c *Container) {
 // testUpdatePost tests /posts to update a post in database
 func testUpdatePost(c *Container) {
 	c.Goblin.It("PUT /posts should update a post in database", func() {
-		_ = createTestUser(c, "test-update-post@test.com", "test-pwd")
-		loginResult := login(c, "test-update-post@test.com", "test-pwd")
-		c.Goblin.Assert(loginResult.Code).Eql(http.StatusOK)
-		cookies := loginResult.Result().Cookies()
-		postID := createSamplePost(c, "sample-post", cookies)
+		u := userInfo{"test-update-post@test.com", "test-pwd", ""}
+		sample := db.Post{Doc: "sample-post"}
+		post, cookies, _ := createSamplePost(c, &sample, &u)
 
-		values := Data{"id": postID, "doc": "something-changed"}
+		values := Data{"id": post.ID, "doc": "something-changed"}
 		result := MakeRequest(&reqData{
 			handler: c.Router,
 			method:  "PUT",
@@ -225,13 +226,11 @@ func testUpdatePost(c *Container) {
 	})
 
 	c.Goblin.It("PUT /posts with no new content should return error", func() {
-		_ = createTestUser(c, "test-update-post-no-content@test.com", "test-pwd")
-		loginResult := login(c, "test-update-post-no-content@test.com", "test-pwd")
-		c.Goblin.Assert(loginResult.Code).Eql(http.StatusOK)
-		cookies := loginResult.Result().Cookies()
-		postID := createSamplePost(c, "sample-post", cookies)
+		u := userInfo{"test-update-post-no-content@test.com", "test-pwd", ""}
+		sample := db.Post{Doc: ""}
+		post, cookies, _ := createSamplePost(c, &sample, &u)
 
-		values := Data{"id": postID}
+		values := Data{"id": post.ID}
 		c.makeInvalidReq(&errorTestCase{
 			values,
 			"PUT",
@@ -243,37 +242,28 @@ func testUpdatePost(c *Container) {
 	})
 
 	c.Goblin.It("PUT /posts with invalid user should return error", func() {
-		// takes too long
-		_ = createTestUser(c, "test-update-post-wrong-author@test.com", "test-pwd")
-		loginResult := login(c, "test-update-post-wrong-author@test.com", "test-pwd")
-		c.Goblin.Assert(loginResult.Code).Eql(http.StatusOK)
-		cookies := loginResult.Result().Cookies()
-		postID := createSamplePost(c, "sample-posts", cookies)
+		u := userInfo{"test-update-post-wrong-author@test.com", "test-pwd", ""}
+		sample := db.Post{Doc: ""}
+		post, _, _ := createSamplePost(c, &sample, &u)
+		loginResult := login(c, "test-update-post-no-content@test.com", "test-pwd")
 
-		_ = createTestUser(c, "test-update-post-wrong-author2@test.com", "test-pwd")
-		loginResult = login(c, "test-update-post-wrong-author2@test.com", "test-pwd")
-		c.Goblin.Assert(loginResult.Code).Eql(http.StatusOK)
-		cookies = loginResult.Result().Cookies()
-
-		values := Data{"id": postID, "doc": "you are not the author"}
+		values := Data{"id": post.ID, "doc": "you are not the author"}
 		c.makeInvalidReq(&errorTestCase{
 			values,
 			"PUT",
 			"/posts",
 			"User is not the author of the post",
 			http.StatusBadRequest,
-			cookies,
+			loginResult.Result().Cookies(),
 		})
 	})
 
 	c.Goblin.It("PUT /posts with invalid post ID should return error", func() {
-		_ = createTestUser(c, "test-update-post-id@test.com", "test-pwd")
-		loginResult := login(c, "test-update-post-id@test.com", "test-pwd")
-		c.Goblin.Assert(loginResult.Code).Eql(http.StatusOK)
-		cookies := loginResult.Result().Cookies()
-		postID := createSamplePost(c, "sample-post", cookies)
+		u := userInfo{"test-update-post-id@test.com", "test-pwd", ""}
+		sample := db.Post{Doc: ""}
+		post, cookies, _ := createSamplePost(c, &sample, &u)
 
-		values := Data{"id": postID + 3}
+		values := Data{"id": post.ID + 3}
 		c.makeInvalidReq(&errorTestCase{
 			values,
 			"PUT",
@@ -285,11 +275,9 @@ func testUpdatePost(c *Container) {
 	})
 
 	c.Goblin.It("PUT /posts with no post ID should return error", func() {
-		_ = createTestUser(c, "test-update-nopost-id@test.com", "test-pwd")
-		loginResult := login(c, "test-update-nopost-id@test.com", "test-pwd")
-		c.Goblin.Assert(loginResult.Code).Eql(http.StatusOK)
-		cookies := loginResult.Result().Cookies()
-		_ = createSamplePost(c, "sample-post", cookies)
+		u := userInfo{"test-update-nopost-id@test.com", "test-pwd", ""}
+		sample := db.Post{Doc: ""}
+		_, cookies, _ := createSamplePost(c, &sample, &u)
 
 		values := Data{"doc": "yahoo", "tags": "internet of things"}
 		c.makeInvalidReq(&errorTestCase{
@@ -319,13 +307,11 @@ func testUpdatePost(c *Container) {
 	})
 
 	c.Goblin.It("PUT /posts with invalid data type should return error", func() {
-		_ = createTestUser(c, "test-update-datatype@test.com", "test-pwd")
-		loginResult := login(c, "test-update-datatype@test.com", "test-pwd")
-		c.Goblin.Assert(loginResult.Code).Eql(http.StatusOK)
-		cookies := loginResult.Result().Cookies()
-		postID := createSamplePost(c, "sample-post", cookies)
+		u := userInfo{"test-update-datatype@test.com", "test-pwd", ""}
+		sample := db.Post{Doc: ""}
+		post, cookies, _ := createSamplePost(c, &sample, &u)
 
-		values := Data{"id": postID, "likes": "abs"}
+		values := Data{"id": post.ID, "likes": "abs"}
 		c.makeInvalidReq(&errorTestCase{
 			values,
 			"PUT",
@@ -340,16 +326,12 @@ func testUpdatePost(c *Container) {
 // testDeletePost tests /posts/:id to delete a post in database
 func testDeletePost(c *Container) {
 	c.Goblin.It("DELETE /posts/:id should delete a post with the given ID", func() {
-		_ = createTestUser(c, "test-delete-post@test.com", "test-pwd")
-		loginResult := login(c, "test-delete-post@test.com", "test-pwd")
-		c.Goblin.Assert(loginResult.Code).Eql(http.StatusOK)
-		cookies := loginResult.Result().Cookies()
-
-		// Create sample post
-		postID := createSamplePost(c, "some-content", cookies)
+		u := userInfo{"test-delete-post@test.com", "test-pwd", ""}
+		sample := db.Post{Doc: ""}
+		post, cookies, _ := createSamplePost(c, &sample, &u)
 
 		// Delete
-		url := fmt.Sprintf("/posts/%d", postID)
+		url := fmt.Sprintf("/posts/%d", post.ID)
 
 		result := MakeRequest(&reqData{
 			handler: c.Router,

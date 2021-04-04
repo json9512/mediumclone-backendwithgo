@@ -2,7 +2,6 @@ package api
 
 import (
 	"database/sql"
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -43,7 +42,6 @@ func RegisterUser(pool *sql.DB) gin.HandlerFunc {
 		}
 		user := bindFormToUser(&userCred)
 		if user, err := db.InsertUser(c, pool, user); err != nil {
-			fmt.Println(err)
 			HandleError(c, http.StatusInternalServerError, "Saving data to database failed.")
 		} else {
 			c.JSON(http.StatusOK, serializeUser(user))

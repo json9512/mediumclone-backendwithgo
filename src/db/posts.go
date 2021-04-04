@@ -60,7 +60,7 @@ func GetLikesForPost(ctx context.Context, db *sql.DB, id int64) (int, error) {
 
 // InsertPost inserts new post into db with given Post struct
 func InsertPost(ctx context.Context, db *sql.DB, p *Post) (*models.Post, error) {
-	post := bindDataToPostModel(p)
+	post := BindDataToPostModel(p)
 	if err := post.Insert(ctx, db, boil.Infer()); err != nil {
 		return nil, err
 	}
@@ -111,7 +111,7 @@ func updatePostModel(post *models.Post, p *Post) {
 	}
 }
 
-func bindDataToPostModel(p *Post) *models.Post {
+func BindDataToPostModel(p *Post) *models.Post {
 	fmt.Println(p)
 	return &models.Post{
 		Author:   null.StringFrom(p.Author),

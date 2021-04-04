@@ -3,7 +3,6 @@ package db
 import (
 	"context"
 	"database/sql"
-	"fmt"
 
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
@@ -38,8 +37,7 @@ func GetUserByEmail(ctx context.Context, db *sql.DB, email string) (*models.User
 
 // InsertUser creates a new user in db
 func InsertUser(ctx context.Context, db *sql.DB, u *User) (*models.User, error) {
-	user := bindDataToUserModel(u)
-	fmt.Println(user)
+	user := BindDataToUserModel(u)
 
 	if err := user.Insert(ctx, db, boil.Infer()); err != nil {
 		return nil, err
@@ -94,7 +92,7 @@ func updateUserModel(user *models.User, u *User) {
 	}
 }
 
-func bindDataToUserModel(u *User) *models.User {
+func BindDataToUserModel(u *User) *models.User {
 	return &models.User{
 		Email:          null.StringFrom(u.Email),
 		PWD:            null.StringFrom(u.Password),

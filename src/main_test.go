@@ -14,6 +14,7 @@ import (
 
 func createTestContainer(t *testing.T) *tests.Container {
 	config.ReadVariablesFromFile(".env")
+	envVars := config.LoadEnvVars()
 	logger := config.InitLogger()
 	container := db.Init(logger)
 	container.Migrate("up")
@@ -26,6 +27,7 @@ func createTestContainer(t *testing.T) *tests.Container {
 		Router:  router,
 		DB:      container.DB,
 		Context: context.Background(),
+		Env:     envVars,
 	}
 	return &testContainer
 }

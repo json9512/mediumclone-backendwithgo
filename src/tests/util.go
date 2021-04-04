@@ -7,11 +7,15 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 
 	"github.com/franela/goblin"
 	"github.com/gin-gonic/gin"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 
+	"github.com/json9512/mediumclone-backendwithgo/src/config"
+	"github.com/json9512/mediumclone-backendwithgo/src/db"
 	"github.com/json9512/mediumclone-backendwithgo/src/middlewares"
 	"github.com/json9512/mediumclone-backendwithgo/src/models"
 )
@@ -25,6 +29,7 @@ type Container struct {
 	Router  *gin.Engine
 	DB      *sql.DB
 	Context context.Context
+	Env     *config.EnvVars
 }
 
 type reqData struct {
@@ -42,6 +47,12 @@ type errorTestCase struct {
 	errMsg  string
 	errCode int
 	cookies []*http.Cookie
+}
+
+type userInfo struct {
+	email        string
+	pwd          string
+	access_token string
 }
 
 // MakeRequest returns the response after making a HTTP request
@@ -159,21 +170,26 @@ func (c Container) makeInvalidReq(e *errorTestCase) {
 	c.Goblin.Assert(response["message"]).Eql(e.errMsg)
 }
 
-func createSamplePost(c *Container, doc string, cookies []*http.Cookie) uint {
-	values := Data{"doc": doc}
+func createSamplePost(c *Container, p *db.Post, u *userInfo) (*models.Post, []*http.Cookie, error) {
+	// use transaction
+	tx, err := c.DB.BeginTx(c.Context, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer tx.Commit()
 
-	result := MakeRequest(&reqData{
-		handler: c.Router,
-		method:  "POST",
-		path:    "/posts",
-		reqBody: &values,
-		cookie:  cookies,
-	})
-	c.Goblin.Assert(result.Code).Eql(http.StatusOK)
-	var response map[string]interface{}
-	_ = json.Unmarshal([]byte(result.Body.Bytes()), &response)
+	user := db.User{u.email, u.pwd, 0}
+	userRecord := db.BindDataToUserModel(&user)
+	if err := userRecord.Insert(c.Context, tx, boil.Infer()); err != nil {
+		return nil, nil, err
+	}
+	p.Author = strings.Split(userRecord.Email.String, "@")[0]
 
-	id, exists := response["id"]
-	c.Goblin.Assert(exists).IsTrue()
-	return uint(id.(float64))
+	postRecord := db.BindDataToPostModel(p)
+	if err := postRecord.Insert(c.Context, tx, boil.Infer()); err != nil {
+		return nil, nil, err
+	}
+
+	loginResult := login(c, u.email, u.pwd)
+	return postRecord, loginResult.Result().Cookies(), nil
 }

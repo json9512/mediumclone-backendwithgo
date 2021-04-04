@@ -223,7 +223,7 @@ func testUpdateUser(c *Container) {
 		loginResult := login(c, "test-put-user2@test.com", "test-pwd")
 		c.Goblin.Assert(loginResult.Code).Eql(http.StatusOK)
 		cookies := loginResult.Result().Cookies()
-
+		fmt.Println("test")
 		values := Data{
 			"id": 1,
 		}
@@ -253,7 +253,7 @@ func testUpdateUser(c *Container) {
 			values,
 			"PUT",
 			"/users",
-			"Invalid email",
+			"Invalid data.",
 			http.StatusBadRequest,
 			cookies,
 		})

@@ -69,7 +69,7 @@ func Login(pool *sql.DB, env *config.EnvVars) gin.HandlerFunc {
 			return
 		}
 
-		at, err := createAccessToken(user.Email.String, env.JWTSecret, expiresIn)
+		at, err := CreateAccessToken(user.Email.String, env.JWTSecret, expiresIn)
 		if err != nil {
 			HandleError(c, http.StatusInternalServerError, "Login failed. Unable to create token.")
 		}
@@ -79,7 +79,7 @@ func Login(pool *sql.DB, env *config.EnvVars) gin.HandlerFunc {
 	}
 }
 
-func createAccessToken(userEmail, secret string, expiryDate int64) (string, error) {
+func CreateAccessToken(userEmail, secret string, expiryDate int64) (string, error) {
 	claims := jwt.MapClaims{}
 	claims["authorized"] = true
 	claims["user_email"] = userEmail
