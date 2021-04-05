@@ -1,52 +1,42 @@
 package api
 
 import (
+	"context"
 	"database/sql"
-	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 
 	"github.com/json9512/mediumclone-backendwithgo/src/db"
+	"github.com/json9512/mediumclone-backendwithgo/src/models"
 )
+
+type queryChecker struct {
+	tagsExist    bool
+	authorExists bool
+}
 
 // GetPosts returns all posts
 // optional: with tags or/and author
 func GetPosts(pool *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-
+		queryChecker := &queryChecker{false, false}
 		queries := c.Request.URL.Query()
 
 		if checkIfQueriesExist(queries) {
-			// extract tags
-			// fmt.Println(queries)
-			// 3 condition
-			// 1. only tags exist
-			tags, tagsExist := queries["tags"]
-			if tagsExist && strings.Contains(tags[0], ",") {
-				tags = strings.Split(tags[0], ",")
-			}
-			// 2. only author exists (atmost 1)
-			var author string
-			rawAuthor, _ := queries["author"]
-			if len(rawAuthor) > 0 {
-				author = rawAuthor[0]
-			}
-			// 3. both exist
-			if len(tags) > 0 && author != "" {
-				// 	query, _ := db.GetPostsByTags(tags)
-				// 	fmt.Println(query)
-				//
-			}
-			posts, err := db.GetPosts(c, pool)
-			if err != nil {
-				HandleError(c, http.StatusBadRequest, "No posts in db")
-			}
+			tags, tagsExist := checkIfTagsExist(queries)
+			author, authorExists := checkIfAuthorExists(queries)
+			queryChecker.authorExists = authorExists
+			queryChecker.tagsExist = tagsExist
+			posts, err := executeQuery(c, pool, tags, author, queryChecker)
 
-			c.JSON(200, &response{
-				"result": posts,
-			})
+			if err != nil || posts == nil {
+				HandleError(c, http.StatusBadRequest, "No posts in db")
+			} else {
+				c.JSON(200, serializePosts(*posts))
+			}
 		} else {
 			c.JSON(200, &response{
 				"result": []string{"test", "sample", "post"},
@@ -69,9 +59,7 @@ func GetPost(pool *sql.DB) gin.HandlerFunc {
 			HandleError(c, http.StatusBadRequest, "Invalid Request.")
 			return
 		} else {
-			c.JSON(http.StatusOK, &response{
-				"result": post, // need serialize
-			})
+			c.JSON(http.StatusOK, serializePost(post))
 		}
 	}
 }
@@ -90,7 +78,7 @@ func GetLikesForPost(pool *sql.DB) gin.HandlerFunc {
 		if likes, err := db.GetLikesForPost(c, pool, id); err != nil {
 			HandleError(c, http.StatusBadRequest, "Invalid Request.")
 		} else {
-			c.JSON(http.StatusOK, likes) // need serialize of some sort
+			c.JSON(http.StatusOK, &response{"likes": likes})
 		}
 	}
 }
@@ -132,7 +120,7 @@ func UpdatePost(pool *sql.DB) gin.HandlerFunc {
 			HandleError(c, http.StatusBadRequest, "Invalid request data")
 			return
 		}
-		fmt.Println(reqBody)
+
 		if err := validateStruct(&reqBody); err != nil {
 			HandleError(c, http.StatusBadRequest, "ID required")
 			return
@@ -180,4 +168,39 @@ func DeletePost(pool *sql.DB) gin.HandlerFunc {
 			c.Status(http.StatusOK)
 		}
 	}
+}
+
+func checkIfTagsExist(q url.Values) (*[]string, bool) {
+	tags, tagsExist := q["tags"]
+	if !tagsExist {
+		return nil, false
+	}
+
+	if tagsExist && strings.Contains(tags[0], ",") {
+		tags = strings.Split(tags[0], ",")
+		return &tags, true
+	} else {
+		return &tags, true
+	}
+}
+
+func checkIfAuthorExists(q url.Values) (*string, bool) {
+	var author string
+	rawAuthor, _ := q["author"]
+	if len(rawAuthor) > 0 {
+		author = rawAuthor[0]
+		return &author, true
+	}
+	return nil, false
+}
+
+func executeQuery(c context.Context, pool *sql.DB, tags *[]string, author *string, checker *queryChecker) (*models.PostSlice, error) {
+	if checker.authorExists && checker.tagsExist {
+		return db.GetPostsByTagsAndFilterByAuthor(c, pool, *tags, *author)
+	} else if checker.authorExists {
+		return db.GetPostsByAuthor(c, pool, *author)
+	} else if checker.tagsExist {
+		return db.GetPostsByTags(c, pool, *tags)
+	}
+	return nil, nil
 }

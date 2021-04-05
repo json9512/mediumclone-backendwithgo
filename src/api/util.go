@@ -77,6 +77,13 @@ func serializePost(p *models.Post) response {
 	}
 }
 
+func serializePosts(posts []*models.Post) response {
+	return response{
+		"totalCount": len(posts),
+		"posts":      posts,
+	}
+}
+
 func extractData(c *gin.Context, reqBody interface{}) error {
 	if err := c.BindJSON(&reqBody); err != nil {
 		return err

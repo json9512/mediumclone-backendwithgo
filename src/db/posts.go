@@ -3,8 +3,8 @@ package db
 import (
 	"context"
 	"database/sql"
-	"fmt"
 
+	"github.com/lib/pq"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -31,6 +31,33 @@ func GetPosts(ctx context.Context, db *sql.DB) (*models.PostSlice, error) {
 	return &posts, nil
 }
 
+// GetPostsByTags returns posts that have a tag listed in the tags array
+func GetPostsByTags(ctx context.Context, db *sql.DB, tags []string) (*models.PostSlice, error) {
+	posts, err := models.Posts(qm.Where("tags @> ?", pq.Array(tags))).All(ctx, db)
+	if err != nil {
+		return nil, err
+	}
+	return &posts, err
+}
+
+func GetPostsByAuthor(ctx context.Context, db *sql.DB, author string) (*models.PostSlice, error) {
+	posts, err := models.Posts(qm.Where("author = ?", author)).All(ctx, db)
+	if err != nil {
+		return nil, err
+	}
+	return &posts, err
+}
+
+// GetPostsByTagsAndFilterByAuthor returns posts that have a tag listed in tags array
+// and are written by the author
+func GetPostsByTagsAndFilterByAuthor(ctx context.Context, db *sql.DB, tags []string, author string) (*models.PostSlice, error) {
+	posts, err := models.Posts(qm.Where("tags @> ? AND author = ?", pq.Array(tags), author)).All(ctx, db)
+	if err != nil {
+		return nil, err
+	}
+	return &posts, err
+}
+
 // GetPostByID returns a post by its ID
 func GetPostByID(ctx context.Context, db *sql.DB, id int64) (*models.Post, error) {
 	post, err := models.Posts(qm.Where("id = ?", id)).One(ctx, db)
@@ -38,15 +65,6 @@ func GetPostByID(ctx context.Context, db *sql.DB, id int64) (*models.Post, error
 		return nil, err
 	}
 	return post, nil
-}
-
-// GetPostsByTags returns posts that have a tag listed in the tags array
-func GetPostsByTags(ctx context.Context, db *sql.DB, tags []string) (*models.PostSlice, error) {
-	posts, err := models.Posts(qm.Where("tags @> ?", tags)).All(ctx, db)
-	if err != nil {
-		return nil, err
-	}
-	return &posts, err
 }
 
 // GetLikesForPost returns the like count for a post by the given ID
@@ -112,7 +130,6 @@ func updatePostModel(post *models.Post, p *Post) {
 }
 
 func BindDataToPostModel(p *Post) *models.Post {
-	fmt.Println(p)
 	return &models.Post{
 		Author:   null.StringFrom(p.Author),
 		Document: null.StringFrom(p.Doc),

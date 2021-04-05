@@ -5,9 +5,12 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"math/rand"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/franela/goblin"
 	"github.com/gin-gonic/gin"
@@ -178,7 +181,7 @@ func createSamplePost(c *Container, p *db.Post, u *userInfo) (*models.Post, []*h
 	}
 	defer tx.Commit()
 
-	user := db.User{u.email, u.pwd, 0}
+	user := db.User{Email: u.email, Password: u.pwd, TokenExpiresIn: 0}
 	userRecord := db.BindDataToUserModel(&user)
 	if err := userRecord.Insert(c.Context, tx, boil.Infer()); err != nil {
 		return nil, nil, err
@@ -192,4 +195,75 @@ func createSamplePost(c *Container, p *db.Post, u *userInfo) (*models.Post, []*h
 
 	loginResult := login(c, u.email, u.pwd)
 	return postRecord, loginResult.Result().Cookies(), nil
+}
+
+func createPostsWithRandomTags(c *Container) error {
+	tx, err := c.DB.BeginTx(c.Context, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Commit()
+
+	tags := []string{"hello", "nice", "space", "programming", "golang"}
+	authors := []string{"Denver", "Mike", "Jessie", "Joe", "Anna"}
+	documents := []string{"Something", "Someone", "Somewhere", "Somebody", "Whenever"}
+	counter := 0
+
+	for counter < 10 {
+		counter += 1
+
+		p := &db.Post{
+			Author: authors[createRandomIndex(len(authors)-1)],
+			Doc:    documents[createRandomIndex(len(documents)-1)],
+			Tags:   tags[:createRandomIndex(len(tags)-1)],
+		}
+		postRecord := db.BindDataToPostModel(p)
+		if err := postRecord.Insert(c.Context, tx, boil.Infer()); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func createRandomIndex(max int) int {
+	rand.Seed(time.Now().UnixNano())
+	min := 0
+	limit := max
+	return rand.Intn(limit-min+1) + min
+}
+
+func verifyCreatedPost(c *Container, result map[string]string, ogPost *db.Post) {
+	author, _ := result["author"]
+	comments, _ := result["comments"]
+	document, _ := result["doc"]
+	tags, _ := result["tags"]
+	likes, _ := result["likes"]
+	likes_int := 0
+	if likes != "" {
+		likes_int, _ = strconv.Atoi(likes)
+	}
+
+	c.Goblin.Assert(author).Eql(ogPost.Author)
+	c.Goblin.Assert(comments).Eql(ogPost.Comments)
+	c.Goblin.Assert(document).Eql(ogPost.Doc)
+	c.Goblin.Assert(likes_int).Eql(ogPost.Likes)
+	c.Goblin.Assert(tags).Eql(convertTagsToStr(ogPost.Tags))
+}
+
+func convertTagsToStr(tags []string) string {
+
+	if len(tags) == 0 {
+		return ""
+	}
+
+	temp := ""
+	for _, s := range tags {
+		temp += s + ","
+	}
+
+	if len(temp) == 0 {
+		return ""
+	}
+
+	return temp[:len(temp)-1]
 }
