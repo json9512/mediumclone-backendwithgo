@@ -173,7 +173,7 @@ func testLogout(c *Container) {
 
 // RunAuthTests runs test cases for /login and /logout
 func RunAuthTests(c *Container) {
-	c.Goblin.Describe("Authentication/Authorization test", func() {
+	c.Goblin.Describe("Authentication/Authorization", func() {
 		testLogin(c)
 		testLogout(c)
 	})

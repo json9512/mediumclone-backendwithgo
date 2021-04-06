@@ -72,7 +72,7 @@ func UpdateUser(pool *sql.DB) gin.HandlerFunc {
 
 		userID, _ := reqBody.ID.Int64()
 		if user, err := db.UpdateUser(c, pool, userID, user); err != nil {
-			HandleError(c, http.StatusInternalServerError, "Saving data to database failed.")
+			HandleError(c, http.StatusBadRequest, "Invalid request.")
 		} else {
 			c.JSON(http.StatusOK, serializeUser(user))
 		}

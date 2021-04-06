@@ -41,7 +41,7 @@ func Test(t *testing.T) {
 	tests.RunAuthTests(testContainer)
 
 	// Environment setup test
-	testContainer.Goblin.Describe("Environment variables test", func() {
+	testContainer.Goblin.Describe("Environment variables", func() {
 		testContainer.Goblin.It("os.Getenv('DB_NAME') should return $DB_NAME", func() {
 			env := os.Getenv("DB_NAME")
 			testContainer.Goblin.Assert(env).Equal("mediumclone")
