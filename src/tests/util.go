@@ -178,7 +178,7 @@ func loginAndCreatePost(c *Container, p *db.Post, u *userInfo) (*models.Post, []
 	if err != nil {
 		return nil, nil, err
 	}
-	defer tx.Commit()
+	defer tx.Rollback()
 
 	user := db.User{Email: u.email, Password: u.pwd, TokenExpiresIn: 0}
 	userRecord := db.BindDataToUserModel(&user)
@@ -192,6 +192,7 @@ func loginAndCreatePost(c *Container, p *db.Post, u *userInfo) (*models.Post, []
 		return nil, nil, err
 	}
 
+	tx.Commit()
 	loginResult := login(c, u.email, u.pwd)
 	return postRecord, loginResult.Result().Cookies(), nil
 }
@@ -287,4 +288,31 @@ func convertTagsToStr(tags []string) string {
 	}
 
 	return temp[:len(temp)-1]
+}
+
+func checkIfTagExistsInPosts(posts interface{}, tag string) bool {
+	for _, p := range posts.([]interface{}) {
+		temp := p.(map[string]interface{})["tags"]
+		postTags := temp.([]interface{})
+
+		for _, c := range postTags {
+			if c.(string) == tag {
+				return true
+			}
+		}
+		return false
+	}
+	return false
+}
+
+func checkIfAuthorExistsInPosts(posts interface{}, author string) bool {
+	for _, p := range posts.([]interface{}) {
+		temp := p.(map[string]interface{})["author"]
+		postAuthor := temp.(string)
+
+		if author == postAuthor {
+			return true
+		}
+	}
+	return false
 }

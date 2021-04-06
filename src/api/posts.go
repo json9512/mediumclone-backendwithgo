@@ -83,7 +83,7 @@ func CreatePost(pool *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		if err := validateStruct(&reqBody); err != nil && reqBody.Doc == "" {
+		if err := validateStruct(&reqBody); err != nil || reqBody.Doc == "" {
 			HandleError(c, http.StatusBadRequest, "ID, Doc required")
 			return
 		}
