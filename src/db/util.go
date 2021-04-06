@@ -1,4 +1,4 @@
-package dbtool
+package db
 
 import (
 	"database/sql/driver"

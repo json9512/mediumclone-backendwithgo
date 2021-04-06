@@ -1,26 +1,24 @@
 package api
 
 import (
+	"database/sql"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
-
-	"github.com/json9512/mediumclone-backendwithgo/src/dbtool"
+	"github.com/json9512/mediumclone-backendwithgo/src/db"
 )
 
 // RetrieveUser gets user by its ID from db
-func RetrieveUser(db *dbtool.DB) gin.HandlerFunc {
+func RetrieveUser(pool *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-
-		id := c.Param("id")
-		idInt, err := strconv.ParseInt(id, 10, 64)
-		if err != nil {
+		idStr := c.Param("id")
+		id := convertToInt(idStr)
+		if id < 1 {
 			HandleError(c, http.StatusBadRequest, "Invalid ID.")
 			return
 		}
 
-		if user, err := db.GetUserByID(idInt); err != nil {
+		if user, err := db.GetUserByID(c, pool, id); err != nil {
 			HandleError(c, http.StatusBadRequest, "User not found.")
 		} else {
 			c.JSON(http.StatusOK, serializeUser(user))
@@ -29,22 +27,22 @@ func RetrieveUser(db *dbtool.DB) gin.HandlerFunc {
 }
 
 // RegisterUser creates a new user in db
-func RegisterUser(db *dbtool.DB) gin.HandlerFunc {
+func RegisterUser(pool *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var userCred credential
+		var userCred userInsertForm
 		err := extractData(c, &userCred)
 		if err != nil {
-			HandleError(c, http.StatusBadRequest, "User registration failed. Invalid data type.")
+			HandleError(c, http.StatusBadRequest, "Invalid data type.")
 			return
 		}
 
 		if err := validateStruct(&userCred); err != nil {
-			HandleError(c, http.StatusBadRequest, "User registration failed. Invalid credential.")
+			HandleError(c, http.StatusBadRequest, "Invalid credential.")
 			return
 		}
-
-		if user, err := db.CreateUser(userCred.Email, userCred.Password); err != nil {
-			HandleError(c, http.StatusInternalServerError, "User update failed. Saving data to database failed.")
+		user := bindFormToUser(&userCred)
+		if user, err := db.InsertUser(c, pool, user); err != nil {
+			HandleError(c, http.StatusInternalServerError, "Saving data to database failed.")
 		} else {
 			c.JSON(http.StatusOK, serializeUser(user))
 		}
@@ -52,62 +50,49 @@ func RegisterUser(db *dbtool.DB) gin.HandlerFunc {
 }
 
 // UpdateUser updates the user with provided info
-func UpdateUser(db *dbtool.DB) gin.HandlerFunc {
+func UpdateUser(pool *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var reqBody userUpdateForm
 		err := extractData(c, &reqBody)
 		if err != nil {
-			HandleError(c, http.StatusBadRequest, "User update failed. Invalid data type.")
+			HandleError(c, http.StatusBadRequest, "Invalid data type.")
 			return
 		}
 
 		if err := validateStruct(reqBody); err != nil {
-			HandleError(c, http.StatusBadRequest, "User update failed. Invalid data.")
+			HandleError(c, http.StatusBadRequest, "Invalid data.")
 			return
 		}
 
-		query, err := createUserUpdateQuery(reqBody.ID, reqBody.Email, reqBody.Password, nil)
+		user, err := bindUpdateFormToUser(&reqBody)
 		if err != nil {
-			HandleError(c, http.StatusBadRequest, err.Error())
+			HandleError(c, http.StatusBadRequest, "Invalid data.")
 			return
 		}
 
-		if !db.CheckIfUserExists(query.ID) {
-			HandleError(c, http.StatusBadRequest, "User update failed. Invalid ID.")
-			return
-		}
-
-		if _, err := db.UpdateUser(&query); err != nil {
-			HandleError(c, http.StatusInternalServerError, "User update failed. Saving data to database failed.")
+		userID, _ := reqBody.ID.Int64()
+		if user, err := db.UpdateUser(c, pool, userID, user); err != nil {
+			HandleError(c, http.StatusBadRequest, "Invalid request.")
 		} else {
-			c.Status(http.StatusOK)
+			c.JSON(http.StatusOK, serializeUser(user))
 		}
 	}
 }
 
 // DeleteUser deletes the user in db with its ID
-func DeleteUser(db *dbtool.DB) gin.HandlerFunc {
+func DeleteUser(pool *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		id := c.Param("id")
-		idInt, err := strconv.ParseInt(id, 10, 64)
-
-		if err != nil || idInt < 1 {
-			HandleError(c, http.StatusBadRequest, "Invalid ID")
+		idStr := c.Param("id")
+		id := convertToInt(idStr)
+		if id < 1 {
+			HandleError(c, http.StatusBadRequest, "Invalid ID.")
 			return
 		}
 
-		if _, err := db.DeleteUserByID(idInt); err != nil {
-			HandleError(c, http.StatusBadRequest, "Deleting user data from database failed. User not found")
+		if _, err := db.DeleteUserByID(c, pool, id); err != nil {
+			HandleError(c, http.StatusBadRequest, "User not found.")
 		} else {
 			c.Status(http.StatusOK)
 		}
-
 	}
-}
-
-func extractData(c *gin.Context, reqBody interface{}) error {
-	if err := c.BindJSON(&reqBody); err != nil {
-		return err
-	}
-	return nil
 }

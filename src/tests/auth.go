@@ -14,172 +14,167 @@ type testCred struct {
 	expectedErr string
 }
 
-func testLogin(tb *TestToolbox) {
-	tb.Goblin.It("POST /login should attempt to login with the test user", func() {
+func testLogin(c *Container) {
+	c.Goblin.It("POST /login should attempt to login with the test user", func() {
 		// Create sample user before login request
-		user := createTestUser(tb, "login@test.com", "test-password")
+		user := createTestUser(c, "login@test.com", "test-password")
 
 		// Successful login should populate tokens
-		result := login(tb, user.Email, "test-password")
-		tb.Goblin.Assert(result.Code).Eql(http.StatusOK)
+		result := login(c, user.Email.String, "test-password")
+		c.Goblin.Assert(result.Code).Eql(http.StatusOK)
 
 		cookies := result.Result().Cookies()
 		accessTokenVal := cookies[0].Value
-		valid := middlewares.ValidateToken(accessTokenVal, tb.DB)
+		valid := middlewares.ValidateToken(c.Context, accessTokenVal, c.DB)
 
-		tb.Goblin.Assert(cookies).IsNotNil()
-		tb.Goblin.Assert(valid).IsNil()
+		c.Goblin.Assert(cookies).IsNotNil()
+		c.Goblin.Assert(valid).IsNil()
 	})
 
-	tb.Goblin.It("POST /login with invalid password should return error", func() {
+	c.Goblin.It("POST /login with invalid password should return error", func() {
 
-		createTestUser(tb, "test-pwd@test.com", "test-pwd")
-		result := login(tb, "test-pwd@test.com", "test-pwd-invalid")
-		tb.Goblin.Assert(result.Code).Eql(http.StatusBadRequest)
-		tb.Goblin.Assert(len(result.Result().Cookies())).Eql(0)
+		createTestUser(c, "test-pwd@test.com", "test-pwd")
+		result := login(c, "test-pwd@test.com", "test-pwd-invalid")
+		c.Goblin.Assert(result.Code).Eql(http.StatusBadRequest)
+		c.Goblin.Assert(len(result.Result().Cookies())).Eql(0)
 
 		// Extract error message from result
 		body := extractBody(result)
-		tb.Goblin.Assert(body["message"]).Eql("Authentication failed. Wrong password.")
+		c.Goblin.Assert(body["message"]).Eql("Wrong password.")
 	})
 
-	tb.Goblin.It("POST /login with invalid email should return error", func() {
-		createTestUser(tb, "test-email@test.com", "test-pwd")
-		result := login(tb, "test-email1313@test.com", "test-pwd")
-		tb.Goblin.Assert(result.Code).Eql(http.StatusBadRequest)
-		tb.Goblin.Assert(len(result.Result().Cookies())).Eql(0)
+	c.Goblin.It("POST /login with invalid email should return error", func() {
+		createTestUser(c, "test-email@test.com", "test-pwd")
+		result := login(c, "test-email1313@test.com", "test-pwd")
+		c.Goblin.Assert(result.Code).Eql(http.StatusBadRequest)
+		c.Goblin.Assert(len(result.Result().Cookies())).Eql(0)
 
 		// Extract error message from result
 		body := extractBody(result)
-		tb.Goblin.Assert(body["message"]).Eql("Authentication failed. User does not exist.")
+		c.Goblin.Assert(body["message"]).Eql("User does not exist.")
 	})
 
-	tb.Goblin.It("POST /login with invalid email format should return error", func() {
-		createTestUser(tb, "test-email-2@test.com", "test-pwd")
-		result := login(tb, "test-email-2test.com", "test-pwd")
-		tb.Goblin.Assert(result.Code).Eql(http.StatusBadRequest)
-		tb.Goblin.Assert(len(result.Result().Cookies())).Eql(0)
+	c.Goblin.It("POST /login with invalid email format should return error", func() {
+		createTestUser(c, "test-email-2@test.com", "test-pwd")
+		result := login(c, "test-email-2test.com", "test-pwd")
+		c.Goblin.Assert(result.Code).Eql(http.StatusBadRequest)
+		c.Goblin.Assert(len(result.Result().Cookies())).Eql(0)
 
 		// Extract error message from result
 		body := extractBody(result)
-		tb.Goblin.Assert(body["message"]).Eql("Authentication failed. Invalid data type.")
+		c.Goblin.Assert(body["message"]).Eql("Invalid data type.")
 	})
 }
 
-func testLogout(tb *TestToolbox) {
-	tb.Goblin.It("POST /logout should invalidate token for the user", func() {
-		user := createTestUser(tb, "logout@test.com", "test-password")
-		loginResult := login(tb, "logout@test.com", "test-password")
-		tb.Goblin.Assert(loginResult.Code).Eql(http.StatusOK)
+func testLogout(c *Container) {
+	c.Goblin.It("POST /logout should invalidate token for the user", func() {
+		user := createTestUser(c, "logout@test.com", "test-password")
+		loginResult := login(c, "logout@test.com", "test-password")
+		c.Goblin.Assert(loginResult.Code).Eql(http.StatusOK)
 
 		cookies := loginResult.Result().Cookies()
 		accessTokenVal := cookies[0].Value
-		valid := middlewares.ValidateToken(accessTokenVal, tb.DB)
-		tb.Goblin.Assert(cookies).IsNotNil()
-		tb.Goblin.Assert(valid).IsNil()
+		valid := middlewares.ValidateToken(c.Context, accessTokenVal, c.DB)
+		c.Goblin.Assert(cookies).IsNotNil()
+		c.Goblin.Assert(valid).IsNil()
 
 		// Test logout from here
-		logoutResult := logout(tb, user.Email, cookies)
+		logoutResult := logout(c, user.Email.String, cookies)
 
-		tb.Goblin.Assert(logoutResult.Code).Eql(http.StatusOK)
+		c.Goblin.Assert(logoutResult.Code).Eql(http.StatusOK)
 
 		cookies = logoutResult.Result().Cookies()
 		accessTokenVal = cookies[0].Value
 
-		tb.Goblin.Assert(cookies).IsNotNil()
-		tb.Goblin.Assert(accessTokenVal).Eql("")
+		c.Goblin.Assert(cookies).IsNotNil()
+		c.Goblin.Assert(accessTokenVal).Eql("")
 
 		// Query the db and check if token is removed
-		userFromDB, err := tb.DB.GetUserByEmail(user.Email)
-		tb.Goblin.Assert(err).IsNil()
-		tb.Goblin.Assert(userFromDB.TokenExpiresIn).Eql(user.TokenExpiresIn)
+		userDB := getUserFromDBByEmail(c, user.Email.String)
+		c.Goblin.Assert(userDB.TokenExpiresIn).Eql(user.TokenExpiresIn)
 
 	})
 
-	tb.Goblin.It("POST /logout with invalid email format should return error", func() {
-		createTestUser(tb, "test1422@test.com", "test-pwd")
-		loginResult := login(tb, "test1422@test.com", "test-pwd")
-		tb.Goblin.Assert(loginResult.Code).Eql(http.StatusOK)
-		testAccessToken(tb, loginResult)
+	c.Goblin.It("POST /logout with invalid email format should return error", func() {
+		createTestUser(c, "test1422@test.com", "test-pwd")
+		loginResult := login(c, "test1422@test.com", "test-pwd")
+		c.Goblin.Assert(loginResult.Code).Eql(http.StatusOK)
+		testAccessToken(c, loginResult)
 		cookies := loginResult.Result().Cookies()
 
-		logoutResult := logout(tb, "testtest.com", cookies)
-		tb.Goblin.Assert(logoutResult.Code).Eql(http.StatusBadRequest)
+		logoutResult := logout(c, "testtest.com", cookies)
+		c.Goblin.Assert(logoutResult.Code).Eql(http.StatusBadRequest)
 
-		userFromDB, err := tb.DB.GetUserByEmail("test1422@test.com")
-		tb.Goblin.Assert(err).IsNil()
-		tb.Goblin.Assert(userFromDB.TokenExpiresIn).IsNotNil()
+		userDB := getUserFromDBByEmail(c, "test1422@test.com")
+		c.Goblin.Assert(userDB.TokenExpiresIn).IsNotNil()
 
 		// Extract error message from result
 		body := extractBody(logoutResult)
-		tb.Goblin.Assert(body["message"]).Eql("Logout failed. User does not exist.")
+		c.Goblin.Assert(body["message"]).Eql("User does not exist.")
 
 	})
 
-	tb.Goblin.It("POST /logout with invalid email should return error", func() {
-		createTestUser(tb, "test131@test.com", "test-pwd")
-		loginResult := login(tb, "test131@test.com", "test-pwd")
-		tb.Goblin.Assert(loginResult.Code).Eql(http.StatusOK)
-		testAccessToken(tb, loginResult)
+	c.Goblin.It("POST /logout with invalid email should return error", func() {
+		createTestUser(c, "test131@test.com", "test-pwd")
+		loginResult := login(c, "test131@test.com", "test-pwd")
+		c.Goblin.Assert(loginResult.Code).Eql(http.StatusOK)
+		testAccessToken(c, loginResult)
 		cookies := loginResult.Result().Cookies()
 
-		logoutResult := logout(tb, "test133@test.com", cookies)
-		tb.Goblin.Assert(logoutResult.Code).Eql(http.StatusBadRequest)
+		logoutResult := logout(c, "test133@test.com", cookies)
+		c.Goblin.Assert(logoutResult.Code).Eql(http.StatusBadRequest)
 
-		userFromDB, err := tb.DB.GetUserByEmail("test131@test.com")
-		tb.Goblin.Assert(err).IsNil()
-		tb.Goblin.Assert(userFromDB.TokenExpiresIn).IsNotNil()
+		userDB := getUserFromDBByEmail(c, "test131@test.com")
+		c.Goblin.Assert(userDB.TokenExpiresIn).IsNotNil()
 
 		// Extract error message from result
 		body := extractBody(logoutResult)
-		tb.Goblin.Assert(body["message"]).Eql("Logout failed. User does not exist.")
+		c.Goblin.Assert(body["message"]).Eql("User does not exist.")
 
 	})
 
-	tb.Goblin.It("POST /logout with invalid cookie should return error", func() {
-		user := createTestUser(tb, "logoutinvalidcookie@test.com", "test-password")
-		loginResult := login(tb, "logoutinvalidcookie@test.com", "test-password")
-		tb.Goblin.Assert(loginResult.Code).Eql(http.StatusOK)
-		testAccessToken(tb, loginResult)
+	c.Goblin.It("POST /logout with invalid cookie should return error", func() {
+		user := createTestUser(c, "logoutinvalidcookie@test.com", "test-password")
+		loginResult := login(c, "logoutinvalidcookie@test.com", "test-password")
+		c.Goblin.Assert(loginResult.Code).Eql(http.StatusOK)
+		testAccessToken(c, loginResult)
 		cookies := loginResult.Result().Cookies()
 
 		// mingle the cookie
 		cookies[0].Value += "k"
-		logoutResult := logout(tb, user.Email, cookies)
-		tb.Goblin.Assert(logoutResult.Code).Eql(http.StatusUnauthorized)
+		logoutResult := logout(c, user.Email.String, cookies)
+		c.Goblin.Assert(logoutResult.Code).Eql(http.StatusUnauthorized)
 
-		userFromDB, err := tb.DB.GetUserByEmail(user.Email)
-		tb.Goblin.Assert(err).IsNil()
-		tb.Goblin.Assert(userFromDB.TokenExpiresIn).IsNotNil()
+		userDB := getUserFromDBByEmail(c, user.Email.String)
+		c.Goblin.Assert(userDB.TokenExpiresIn).IsNotNil()
 
 		// Extract error message from result
 		body := extractBody(logoutResult)
-		tb.Goblin.Assert(body["message"]).Eql("Unauthorized request. Token invalid.")
+		c.Goblin.Assert(body["message"]).Eql("Token invalid.")
 	})
 
-	tb.Goblin.It("POST /logout with no cookie should return error", func() {
-		user := createTestUser(tb, "logoutnocookie@test.com", "test-password")
+	c.Goblin.It("POST /logout with no cookie should return error", func() {
+		user := createTestUser(c, "logoutnocookie@test.com", "test-password")
 		// Login with the created user
-		loginResult := login(tb, user.Email, user.Password)
-		testAccessToken(tb, loginResult)
-		logoutResult := logout(tb, user.Email, nil)
-		tb.Goblin.Assert(logoutResult.Code).Eql(http.StatusUnauthorized)
+		loginResult := login(c, user.Email.String, user.PWD.String)
+		testAccessToken(c, loginResult)
+		logoutResult := logout(c, user.Email.String, nil)
+		c.Goblin.Assert(logoutResult.Code).Eql(http.StatusUnauthorized)
 
-		userFromDB, err := tb.DB.GetUserByEmail(user.Email)
-		tb.Goblin.Assert(err).IsNil()
-		tb.Goblin.Assert(userFromDB.TokenExpiresIn).IsNotNil()
+		userDB := getUserFromDBByEmail(c, user.Email.String)
+		c.Goblin.Assert(userDB.TokenExpiresIn).IsNotNil()
 
 		// Extract error message from result
 		body := extractBody(logoutResult)
-		tb.Goblin.Assert(body["message"]).Eql("Unauthorized request. Token not found.")
+		c.Goblin.Assert(body["message"]).Eql("Token not found.")
 
 	})
 }
 
 // RunAuthTests runs test cases for /login and /logout
-func RunAuthTests(tb *TestToolbox) {
-	tb.Goblin.Describe("Authentication/Authorization test", func() {
-		testLogin(tb)
-		testLogout(tb)
+func RunAuthTests(c *Container) {
+	c.Goblin.Describe("Authentication/Authorization", func() {
+		testLogin(c)
+		testLogout(c)
 	})
 }

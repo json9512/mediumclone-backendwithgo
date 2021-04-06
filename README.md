@@ -27,7 +27,7 @@
 <br>
 <details close>
 
-<summary>HTTP Methods</summary>
+<summary> </summary>
 
 ####  GET
 모든 `posts`를 리턴함
@@ -66,7 +66,7 @@
 <br>
 <details>
 
-<summary>HTTP Methods</summary>
+<summary> </summary>
 
 #### GET
 주어진 `id`의 `post`를 리턴함
@@ -81,7 +81,7 @@
 <br>
 <details>
 
-<summary>HTTP Methods</summary>
+<summary> </summary>
 
 #### GET
 주어진 `id`의 `post`의 `like`를 리턴함
@@ -93,7 +93,7 @@
 <br>
 <details>
 
-<summary>HTTP Methods</summary>
+<summary> </summary>
 
 #### POST
 새로운 `user`를 생성함
@@ -125,7 +125,7 @@
 <br>
 <details>
 
-<summary>HTTP Methods</summary>
+<summary> </summary>
 
 #### GET
 주어진 `id`의 `user`를 리턴함
@@ -140,7 +140,7 @@
 <br>
 <details>
 
-<summary>HTTP Methods</summary>
+<summary> </summary>
 
 #### POST
 주어진 정보로 `user`를 인증함
@@ -161,7 +161,7 @@
 <br>
 <details>
 
-<summary>HTTP Methods</summary>
+<summary> </summary>
 
 #### POST
 주어진 `email`로 `user`를 로그아웃함

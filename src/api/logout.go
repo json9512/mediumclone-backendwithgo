@@ -1,32 +1,33 @@
 package api
 
 import (
+	"database/sql"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/json9512/mediumclone-backendwithgo/src/dbtool"
+	"github.com/json9512/mediumclone-backendwithgo/src/db"
 )
 
 // Logout invalidates the tokens for the user
-func Logout(db *dbtool.DB) gin.HandlerFunc {
+func Logout(pool *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var userInfo map[string]interface{}
 
 		if err := c.BindJSON(&userInfo); err != nil {
-			HandleError(c, http.StatusBadRequest, "Logout failed. Invalid data type.")
+			HandleError(c, http.StatusBadRequest, "Invalid data type.")
 			return
 		}
 
 		email := userInfo["email"]
-		user, err := db.GetUserByEmail(email.(string))
+		user, err := db.GetUserByEmail(c, pool, email.(string))
 		if err != nil {
-			HandleError(c, http.StatusBadRequest, "Logout failed. User does not exist.")
+			HandleError(c, http.StatusBadRequest, "User does not exist.")
 			return
 		}
 
-		query, err := createUserUpdateQuery(user.ID, user.Email, user.Password, 0)
-		if _, err = db.UpdateUser(query); err != nil {
+		user, err = db.UpdateTokenExpiresIn(c, pool, user, 0)
+		if err != nil {
 			HandleError(c, http.StatusInternalServerError, "Updating user information in DB failed.")
 			return
 		}

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"database/sql"
 	"net/http"
 	"time"
 
@@ -8,18 +9,18 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/json9512/mediumclone-backendwithgo/src/config"
-	"github.com/json9512/mediumclone-backendwithgo/src/dbtool"
+	"github.com/json9512/mediumclone-backendwithgo/src/db"
 )
 
 // Login validates the user and distributes the tokens
-func Login(db *dbtool.DB, envVars *config.EnvVars) gin.HandlerFunc {
+func Login(pool *sql.DB, env *config.EnvVars) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var userCred credential
+		var userCred userInsertForm
 		if err := c.BindJSON(&userCred); err != nil {
 			c.JSON(
 				http.StatusBadRequest,
 				&errorResponse{
-					Msg: "Authentication failed. Invalid data type.",
+					Msg: "Invalid data type.",
 				},
 			)
 			return
@@ -29,36 +30,36 @@ func Login(db *dbtool.DB, envVars *config.EnvVars) gin.HandlerFunc {
 			c.JSON(
 				http.StatusBadRequest,
 				&errorResponse{
-					Msg: "Authentication failed. Invalid data type.",
+					Msg: "Invalid data type.",
 				},
 			)
 			return
 		}
 
-		user, err := db.GetUserByEmail(userCred.Email)
+		user, err := db.GetUserByEmail(c, pool, userCred.Email)
 		if err != nil {
 			c.JSON(
 				http.StatusBadRequest,
 				&errorResponse{
-					Msg: "Authentication failed. User does not exist.",
+					Msg: "User does not exist.",
 				},
 			)
 			return
 		}
 
-		if user.Password != userCred.Password {
+		if user.PWD.String != userCred.Password {
 			c.JSON(
 				http.StatusBadRequest,
 				&errorResponse{
-					Msg: "Authentication failed. Wrong password.",
+					Msg: "Wrong password.",
 				},
 			)
 			return
 		}
 
 		expiresIn := time.Now().Add(time.Hour * 24).Unix()
-		user.TokenExpiresIn = expiresIn
-		if err := db.Update(&user); err != nil {
+		user, err = db.UpdateTokenExpiresIn(c, pool, user, expiresIn)
+		if err != nil {
 			c.JSON(
 				http.StatusInternalServerError,
 				&errorResponse{
@@ -68,7 +69,7 @@ func Login(db *dbtool.DB, envVars *config.EnvVars) gin.HandlerFunc {
 			return
 		}
 
-		at, err := createAccessToken(user.Email, envVars.JWTSecret, expiresIn)
+		at, err := CreateAccessToken(user.Email.String, env.JWTSecret, expiresIn)
 		if err != nil {
 			HandleError(c, http.StatusInternalServerError, "Login failed. Unable to create token.")
 		}
@@ -78,7 +79,7 @@ func Login(db *dbtool.DB, envVars *config.EnvVars) gin.HandlerFunc {
 	}
 }
 
-func createAccessToken(userEmail, secret string, expiryDate int64) (string, error) {
+func CreateAccessToken(userEmail, secret string, expiryDate int64) (string, error) {
 	claims := jwt.MapClaims{}
 	claims["authorized"] = true
 	claims["user_email"] = userEmail
