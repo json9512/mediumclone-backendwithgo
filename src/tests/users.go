@@ -8,7 +8,7 @@ import (
 
 // RunUsersTests executes all tests for /users
 func RunUsersTests(c *Container) {
-	c.Goblin.Describe("/users endpoint test", func() {
+	c.Goblin.Describe("API", func() {
 		testCreatUser(c)
 		testGetUserWithID(c)
 		testUpdateUser(c)

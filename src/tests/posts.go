@@ -183,7 +183,9 @@ func testDeletePost(c *Container) {
 
 	// add failure cases:
 	// 1. invalid id
+	testDeleteWithInvalidID(c)
 	// 2. invalid user
+	testDeleteWithInvalidUser(c)
 }
 
 // RunPostsTests executes all tests for /posts
@@ -459,6 +461,45 @@ func testGetPostWithInvalidID(c *Container) {
 			"Post not found.",
 			http.StatusBadRequest,
 			nil,
+		})
+	})
+}
+
+func testDeleteWithInvalidID(c *Container) {
+	c.Goblin.It("DELETE /posts/:id with invalid ID should return error", func() {
+		u := userInfo{"test-delete-post2@test.com", "test-pwd", ""}
+		sample := db.Post{Doc: ""}
+		post, cookies, _ := loginAndCreatePost(c, &sample, &u)
+		url := fmt.Sprintf("/posts/%d", post.ID+1)
+
+		c.makeInvalidReq(&errorTestCase{
+			nil,
+			"DELETE",
+			url,
+			"Post not found.",
+			http.StatusBadRequest,
+			cookies,
+		})
+	})
+}
+
+func testDeleteWithInvalidUser(c *Container) {
+	c.Goblin.It("DELETE /posts/:id with invalid user should return error", func() {
+		u := userInfo{"test-delete-post3@test.com", "test-pwd", ""}
+		sample := db.Post{Doc: ""}
+		post, _, _ := loginAndCreatePost(c, &sample, &u)
+
+		_ = createTestUser(c, "test-delete-post4@test.com", "test-pwd")
+		loginRes := login(c, "test-delete-post4@test.com", "test-pwd")
+		url := fmt.Sprintf("/posts/%d", post.ID)
+
+		c.makeInvalidReq(&errorTestCase{
+			nil,
+			"DELETE",
+			url,
+			"User is not the author of the post.",
+			http.StatusBadRequest,
+			loginRes.Result().Cookies(),
 		})
 	})
 }

@@ -48,7 +48,6 @@ func GetPost(pool *sql.DB) gin.HandlerFunc {
 
 		if post, err := db.GetPostByID(c, pool, id); err != nil {
 			HandleError(c, http.StatusBadRequest, "Post not found.")
-			return
 		} else {
 			c.JSON(http.StatusOK, serializePost(post))
 		}
@@ -136,7 +135,6 @@ func UpdatePost(pool *sql.DB) gin.HandlerFunc {
 
 		if createdPost, err := db.UpdatePost(c, pool, postID, post); err != nil {
 			HandleError(c, http.StatusInternalServerError, "Failed to update post in DB.")
-			return
 		} else {
 			c.JSON(http.StatusOK, serializePost(createdPost))
 		}
@@ -150,6 +148,17 @@ func DeletePost(pool *sql.DB) gin.HandlerFunc {
 		id := convertToInt(idStr)
 		if id < 1 {
 			HandleError(c, http.StatusBadRequest, "Invalid ID.")
+			return
+		}
+
+		queriedPost, err := db.GetPostByID(c, pool, id)
+		if err != nil {
+			HandleError(c, http.StatusBadRequest, "Post not found.")
+			return
+		}
+
+		if !checkIfUserIsAuthor(c, queriedPost.Author.String) {
+			HandleError(c, http.StatusBadRequest, "User is not the author of the post.")
 			return
 		}
 
