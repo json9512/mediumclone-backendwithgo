@@ -10,7 +10,7 @@ import (
 
 // testGetPosts tests /posts to retrieve all posts
 func testGetPosts(c *Container) {
-	c.Goblin.It("GET /posts should return list of all posts", func() {
+	c.Goblin.It("GET /posts should return list of posts", func() {
 		result := MakeRequest(&reqData{
 			handler: c.Router,
 			method:  "GET",
@@ -31,9 +31,9 @@ func testGetPosts(c *Container) {
 	})
 }
 
-// testGetPost tests /posts/:id to retrieve single post with id
+// testGetPost tests /posts/:id to retrieve a post by id
 func testGetPost(c *Container) {
-	c.Goblin.It("GET /posts/:id should return post with given id", func() {
+	c.Goblin.It("GET /posts/:id should return a post by its id", func() {
 		samplePost := &db.Post{Doc: "Test something"}
 		user := &userInfo{"testing-get-post@test.com", "test", ""}
 		post, _, _ := loginAndCreatePost(c, samplePost, user)
@@ -52,13 +52,14 @@ func testGetPost(c *Container) {
 		verifyCreatedPost(c, response, samplePost)
 	})
 
-	// add failure case
+	testGetPostWithInvalidID(c)
+
 }
 
 // testGetLikeOfPost tests /posts/:id/like
-// to retrieve like count of a single post with given id
+// to retrieve like count of a post by its id
 func testGetLikeOfPost(c *Container) {
-	c.Goblin.It("GET /posts/:id/like should return like count of post with given id", func() {
+	c.Goblin.It("GET /posts/:id/like should return like count of a post by its id", func() {
 		samplePost := &db.Post{Doc: "Test something", Likes: 123}
 		user := &userInfo{"testing-get-post-likes@test.com", "test", ""}
 		post, _, _ := loginAndCreatePost(c, samplePost, user)
@@ -77,7 +78,7 @@ func testGetLikeOfPost(c *Container) {
 		c.Goblin.Assert(response["likes"]).Eql(samplePost.Likes)
 	})
 
-	// add failure case
+	testGetLikeWithInvalidID(c)
 }
 
 // testGetPostWithQuery tests /posts?queryname=XXX
@@ -90,9 +91,9 @@ func testGetPostWithQuery(c *Container) {
 	testGetByTagsAndAuthor(c)
 }
 
-// testCreatePost tests /posts to create a new post in database
+// testCreatePost tests /posts to create a post in database
 func testCreatePost(c *Container) {
-	c.Goblin.It("POST /posts should create a new post in database", func() {
+	c.Goblin.It("POST /posts should create a post in database", func() {
 		_ = createTestUser(c, "test-create-post@test.com", "test-pwd")
 		loginResult := login(c, "test-create-post@test.com", "test-pwd")
 		c.Goblin.Assert(loginResult.Code).Eql(http.StatusOK)
@@ -180,7 +181,9 @@ func testDeletePost(c *Container) {
 		c.Goblin.Assert(result.Code).Eql(http.StatusOK)
 	})
 
-	// add failure cases
+	// add failure cases:
+	// 1. invalid id
+	// 2. invalid user
 }
 
 // RunPostsTests executes all tests for /posts
@@ -308,7 +311,7 @@ func testCreateWithInvalidDoc(c *Container) {
 			values,
 			"POST",
 			"/posts",
-			"Invalid request data",
+			"Invalid request data.",
 			http.StatusBadRequest,
 			cookies,
 		})
@@ -328,7 +331,7 @@ func testCreateWithNoDoc(c *Container) {
 			values,
 			"POST",
 			"/posts",
-			"ID, Doc required",
+			"ID, Doc required.",
 			http.StatusBadRequest,
 			cookies,
 		})
@@ -349,7 +352,7 @@ func testUpdateWithInvalidUser(c *Container) {
 			values,
 			"PUT",
 			"/posts",
-			"User is not the author of the post",
+			"User is not the author of the post.",
 			http.StatusBadRequest,
 			loginResult.Result().Cookies(),
 		})
@@ -367,7 +370,7 @@ func testUpdateWithInvalidID(c *Container) {
 			values,
 			"PUT",
 			"/posts",
-			"Post not found",
+			"Post not found.",
 			http.StatusBadRequest,
 			cookies,
 		})
@@ -385,7 +388,7 @@ func testUpdateWithNoID(c *Container) {
 			values,
 			"PUT",
 			"/posts",
-			"ID required",
+			"ID required.",
 			http.StatusBadRequest,
 			cookies,
 		})
@@ -403,7 +406,7 @@ func testUpdateWithNoBody(c *Container) {
 			nil,
 			"PUT",
 			"/posts",
-			"ID required",
+			"ID required.",
 			http.StatusBadRequest,
 			cookies,
 		})
@@ -421,9 +424,41 @@ func testUpdateWithInvalidDataType(c *Container) {
 			values,
 			"PUT",
 			"/posts",
-			"Invalid request data",
+			"Invalid request data.",
 			http.StatusBadRequest,
 			cookies,
+		})
+	})
+}
+
+func testGetLikeWithInvalidID(c *Container) {
+	c.Goblin.It("GET /posts/:id/like with invalid ID should return error", func() {
+		samplePost := &db.Post{Doc: "Test something", Likes: 1213}
+		user := &userInfo{"testing-get-post-likes2@test.com", "test", ""}
+		post, cookies, _ := loginAndCreatePost(c, samplePost, user)
+		c.makeInvalidReq(&errorTestCase{
+			nil,
+			"GET",
+			fmt.Sprintf("/posts/%d/like", post.ID+1),
+			"Post not found.",
+			http.StatusBadRequest,
+			cookies,
+		})
+	})
+}
+
+func testGetPostWithInvalidID(c *Container) {
+	c.Goblin.It("GET /posts/:id with invalid ID should return error", func() {
+		samplePost := &db.Post{Doc: "Test something"}
+		user := &userInfo{"testing-get-post2@test.com", "test", ""}
+		post, _, _ := loginAndCreatePost(c, samplePost, user)
+		c.makeInvalidReq(&errorTestCase{
+			nil,
+			"GET",
+			fmt.Sprintf("/posts/%d", post.ID+1),
+			"Post not found.",
+			http.StatusBadRequest,
+			nil,
 		})
 	})
 }

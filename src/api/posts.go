@@ -28,7 +28,7 @@ func GetPosts(pool *sql.DB) gin.HandlerFunc {
 		if !res {
 			posts, err := db.GetPosts(c, pool)
 			if err != nil {
-				HandleError(c, http.StatusBadRequest, "No posts in db")
+				HandleError(c, http.StatusBadRequest, "No posts in db.")
 			} else {
 				c.JSON(200, serializePosts(*posts))
 			}
@@ -47,7 +47,7 @@ func GetPost(pool *sql.DB) gin.HandlerFunc {
 		}
 
 		if post, err := db.GetPostByID(c, pool, id); err != nil {
-			HandleError(c, http.StatusBadRequest, "Invalid Request.")
+			HandleError(c, http.StatusBadRequest, "Post not found.")
 			return
 		} else {
 			c.JSON(http.StatusOK, serializePost(post))
@@ -67,7 +67,7 @@ func GetLikesForPost(pool *sql.DB) gin.HandlerFunc {
 		}
 
 		if likes, err := db.GetLikesForPost(c, pool, id); err != nil {
-			HandleError(c, http.StatusBadRequest, "Invalid Request.")
+			HandleError(c, http.StatusBadRequest, "Post not found.")
 		} else {
 			c.JSON(http.StatusOK, &response{"likes": likes})
 		}
@@ -79,18 +79,18 @@ func CreatePost(pool *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var reqBody postInsertForm
 		if err := extractData(c, &reqBody); err != nil {
-			HandleError(c, http.StatusBadRequest, "Invalid request data")
+			HandleError(c, http.StatusBadRequest, "Invalid request data.")
 			return
 		}
 
 		if err := validateStruct(&reqBody); err != nil || reqBody.Doc == "" {
-			HandleError(c, http.StatusBadRequest, "ID, Doc required")
+			HandleError(c, http.StatusBadRequest, "ID, Doc required.")
 			return
 		}
 
 		username, exists := c.Get("username")
 		if !exists {
-			HandleError(c, http.StatusBadRequest, "Username not found")
+			HandleError(c, http.StatusBadRequest, "Username not found.")
 			return
 		}
 
@@ -108,23 +108,23 @@ func UpdatePost(pool *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var reqBody postUpdateForm
 		if err := extractData(c, &reqBody); err != nil {
-			HandleError(c, http.StatusBadRequest, "Invalid request data")
+			HandleError(c, http.StatusBadRequest, "Invalid request data.")
 			return
 		}
 
 		if err := validateStruct(&reqBody); err != nil {
-			HandleError(c, http.StatusBadRequest, "ID required")
+			HandleError(c, http.StatusBadRequest, "ID required.")
 			return
 		}
 		postID, _ := reqBody.ID.Int64()
 		queriedPost, err := db.GetPostByID(c, pool, postID)
 		if err != nil {
-			HandleError(c, http.StatusBadRequest, "Post not found")
+			HandleError(c, http.StatusBadRequest, "Post not found.")
 			return
 		}
 
 		if !checkIfUserIsAuthor(c, queriedPost.Author.String) {
-			HandleError(c, http.StatusBadRequest, "User is not the author of the post")
+			HandleError(c, http.StatusBadRequest, "User is not the author of the post.")
 			return
 		}
 
@@ -154,7 +154,7 @@ func DeletePost(pool *sql.DB) gin.HandlerFunc {
 		}
 
 		if _, err := db.DeletePostByID(c, pool, id); err != nil {
-			HandleError(c, http.StatusBadRequest, "Post not found")
+			HandleError(c, http.StatusBadRequest, "Post not found.")
 		} else {
 			c.Status(http.StatusOK)
 		}
@@ -211,7 +211,7 @@ func handleQuery(c *gin.Context, pool *sql.DB, q url.Values, checker *queryCheck
 		posts, err := executeQuery(c, pool, tags, author, checker)
 
 		if err != nil || posts == nil {
-			HandleError(c, http.StatusBadRequest, "No posts in db")
+			HandleError(c, http.StatusBadRequest, "No posts in db.")
 		} else {
 			c.JSON(200, serializePosts(*posts))
 			success = true
