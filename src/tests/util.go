@@ -173,8 +173,7 @@ func (c Container) makeInvalidReq(e *errorTestCase) {
 	c.Goblin.Assert(response["message"]).Eql(e.errMsg)
 }
 
-func createSamplePost(c *Container, p *db.Post, u *userInfo) (*models.Post, []*http.Cookie, error) {
-	// use transaction
+func loginAndCreatePost(c *Container, p *db.Post, u *userInfo) (*models.Post, []*http.Cookie, error) {
 	tx, err := c.DB.BeginTx(c.Context, nil)
 	if err != nil {
 		return nil, nil, err
@@ -188,13 +187,21 @@ func createSamplePost(c *Container, p *db.Post, u *userInfo) (*models.Post, []*h
 	}
 	p.Author = strings.Split(userRecord.Email.String, "@")[0]
 
-	postRecord := db.BindDataToPostModel(p)
-	if err := postRecord.Insert(c.Context, tx, boil.Infer()); err != nil {
+	postRecord, err := createPost(c.Context, tx, p)
+	if err != nil {
 		return nil, nil, err
 	}
 
 	loginResult := login(c, u.email, u.pwd)
 	return postRecord, loginResult.Result().Cookies(), nil
+}
+
+func createPost(ctx context.Context, pool boil.ContextExecutor, p *db.Post) (*models.Post, error) {
+	postRecord := db.BindDataToPostModel(p)
+	if err := postRecord.Insert(ctx, pool, boil.Infer()); err != nil {
+		return nil, err
+	}
+	return postRecord, nil
 }
 
 func createPostsWithRandomTags(c *Container) error {
@@ -209,7 +216,15 @@ func createPostsWithRandomTags(c *Container) error {
 	documents := []string{"Something", "Someone", "Somewhere", "Somebody", "Whenever"}
 	counter := 0
 
-	for counter < 10 {
+	p := &db.Post{
+		Author: authors[counter],
+		Doc:    documents[counter],
+		Tags:   tags,
+	}
+
+	createPost(c.Context, tx, p)
+
+	for counter < 5 {
 		counter += 1
 
 		p := &db.Post{
@@ -217,37 +232,43 @@ func createPostsWithRandomTags(c *Container) error {
 			Doc:    documents[createRandomIndex(len(documents)-1)],
 			Tags:   tags[:createRandomIndex(len(tags)-1)],
 		}
-		postRecord := db.BindDataToPostModel(p)
-		if err := postRecord.Insert(c.Context, tx, boil.Infer()); err != nil {
-			return err
-		}
+		createPost(c.Context, tx, p)
 	}
 	return nil
 }
 
 func createRandomIndex(max int) int {
-	rand.Seed(time.Now().UnixNano())
+	rand.Seed(time.Now().Local().UnixNano())
 	min := 0
 	limit := max
 	return rand.Intn(limit-min+1) + min
 }
 
-func verifyCreatedPost(c *Container, result map[string]string, ogPost *db.Post) {
-	author, _ := result["author"]
-	comments, _ := result["comments"]
-	document, _ := result["doc"]
-	tags, _ := result["tags"]
-	likes, _ := result["likes"]
+func verifyCreatedPost(c *Container, result map[string]interface{}, ogPost *db.Post) {
+	author, _ := result["author"].(string)
+	comments, _ := result["comments"].(string)
+	document, _ := result["doc"].(string)
+	tags, _ := result["tags"].(string)
+	likes, _ := result["likes"].(string)
 	likes_int := 0
 	if likes != "" {
 		likes_int, _ = strconv.Atoi(likes)
 	}
 
-	c.Goblin.Assert(author).Eql(ogPost.Author)
+	c.Goblin.Assert(author).Eql(strings.Title(ogPost.Author))
 	c.Goblin.Assert(comments).Eql(ogPost.Comments)
 	c.Goblin.Assert(document).Eql(ogPost.Doc)
 	c.Goblin.Assert(likes_int).Eql(ogPost.Likes)
 	c.Goblin.Assert(tags).Eql(convertTagsToStr(ogPost.Tags))
+}
+
+func extractResult(r *httptest.ResponseRecorder) (map[string]interface{}, error) {
+	var response map[string]interface{}
+	err := json.Unmarshal(r.Body.Bytes(), &response)
+	if err != nil {
+		return nil, err
+	}
+	return response, nil
 }
 
 func convertTagsToStr(tags []string) string {

@@ -11,10 +11,6 @@ import (
 // testGetPosts tests /posts to retrieve all posts
 func testGetPosts(c *Container) {
 	c.Goblin.It("GET /posts should return list of all posts", func() {
-		body := Data{
-			"result": []string{"test", "sample", "post"},
-		}
-
 		result := MakeRequest(&reqData{
 			handler: c.Router,
 			method:  "GET",
@@ -25,14 +21,13 @@ func testGetPosts(c *Container) {
 
 		c.Goblin.Assert(result.Code).Eql(http.StatusOK)
 
-		var response map[string][]string
-		err := json.Unmarshal([]byte(result.Body.Bytes()), &response)
+		response, err := extractResult(result)
+		c.Goblin.Assert(err).IsNil()
 
-		value, exists := response["result"]
-
+		value, exists := response["posts"]
 		c.Goblin.Assert(err).IsNil()
 		c.Goblin.Assert(exists).IsTrue()
-		c.Goblin.Assert(body["result"]).Eql(value)
+		c.Goblin.Assert(value).IsNotNil()
 	})
 }
 
@@ -42,7 +37,7 @@ func testGetPost(c *Container) {
 	c.Goblin.It("GET /posts/:id should return post with given id", func() {
 		samplePost := &db.Post{Doc: "Test something"}
 		user := &userInfo{"testing-get-post@test.com", "test", ""}
-		post, _, _ := createSamplePost(c, samplePost, user)
+		post, _, _ := loginAndCreatePost(c, samplePost, user)
 		result := MakeRequest(&reqData{
 			handler: c.Router,
 			method:  "GET",
@@ -52,8 +47,9 @@ func testGetPost(c *Container) {
 		})
 		c.Goblin.Assert(result.Code).Eql(http.StatusOK)
 
-		var response map[string]string
-		_ = json.Unmarshal([]byte(result.Body.Bytes()), &response)
+		response, err := extractResult(result)
+		c.Goblin.Assert(err).IsNil()
+
 		verifyCreatedPost(c, response, samplePost)
 	})
 }
@@ -64,7 +60,7 @@ func testGetLikeOfPost(c *Container) {
 	c.Goblin.It("GET /posts/:id/like should return like count of post with given id", func() {
 		samplePost := &db.Post{Doc: "Test something", Likes: 123}
 		user := &userInfo{"testing-get-post-likes@test.com", "test", ""}
-		post, _, _ := createSamplePost(c, samplePost, user)
+		post, _, _ := loginAndCreatePost(c, samplePost, user)
 
 		result := MakeRequest(&reqData{
 			handler: c.Router,
@@ -85,8 +81,6 @@ func testGetLikeOfPost(c *Container) {
 // to retrieve post/posts based on the query
 func testGetPostWithQuery(c *Container) {
 	c.Goblin.It("GET /posts?tag=hello should return posts with tags=[hello]", func() {
-
-		// Need to create true case
 		result := MakeRequest(&reqData{
 			handler: c.Router,
 			method:  "GET",
@@ -96,9 +90,9 @@ func testGetPostWithQuery(c *Container) {
 		})
 		c.Goblin.Assert(result.Code).Eql(http.StatusOK)
 
-		var response map[string]interface{}
-		err := json.Unmarshal(result.Body.Bytes(), &response)
+		response, err := extractResult(result)
 		c.Goblin.Assert(err).IsNil()
+
 		_, countExists := response["totalCount"]
 		c.Goblin.Assert(countExists).IsTrue()
 
@@ -110,8 +104,6 @@ func testGetPostWithQuery(c *Container) {
 	})
 
 	c.Goblin.It("GET /posts?tag=hello,nice should return posts with tags=[hello, nice]", func() {
-
-		// Need to create true case
 		result := MakeRequest(&reqData{
 			handler: c.Router,
 			method:  "GET",
@@ -121,9 +113,9 @@ func testGetPostWithQuery(c *Container) {
 		})
 		c.Goblin.Assert(result.Code).Eql(http.StatusOK)
 
-		var response map[string]interface{}
-		err := json.Unmarshal(result.Body.Bytes(), &response)
+		response, err := extractResult(result)
 		c.Goblin.Assert(err).IsNil()
+
 		_, countExists := response["totalCount"]
 		c.Goblin.Assert(countExists).IsTrue()
 
@@ -135,6 +127,35 @@ func testGetPostWithQuery(c *Container) {
 
 		niceValid := checkIfTagExistsInPosts(posts, "nice")
 		c.Goblin.Assert(niceValid).IsTrue()
+	})
+
+	c.Goblin.It("GET /posts?tag=hello,nice&author=denver should return posts with tags=[hello, nice] and author=denver", func() {
+		result := MakeRequest(&reqData{
+			handler: c.Router,
+			method:  "GET",
+			path:    "/posts?tags=hello,nice",
+			reqBody: nil,
+			cookie:  nil,
+		})
+		c.Goblin.Assert(result.Code).Eql(http.StatusOK)
+
+		response, err := extractResult(result)
+		c.Goblin.Assert(err).IsNil()
+
+		_, countExists := response["totalCount"]
+		c.Goblin.Assert(countExists).IsTrue()
+
+		posts, postsExist := response["posts"]
+		c.Goblin.Assert(postsExist)
+
+		helloValid := checkIfTagExistsInPosts(posts, "hello")
+		c.Goblin.Assert(helloValid).IsTrue()
+
+		niceValid := checkIfTagExistsInPosts(posts, "nice")
+		c.Goblin.Assert(niceValid).IsTrue()
+
+		authorValid := checkIfAuthorExistsInPosts(posts, "Denver")
+		c.Goblin.Assert(authorValid).IsTrue()
 	})
 }
 
@@ -164,16 +185,16 @@ func testCreatePost(c *Container) {
 		author, exists := response["author"]
 		likes, exists := response["likes"]
 		document, exists := response["doc"]
-		//tags, exists := response["tags"]
+		tags, exists := response["tags"]
 		comments, exists := response["comments"]
 
 		c.Goblin.Assert(err).IsNil()
 		c.Goblin.Assert(exists).IsTrue()
 		c.Goblin.Assert(values["doc"]).Eql(document)
 		c.Goblin.Assert(id).IsNotNil()
-		c.Goblin.Assert(author).Eql("test-create-post")
+		c.Goblin.Assert(author).Eql("Test-Create-Post")
 		c.Goblin.Assert(int(likes.(float64))).Eql(0)
-		//tb.Goblin.Assert(tags.([]interface{})).Eql([]interface{}{""})
+		c.Goblin.Assert(tags.([]interface{})).Eql([]interface{}{""})
 		c.Goblin.Assert(comments).Eql("")
 	})
 
@@ -219,7 +240,7 @@ func testUpdatePost(c *Container) {
 	c.Goblin.It("PUT /posts should update a post in database", func() {
 		u := userInfo{"test-update-post@test.com", "test-pwd", ""}
 		sample := db.Post{Doc: "sample-post"}
-		post, cookies, _ := createSamplePost(c, &sample, &u)
+		post, cookies, _ := loginAndCreatePost(c, &sample, &u)
 
 		values := Data{"id": post.ID, "doc": "something-changed"}
 		result := MakeRequest(&reqData{
@@ -236,7 +257,7 @@ func testUpdatePost(c *Container) {
 	c.Goblin.It("PUT /posts with no new content should return error", func() {
 		u := userInfo{"test-update-post-no-content@test.com", "test-pwd", ""}
 		sample := db.Post{Doc: ""}
-		post, cookies, _ := createSamplePost(c, &sample, &u)
+		post, cookies, _ := loginAndCreatePost(c, &sample, &u)
 
 		values := Data{"id": post.ID}
 		c.makeInvalidReq(&errorTestCase{
@@ -252,7 +273,7 @@ func testUpdatePost(c *Container) {
 	c.Goblin.It("PUT /posts with invalid user should return error", func() {
 		u := userInfo{"test-update-post-wrong-author@test.com", "test-pwd", ""}
 		sample := db.Post{Doc: ""}
-		post, _, _ := createSamplePost(c, &sample, &u)
+		post, _, _ := loginAndCreatePost(c, &sample, &u)
 		loginResult := login(c, "test-update-post-no-content@test.com", "test-pwd")
 
 		values := Data{"id": post.ID, "doc": "you are not the author"}
@@ -269,7 +290,7 @@ func testUpdatePost(c *Container) {
 	c.Goblin.It("PUT /posts with invalid post ID should return error", func() {
 		u := userInfo{"test-update-post-id@test.com", "test-pwd", ""}
 		sample := db.Post{Doc: ""}
-		post, cookies, _ := createSamplePost(c, &sample, &u)
+		post, cookies, _ := loginAndCreatePost(c, &sample, &u)
 
 		values := Data{"id": post.ID + 3}
 		c.makeInvalidReq(&errorTestCase{
@@ -285,7 +306,7 @@ func testUpdatePost(c *Container) {
 	c.Goblin.It("PUT /posts with no post ID should return error", func() {
 		u := userInfo{"test-update-nopost-id@test.com", "test-pwd", ""}
 		sample := db.Post{Doc: ""}
-		_, cookies, _ := createSamplePost(c, &sample, &u)
+		_, cookies, _ := loginAndCreatePost(c, &sample, &u)
 
 		values := Data{"doc": "yahoo", "tags": "internet of things"}
 		c.makeInvalidReq(&errorTestCase{
@@ -317,7 +338,7 @@ func testUpdatePost(c *Container) {
 	c.Goblin.It("PUT /posts with invalid data type should return error", func() {
 		u := userInfo{"test-update-datatype@test.com", "test-pwd", ""}
 		sample := db.Post{Doc: ""}
-		post, cookies, _ := createSamplePost(c, &sample, &u)
+		post, cookies, _ := loginAndCreatePost(c, &sample, &u)
 
 		values := Data{"id": post.ID, "likes": "abs"}
 		c.makeInvalidReq(&errorTestCase{
@@ -336,7 +357,7 @@ func testDeletePost(c *Container) {
 	c.Goblin.It("DELETE /posts/:id should delete a post with the given ID", func() {
 		u := userInfo{"test-delete-post@test.com", "test-pwd", ""}
 		sample := db.Post{Doc: ""}
-		post, cookies, _ := createSamplePost(c, &sample, &u)
+		post, cookies, _ := loginAndCreatePost(c, &sample, &u)
 
 		// Delete
 		url := fmt.Sprintf("/posts/%d", post.ID)
@@ -355,7 +376,7 @@ func testDeletePost(c *Container) {
 
 // RunPostsTests executes all tests for /posts
 func RunPostsTests(c *Container) {
-	c.Goblin.Describe("/posts endpoint tests", func() {
+	c.Goblin.Describe("API", func() {
 		createPostsWithRandomTags(c)
 		// GET /posts
 		testGetPosts(c)
@@ -382,7 +403,8 @@ func RunPostsTests(c *Container) {
 
 func checkIfTagExistsInPosts(posts interface{}, tag string) bool {
 	for _, p := range posts.([]interface{}) {
-		postTags := p.(map[string]interface{})["tags"].([]interface{})
+		temp := p.(map[string]interface{})["tags"]
+		postTags := temp.([]interface{})
 
 		for _, c := range postTags {
 			if c.(string) == tag {
@@ -390,6 +412,18 @@ func checkIfTagExistsInPosts(posts interface{}, tag string) bool {
 			}
 		}
 		return false
+	}
+	return false
+}
+
+func checkIfAuthorExistsInPosts(posts interface{}, author string) bool {
+	for _, p := range posts.([]interface{}) {
+		temp := p.(map[string]interface{})["author"]
+		postAuthor := temp.(string)
+
+		if author == postAuthor {
+			return true
+		}
 	}
 	return false
 }

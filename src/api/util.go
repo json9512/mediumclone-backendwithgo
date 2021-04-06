@@ -67,9 +67,10 @@ func serializeUser(u *models.User) response {
 }
 
 func serializePost(p *models.Post) response {
+	author := strings.Title(strings.ToLower(p.Author.String))
 	return response{
 		"id":       p.ID,
-		"author":   p.Author,
+		"author":   author,
 		"doc":      p.Document,
 		"tags":     p.Tags,
 		"comments": p.Comments,
@@ -117,7 +118,7 @@ func convertToInt(id string) int64 {
 
 func bindFormToPost(f *postInsertForm, author string) *db.Post {
 	return &db.Post{
-		Author:   author,
+		Author:   strings.ToLower(author),
 		Doc:      f.Doc,
 		Comments: f.Comments,
 		Tags:     strings.Split(f.Tags, ","),

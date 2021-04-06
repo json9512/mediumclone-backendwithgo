@@ -24,23 +24,14 @@ func GetPosts(pool *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		queryChecker := &queryChecker{false, false}
 		queries := c.Request.URL.Query()
-
-		if checkIfQueriesExist(queries) {
-			tags, tagsExist := checkIfTagsExist(queries)
-			author, authorExists := checkIfAuthorExists(queries)
-			queryChecker.authorExists = authorExists
-			queryChecker.tagsExist = tagsExist
-			posts, err := executeQuery(c, pool, tags, author, queryChecker)
-
-			if err != nil || posts == nil {
+		res := handleQuery(c, pool, queries, queryChecker)
+		if !res {
+			posts, err := db.GetPosts(c, pool)
+			if err != nil {
 				HandleError(c, http.StatusBadRequest, "No posts in db")
 			} else {
 				c.JSON(200, serializePosts(*posts))
 			}
-		} else {
-			c.JSON(200, &response{
-				"result": []string{"test", "sample", "post"},
-			})
 		}
 	}
 }
@@ -185,13 +176,18 @@ func checkIfTagsExist(q url.Values) (*[]string, bool) {
 }
 
 func checkIfAuthorExists(q url.Values) (*string, bool) {
-	var author string
-	rawAuthor, _ := q["author"]
+	rawAuthor, exists := q["author"]
+	if !exists {
+		return nil, false
+	}
+
 	if len(rawAuthor) > 0 {
-		author = rawAuthor[0]
+		author := strings.ToLower(rawAuthor[0])
+		return &author, true
+	} else {
+		author := strings.ToLower(rawAuthor[0])
 		return &author, true
 	}
-	return nil, false
 }
 
 func executeQuery(c context.Context, pool *sql.DB, tags *[]string, author *string, checker *queryChecker) (*models.PostSlice, error) {
@@ -203,4 +199,23 @@ func executeQuery(c context.Context, pool *sql.DB, tags *[]string, author *strin
 		return db.GetPostsByTags(c, pool, *tags)
 	}
 	return nil, nil
+}
+
+func handleQuery(c *gin.Context, pool *sql.DB, q url.Values, checker *queryChecker) bool {
+	success := false
+	if checkIfQueriesExist(q) {
+		tags, tagsExist := checkIfTagsExist(q)
+		author, authorExists := checkIfAuthorExists(q)
+		checker.authorExists = authorExists
+		checker.tagsExist = tagsExist
+		posts, err := executeQuery(c, pool, tags, author, checker)
+
+		if err != nil || posts == nil {
+			HandleError(c, http.StatusBadRequest, "No posts in db")
+		} else {
+			c.JSON(200, serializePosts(*posts))
+			success = true
+		}
+	}
+	return success
 }
