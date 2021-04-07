@@ -70,7 +70,7 @@ func UpdateUser(pool *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		userID, _ := reqBody.ID.Int64()
+		userID := int64(reqBody.ID)
 		if user, err := db.UpdateUser(c, pool, userID, user); err != nil {
 			HandleError(c, http.StatusBadRequest, "Invalid request.")
 		} else {

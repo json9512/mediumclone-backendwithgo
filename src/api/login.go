@@ -12,14 +12,13 @@ import (
 	"github.com/json9512/mediumclone-backendwithgo/src/db"
 )
 
-// Login validates the user and distributes the tokens
 func Login(pool *sql.DB, env *config.EnvVars) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var userCred userInsertForm
 		if err := c.BindJSON(&userCred); err != nil {
 			c.JSON(
 				http.StatusBadRequest,
-				&errorResponse{
+				&APIError{
 					Msg: "Invalid data type.",
 				},
 			)
@@ -29,7 +28,7 @@ func Login(pool *sql.DB, env *config.EnvVars) gin.HandlerFunc {
 		if err := validateStruct(&userCred); err != nil {
 			c.JSON(
 				http.StatusBadRequest,
-				&errorResponse{
+				&APIError{
 					Msg: "Invalid data type.",
 				},
 			)
@@ -40,7 +39,7 @@ func Login(pool *sql.DB, env *config.EnvVars) gin.HandlerFunc {
 		if err != nil {
 			c.JSON(
 				http.StatusBadRequest,
-				&errorResponse{
+				&APIError{
 					Msg: "User does not exist.",
 				},
 			)
@@ -50,7 +49,7 @@ func Login(pool *sql.DB, env *config.EnvVars) gin.HandlerFunc {
 		if user.PWD.String != userCred.Password {
 			c.JSON(
 				http.StatusBadRequest,
-				&errorResponse{
+				&APIError{
 					Msg: "Wrong password.",
 				},
 			)
@@ -62,7 +61,7 @@ func Login(pool *sql.DB, env *config.EnvVars) gin.HandlerFunc {
 		if err != nil {
 			c.JSON(
 				http.StatusInternalServerError,
-				&errorResponse{
+				&APIError{
 					Msg: "Authentication failed. Update failed.",
 				},
 			)

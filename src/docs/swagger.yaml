@@ -1,0 +1,238 @@
+basePath: /api/v1
+definitions:
+  api.APIError:
+    properties:
+      message:
+        type: string
+    type: object
+  api.PostInsertForm:
+    properties:
+      comments:
+        example: some-comment
+        type: string
+      doc:
+        example: some-text
+        type: string
+      likes:
+        example: 123
+        type: integer
+      tags:
+        example: some,tags,here
+        type: string
+    required:
+    - doc
+    type: object
+  api.PostUpdateForm:
+    properties:
+      comments:
+        example: some-comment
+        type: string
+      doc:
+        example: some-text
+        type: string
+      id:
+        example: 1
+        type: integer
+      likes:
+        example: 123
+        type: integer
+      tags:
+        example: some,tags,here
+        type: string
+    required:
+    - id
+    type: object
+  api.SwaggerPosts:
+    properties:
+      posts:
+        items:
+          $ref: '#/definitions/api.PostUpdateForm'
+        type: array
+      total_count:
+        type: integer
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: This is a sample server celler server.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Swagger Example API
+  version: "1.0"
+paths:
+  /posts:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve posts from db
+      operationId: get-posts
+      parameters:
+      - description: tags
+        in: query
+        name: tags
+        type: string
+      - description: author
+        in: query
+        name: author
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.SwaggerPosts'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.APIError'
+      summary: Get posts
+      tags:
+      - posts
+    post:
+      consumes:
+      - application/json
+      description: Creates a new post in DB
+      operationId: create-post
+      parameters:
+      - description: Add Post
+        in: body
+        name: post
+        required: true
+        schema:
+          $ref: '#/definitions/api.PostInsertForm'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/api.APIError'
+      summary: Create a new post
+      tags:
+      - posts
+    put:
+      consumes:
+      - application/json
+      description: Updates a post by the provided data
+      operationId: update-post
+      parameters:
+      - description: Add Post
+        in: body
+        name: post
+        required: true
+        schema:
+          $ref: '#/definitions/api.PostUpdateForm'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/api.APIError'
+      summary: Update a post
+      tags:
+      - posts
+  /posts/:id:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a post by its ID
+      operationId: get-post
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.APIError'
+      summary: Get post
+      tags:
+      - posts
+    put:
+      consumes:
+      - application/json
+      description: Deletes a post by its ID
+      operationId: delete-post
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/api.APIError'
+      summary: Delete a post
+      tags:
+      - posts
+  /posts/:id/like:
+    get:
+      consumes:
+      - application/json
+      description: Get like count of a post by its ID
+      operationId: get-post-likes
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.APIError'
+      summary: Get likes of a post
+      tags:
+      - posts
+swagger: "2.0"
