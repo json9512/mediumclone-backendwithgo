@@ -8,7 +8,7 @@ import (
 )
 
 func testGetPostsByTagsAndAuthor(c *Container) {
-	c.Goblin.It("?tag=hello,nice&author=denver GET should return posts with tags=[hello, nice] and author=denver", func() {
+	c.Goblin.It("?tag=hello%20nice&author=denver GET should return posts with tags=[hello, nice] and author=denver", func() {
 		result := MakeRequest(&reqData{
 			handler: c.Router,
 			method:  "GET",

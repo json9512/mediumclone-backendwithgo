@@ -14,7 +14,7 @@ import (
 
 func Login(pool *sql.DB, env *config.EnvVars) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var userCred userInsertForm
+		var userCred UserInsertForm
 		if err := c.BindJSON(&userCred); err != nil {
 			c.JSON(
 				http.StatusBadRequest,

@@ -28,16 +28,16 @@ type PostUpdateForm struct {
 	Comments string `json:"comments" example:"some-comment"`
 }
 
-type userUpdateForm struct {
-	ID             int    `json:"id" validate:"required"`
-	Email          string `json:"email"`
-	Password       string `json:"password"`
-	TokenExpiresIn int64  `json:"token_expires_in"`
+type UserUpdateForm struct {
+	ID             int    `json:"id" example:"1" validate:"required"`
+	Email          string `json:"email" example:"someone@somewhere.com"`
+	Password       string `json:"password" example:"very-hard-password!2"`
+	TokenExpiresIn int64  `json:"token_expires_in" example:"15233324"`
 }
 
-type userInsertForm struct {
-	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required"`
+type UserInsertForm struct {
+	Email    string `json:"email" example:"someone@somewhere.com" validate:"required,email"`
+	Password string `json:"password" example:"very-hard-password!2" validate:"required"`
 }
 
 type APIError struct {
@@ -47,6 +47,11 @@ type APIError struct {
 type SwaggerPosts struct {
 	TotalCount int              `json:"total_count"`
 	Posts      []PostUpdateForm `json:"posts"`
+}
+
+type SwaggerUser struct {
+	ID    int    `json:"id"`
+	Email string `json:"email"`
 }
 
 type response map[string]interface{}
@@ -158,7 +163,7 @@ func bindUpdateFormToPost(f *PostUpdateForm, author string) (*db.Post, error) {
 	return &post, nil
 }
 
-func bindFormToUser(f *userInsertForm) *db.User {
+func bindFormToUser(f *UserInsertForm) *db.User {
 	return &db.User{
 		Email:          f.Email,
 		Password:       f.Password,
@@ -167,7 +172,7 @@ func bindFormToUser(f *userInsertForm) *db.User {
 
 }
 
-func bindUpdateFormToUser(b *userUpdateForm) (*db.User, error) {
+func bindUpdateFormToUser(b *UserUpdateForm) (*db.User, error) {
 	var user db.User
 	userID := int64(b.ID)
 	if userID < 0 {

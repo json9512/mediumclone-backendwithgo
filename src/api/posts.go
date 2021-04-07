@@ -149,7 +149,7 @@ func CreatePost(pool *sql.DB) gin.HandlerFunc {
 // @ID update-post
 // @Accept  json
 // @Produce  json
-// @Param post body api.PostUpdateForm true "Add Post"
+// @Param post body api.PostUpdateForm true "Update Post"
 // @Success 200 {string} string	"ok"
 // @Failure 400 {object} api.APIError "Bad Request"
 // @Failure 401 {object} api.APIError "Unauthorized"
@@ -203,7 +203,7 @@ func UpdatePost(pool *sql.DB) gin.HandlerFunc {
 // @Success 200 {string} string	"ok"
 // @Failure 400 {object} api.APIError "Bad Request"
 // @Failure 401 {object} api.APIError "Unauthorized"
-// @Router /posts/:id [put]
+// @Router /posts/:id [delete]
 func DeletePost(pool *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		idStr := c.Param("id")

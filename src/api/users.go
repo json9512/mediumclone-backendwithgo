@@ -8,7 +8,17 @@ import (
 	"github.com/json9512/mediumclone-backendwithgo/src/db"
 )
 
-// RetrieveUser gets user by its ID from db
+// RetrieveUser godoc
+// @Summary Get user
+// @Tags users
+// @Description Get user by its ID
+// @ID get-user
+// @Accept  json
+// @Produce  json
+// @Param id path int true "User ID"
+// @Success 200 {object} api.SwaggerUser
+// @Failure 400 {object} api.APIError "Bad Request"
+// @Router /users/:id [get]
 func RetrieveUser(pool *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		idStr := c.Param("id")
@@ -26,10 +36,22 @@ func RetrieveUser(pool *sql.DB) gin.HandlerFunc {
 	}
 }
 
-// RegisterUser creates a new user in db
+// RegisterUser godoc
+// @Summary Create new user
+// @Tags users
+// @Description Create a new user
+// @ID create-user
+// @Accept  json
+// @Produce  json
+// @Param userInfo body api.UserInsertForm true "Add user"
+// @Success 200 {object} api.SwaggerUser
+// @Failure 400 {object} api.APIError "Bad Request"
+// @Failure 500 {object} api.APIError "Internal Server Error"
+// @Failure 401 {object} api.APIError "Unauthorized"
+// @Router /users [post]
 func RegisterUser(pool *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var userCred userInsertForm
+		var userCred UserInsertForm
 		err := extractData(c, &userCred)
 		if err != nil {
 			HandleError(c, http.StatusBadRequest, "Invalid data type.")
@@ -49,10 +71,21 @@ func RegisterUser(pool *sql.DB) gin.HandlerFunc {
 	}
 }
 
-// UpdateUser updates the user with provided info
+// UpdateUser godoc
+// @Summary Update user
+// @Tags users
+// @Description Update user with provided information
+// @ID update-user
+// @Accept  json
+// @Produce  json
+// @Param userInfo body api.UserUpdateForm true "Update user"
+// @Success 200 {object} api.SwaggerUser
+// @Failure 400 {object} api.APIError "Bad Request"
+// @Failure 401 {object} api.APIError "Unauthorized"
+// @Router /users [put]
 func UpdateUser(pool *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var reqBody userUpdateForm
+		var reqBody UserUpdateForm
 		err := extractData(c, &reqBody)
 		if err != nil {
 			HandleError(c, http.StatusBadRequest, "Invalid data type.")
@@ -79,7 +112,18 @@ func UpdateUser(pool *sql.DB) gin.HandlerFunc {
 	}
 }
 
-// DeleteUser deletes the user in db with its ID
+// DeleteUser godoc
+// @Summary Delete user
+// @Tags users
+// @Description Delete user by its ID
+// @ID delete-user
+// @Accept  json
+// @Produce  json
+// @Param id path int true "Delete user"
+// @Success 200
+// @Failure 400 {object} api.APIError "Bad Request"
+// @Failure 401 {object} api.APIError "Unauthorized"
+// @Router /users [delete]
 func DeleteUser(pool *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		idStr := c.Param("id")

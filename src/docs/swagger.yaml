@@ -51,6 +51,42 @@ definitions:
       total_count:
         type: integer
     type: object
+  api.SwaggerUser:
+    properties:
+      email:
+        type: string
+      id:
+        type: integer
+    type: object
+  api.UserInsertForm:
+    properties:
+      email:
+        example: someone@somewhere.com
+        type: string
+      password:
+        example: very-hard-password!2
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  api.UserUpdateForm:
+    properties:
+      email:
+        example: someone@somewhere.com
+        type: string
+      id:
+        example: 1
+        type: integer
+      password:
+        example: very-hard-password!2
+        type: string
+      token_expires_in:
+        example: 15233324
+        type: integer
+    required:
+    - id
+    type: object
 host: localhost:8080
 info:
   contact:
@@ -130,7 +166,7 @@ paths:
       description: Updates a post by the provided data
       operationId: update-post
       parameters:
-      - description: Add Post
+      - description: Update Post
         in: body
         name: post
         required: true
@@ -155,32 +191,7 @@ paths:
       tags:
       - posts
   /posts/:id:
-    get:
-      consumes:
-      - application/json
-      description: Retrieve a post by its ID
-      operationId: get-post
-      parameters:
-      - description: Post ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: ok
-          schema:
-            type: string
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/api.APIError'
-      summary: Get post
-      tags:
-      - posts
-    put:
+    delete:
       consumes:
       - application/json
       description: Deletes a post by its ID
@@ -209,6 +220,31 @@ paths:
       summary: Delete a post
       tags:
       - posts
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a post by its ID
+      operationId: get-post
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.APIError'
+      summary: Get post
+      tags:
+      - posts
   /posts/:id/like:
     get:
       consumes:
@@ -235,4 +271,122 @@ paths:
       summary: Get likes of a post
       tags:
       - posts
+  /users:
+    delete:
+      consumes:
+      - application/json
+      description: Delete user by its ID
+      operationId: delete-user
+      parameters:
+      - description: Delete user
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ""
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/api.APIError'
+      summary: Delete user
+      tags:
+      - users
+    post:
+      consumes:
+      - application/json
+      description: Create a new user
+      operationId: create-user
+      parameters:
+      - description: Add user
+        in: body
+        name: userInfo
+        required: true
+        schema:
+          $ref: '#/definitions/api.UserInsertForm'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.SwaggerUser'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.APIError'
+      summary: Create new user
+      tags:
+      - users
+    put:
+      consumes:
+      - application/json
+      description: Update user with provided information
+      operationId: update-user
+      parameters:
+      - description: Update user
+        in: body
+        name: userInfo
+        required: true
+        schema:
+          $ref: '#/definitions/api.UserUpdateForm'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.SwaggerUser'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/api.APIError'
+      summary: Update user
+      tags:
+      - users
+  /users/:id:
+    get:
+      consumes:
+      - application/json
+      description: Get user by its ID
+      operationId: get-user
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.SwaggerUser'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.APIError'
+      summary: Get user
+      tags:
+      - users
 swagger: "2.0"
