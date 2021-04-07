@@ -21,7 +21,7 @@ func testGetPostsByTagsAndAuthor(c *Container) {
 		response, err := extractResult(result)
 		c.Goblin.Assert(err).IsNil()
 
-		_, countExists := response["totalCount"]
+		_, countExists := response["total_count"]
 		c.Goblin.Assert(countExists).IsTrue()
 
 		posts, postsExist := response["posts"]
@@ -52,7 +52,7 @@ func testGetPostsByTags(c *Container) {
 		response, err := extractResult(result)
 		c.Goblin.Assert(err).IsNil()
 
-		_, countExists := response["totalCount"]
+		_, countExists := response["total_count"]
 		c.Goblin.Assert(countExists).IsTrue()
 
 		posts, postsExist := response["posts"]
@@ -80,7 +80,7 @@ func testGetPostsByTag(c *Container) {
 		response, err := extractResult(result)
 		c.Goblin.Assert(err).IsNil()
 
-		_, countExists := response["totalCount"]
+		_, countExists := response["total_count"]
 		c.Goblin.Assert(countExists).IsTrue()
 
 		posts, postsExist := response["posts"]
