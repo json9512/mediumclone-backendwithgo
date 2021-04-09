@@ -3,7 +3,7 @@
 
 개발 과정과 의사 결정은 [블로그](https://json9512.github.io/blog/%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8-Medium-%ED%81%B4%EB%A1%A0-%EB%B0%B1%EC%97%94%EB%93%9C%EB%A5%BC-%EB%A7%8C%EB%93%A4%EC%96%B4%EB%B3%B4%EC%9E%90-1/)에 기록중입니다.
 
-백엔드를 Go lang으로 개발 중에 있습니다.
+완료: [링크](http://13.209.10.141:3005/swagger/index.html)
 
 ## 개발 목적
 - Golang 배우기

@@ -1,21 +1,15 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "This is a sample server celler server.",
-        "title": "Swagger Example API",
-        "termsOfService": "http://swagger.io/terms/",
+        "description": "RESTful API of MediumClone server.",
+        "title": "MediumClone API",
         "contact": {
             "name": "API Support",
-            "url": "http://www.swagger.io/support",
-            "email": "support@swagger.io"
-        },
-        "license": {
-            "name": "Apache 2.0",
-            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+            "email": "json9512@gmail.com"
         },
         "version": "1.0"
     },
-    "host": "localhost:8080",
+    "host": "13.209.10.141:3005",
     "basePath": "/api/v1",
     "paths": {
         "/login": {
@@ -60,7 +54,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "Logout"
+                    "logout"
                 ],
                 "summary": "Logout user",
                 "operationId": "logout-user",
