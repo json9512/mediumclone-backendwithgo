@@ -9,7 +9,17 @@ import (
 	"github.com/json9512/mediumclone-backendwithgo/src/db"
 )
 
-// Logout invalidates the tokens for the user
+// Logout godoc
+// @Summary Logout user
+// @Tags logout
+// @Description Logout user sets access_token to empty string
+// @ID logout-user
+// @Accept  json
+// @Param email body api.SwaggerEmail true "Logout user"
+// @Header 200 {string} Token "access_token"
+// @Success 200 "OK"
+// @Failure 400 {object} api.APIError "Bad Request"
+// @Router /logout [post]
 func Logout(pool *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var userInfo map[string]interface{}

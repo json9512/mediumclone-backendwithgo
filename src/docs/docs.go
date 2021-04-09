@@ -32,6 +32,76 @@ var doc = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/login": {
+            "post": {
+                "description": "login user sets access_token in cookie",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "login"
+                ],
+                "summary": "Login user",
+                "operationId": "login-user",
+                "parameters": [
+                    {
+                        "description": "Login user",
+                        "name": "userInfo",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api.UserInsertForm"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.APIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/logout": {
+            "post": {
+                "description": "Logout user sets access_token to empty string",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Logout"
+                ],
+                "summary": "Logout user",
+                "operationId": "logout-user",
+                "parameters": [
+                    {
+                        "description": "Logout user",
+                        "name": "email",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api.SwaggerEmail"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.APIError"
+                        }
+                    }
+                }
+            }
+        },
         "/posts": {
             "get": {
                 "description": "Retrieve posts from db",
@@ -523,6 +593,15 @@ var doc = `{
                 "tags": {
                     "type": "string",
                     "example": "some,tags,here"
+                }
+            }
+        },
+        "api.SwaggerEmail": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "someone@somewhere.com"
                 }
             }
         },

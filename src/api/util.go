@@ -54,6 +54,10 @@ type SwaggerUser struct {
 	Email string `json:"email"`
 }
 
+type SwaggerEmail struct {
+	Email string `json:"email" example:"someone@somewhere.com"`
+}
+
 type response map[string]interface{}
 
 // HandleError attaches error response to gin.Context

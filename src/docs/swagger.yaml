@@ -42,6 +42,12 @@ definitions:
     required:
     - id
     type: object
+  api.SwaggerEmail:
+    properties:
+      email:
+        example: someone@somewhere.com
+        type: string
+    type: object
   api.SwaggerPosts:
     properties:
       posts:
@@ -101,6 +107,52 @@ info:
   title: Swagger Example API
   version: "1.0"
 paths:
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: login user sets access_token in cookie
+      operationId: login-user
+      parameters:
+      - description: Login user
+        in: body
+        name: userInfo
+        required: true
+        schema:
+          $ref: '#/definitions/api.UserInsertForm'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.APIError'
+      summary: Login user
+      tags:
+      - login
+  /logout:
+    post:
+      consumes:
+      - application/json
+      description: Logout user sets access_token to empty string
+      operationId: logout-user
+      parameters:
+      - description: Logout user
+        in: body
+        name: email
+        required: true
+        schema:
+          $ref: '#/definitions/api.SwaggerEmail'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.APIError'
+      summary: Logout user
+      tags:
+      - Logout
   /posts:
     get:
       consumes:

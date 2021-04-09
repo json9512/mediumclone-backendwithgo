@@ -12,6 +12,17 @@ import (
 	"github.com/json9512/mediumclone-backendwithgo/src/db"
 )
 
+// Login godoc
+// @Summary Login user
+// @Tags login
+// @Description login user sets access_token in cookie
+// @ID login-user
+// @Accept  json
+// @Param userInfo body api.UserInsertForm true "Login user"
+// @Header 200 {string} Token "access_token"
+// @Success 200 "OK"
+// @Failure 400 {object} api.APIError "Bad Request"
+// @Router /login [post]
 func Login(pool *sql.DB, env *config.EnvVars) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var userCred UserInsertForm
@@ -60,9 +71,9 @@ func Login(pool *sql.DB, env *config.EnvVars) gin.HandlerFunc {
 		user, err = db.UpdateTokenExpiresIn(c, pool, user, expiresIn)
 		if err != nil {
 			c.JSON(
-				http.StatusInternalServerError,
+				http.StatusBadRequest,
 				&APIError{
-					Msg: "Authentication failed. Update failed.",
+					Msg: "Update failed.",
 				},
 			)
 			return
@@ -70,7 +81,7 @@ func Login(pool *sql.DB, env *config.EnvVars) gin.HandlerFunc {
 
 		at, err := CreateAccessToken(user.Email.String, env.JWTSecret, expiresIn)
 		if err != nil {
-			HandleError(c, http.StatusInternalServerError, "Login failed. Unable to create token.")
+			HandleError(c, http.StatusBadRequest, "Unable to create token.")
 		}
 
 		c.SetCookie("access_token", at, 10, "/", "", false, true)

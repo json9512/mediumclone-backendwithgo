@@ -53,6 +53,7 @@ func (c *Container) Migrate(method string) error {
 	n, err := migrate.Exec(c.DB, "postgres", migrations, migrationMethod)
 	if err != nil {
 		c.logger.Error(err)
+		return err
 	}
 
 	c.logger.Infof("Applied %d migrations\n", n)
