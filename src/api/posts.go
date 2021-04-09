@@ -56,7 +56,7 @@ func GetPosts(pool *sql.DB) gin.HandlerFunc {
 // @Param id path string true "Post ID"
 // @Success 200 {string} string	"ok"
 // @Failure 400 {object} api.APIError "Bad Request"
-// @Router /posts/:id [get]
+// @Router /posts/{id} [get]
 func GetPost(pool *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		idStr := c.Param("id")
@@ -84,7 +84,7 @@ func GetPost(pool *sql.DB) gin.HandlerFunc {
 // @Param id path string true "Post ID"
 // @Success 200 {string} string	"ok"
 // @Failure 400 {object} api.APIError "Bad Request"
-// @Router /posts/:id/like [get]
+// @Router /posts/{id}/like [get]
 func GetLikesForPost(pool *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		idStr := c.Param("id")
@@ -203,7 +203,7 @@ func UpdatePost(pool *sql.DB) gin.HandlerFunc {
 // @Success 200 {string} string	"ok"
 // @Failure 400 {object} api.APIError "Bad Request"
 // @Failure 401 {object} api.APIError "Unauthorized"
-// @Router /posts/:id [delete]
+// @Router /posts/{id} [delete]
 func DeletePost(pool *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		idStr := c.Param("id")

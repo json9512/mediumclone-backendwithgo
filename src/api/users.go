@@ -18,7 +18,7 @@ import (
 // @Param id path int true "User ID"
 // @Success 200 {object} api.SwaggerUser
 // @Failure 400 {object} api.APIError "Bad Request"
-// @Router /users/:id [get]
+// @Router /users/{id} [get]
 func RetrieveUser(pool *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		idStr := c.Param("id")
@@ -123,7 +123,7 @@ func UpdateUser(pool *sql.DB) gin.HandlerFunc {
 // @Success 200
 // @Failure 400 {object} api.APIError "Bad Request"
 // @Failure 401 {object} api.APIError "Unauthorized"
-// @Router /users [delete]
+// @Router /users/{id} [delete]
 func DeleteUser(pool *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		idStr := c.Param("id")

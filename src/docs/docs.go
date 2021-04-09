@@ -230,7 +230,7 @@ var doc = `{
                 }
             }
         },
-        "/posts/:id": {
+        "/posts/{id}": {
             "get": {
                 "description": "Retrieve a post by its ID",
                 "consumes": [
@@ -312,7 +312,7 @@ var doc = `{
                 }
             }
         },
-        "/posts/:id/like": {
+        "/posts/{id}/like": {
             "get": {
                 "description": "Get like count of a post by its ID",
                 "consumes": [
@@ -447,6 +447,45 @@ var doc = `{
                         }
                     }
                 }
+            }
+        },
+        "/users/{id}": {
+            "get": {
+                "description": "Get user by its ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Get user",
+                "operationId": "get-user",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.SwaggerUser"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.APIError"
+                        }
+                    }
+                }
             },
             "delete": {
                 "description": "Delete user by its ID",
@@ -482,45 +521,6 @@ var doc = `{
                     },
                     "401": {
                         "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/api.APIError"
-                        }
-                    }
-                }
-            }
-        },
-        "/users/:id": {
-            "get": {
-                "description": "Get user by its ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users"
-                ],
-                "summary": "Get user",
-                "operationId": "get-user",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "User ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.SwaggerUser"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/api.APIError"
                         }
