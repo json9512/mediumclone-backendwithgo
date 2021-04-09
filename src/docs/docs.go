@@ -17,15 +17,9 @@ var doc = `{
     "info": {
         "description": "{{.Description}}",
         "title": "{{.Title}}",
-        "termsOfService": "http://swagger.io/terms/",
         "contact": {
             "name": "API Support",
-            "url": "http://www.swagger.io/support",
-            "email": "support@swagger.io"
-        },
-        "license": {
-            "name": "Apache 2.0",
-            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+            "email": "json9512@gmail.com"
         },
         "version": "{{.Version}}"
     },
@@ -74,7 +68,7 @@ var doc = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Logout"
+                    "logout"
                 ],
                 "summary": "Logout user",
                 "operationId": "logout-user",
@@ -686,11 +680,11 @@ type swaggerInfo struct {
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = swaggerInfo{
 	Version:     "1.0",
-	Host:        "localhost:8080",
+	Host:        "13.209.10.141:3005",
 	BasePath:    "/api/v1",
 	Schemes:     []string{},
-	Title:       "Swagger Example API",
-	Description: "This is a sample server celler server.",
+	Title:       "MediumClone API",
+	Description: "RESTful API of MediumClone server.",
 }
 
 type s struct{}
