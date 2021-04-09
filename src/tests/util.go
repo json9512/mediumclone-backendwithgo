@@ -66,7 +66,7 @@ func MakeRequest(r *reqData) *httptest.ResponseRecorder {
 		jsonBody, _ = json.Marshal(&r.reqBody)
 	}
 
-	req, _ := http.NewRequest(r.method, r.path, bytes.NewBuffer(jsonBody))
+	req, _ := http.NewRequest(r.method, "/api/v1"+r.path, bytes.NewBuffer(jsonBody))
 	if len(r.cookie) > 0 {
 		for _, c := range r.cookie {
 			req.AddCookie(c)

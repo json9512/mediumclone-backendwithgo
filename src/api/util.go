@@ -1,7 +1,6 @@
 package api
 
 import (
-	"encoding/json"
 	"errors"
 	"net/url"
 	"strconv"
@@ -14,42 +13,56 @@ import (
 	"github.com/json9512/mediumclone-backendwithgo/src/models"
 )
 
-type postInsertForm struct {
-	Doc      string `json:"doc" validate:"required"`
-	Tags     string `json:"tags"`
-	Likes    uint   `json:"likes"`
-	Comments string `json:"comments"`
+type PostInsertForm struct {
+	Doc      string `json:"doc" validate:"required" example:"some-text"`
+	Tags     string `json:"tags" example:"some,tags,here"`
+	Likes    uint   `json:"likes" example:"123"`
+	Comments string `json:"comments" example:"some-comment"`
 }
 
-type postUpdateForm struct {
-	ID       json.Number `json:"id" validate:"required"`
-	Doc      string      `json:"doc"`
-	Tags     string      `json:"tags"`
-	Likes    uint        `json:"likes"`
-	Comments string      `json:"comments"`
+type PostUpdateForm struct {
+	ID       int    `json:"id" validate:"required" example:"1"`
+	Doc      string `json:"doc" example:"some-text"`
+	Tags     string `json:"tags" example:"some,tags,here"`
+	Likes    uint   `json:"likes" example:"123"`
+	Comments string `json:"comments" example:"some-comment"`
 }
 
-type userUpdateForm struct {
-	ID             json.Number `json:"id" validate:"required"`
-	Email          string      `json:"email"`
-	Password       string      `json:"password"`
-	TokenExpiresIn int64       `json:"token_expires_in"`
+type UserUpdateForm struct {
+	ID             int    `json:"id" example:"1" validate:"required"`
+	Email          string `json:"email" example:"someone@somewhere.com"`
+	Password       string `json:"password" example:"very-hard-password!2"`
+	TokenExpiresIn int64  `json:"token_expires_in" example:"15233324"`
 }
 
-type userInsertForm struct {
-	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required"`
+type UserInsertForm struct {
+	Email    string `json:"email" example:"someone@somewhere.com" validate:"required,email"`
+	Password string `json:"password" example:"very-hard-password!2" validate:"required"`
 }
 
-type errorResponse struct {
+type APIError struct {
 	Msg string `json:"message"`
+}
+
+type SwaggerPosts struct {
+	TotalCount int              `json:"total_count"`
+	Posts      []PostUpdateForm `json:"posts"`
+}
+
+type SwaggerUser struct {
+	ID    int    `json:"id"`
+	Email string `json:"email"`
+}
+
+type SwaggerEmail struct {
+	Email string `json:"email" example:"someone@somewhere.com"`
 }
 
 type response map[string]interface{}
 
 // HandleError attaches error response to gin.Context
 func HandleError(c *gin.Context, code int, msg string) {
-	c.JSON(code, &errorResponse{Msg: msg})
+	c.JSON(code, &APIError{Msg: msg})
 }
 
 func checkIfQueriesExist(v url.Values) bool {
@@ -80,8 +93,8 @@ func serializePost(p *models.Post) response {
 
 func serializePosts(posts []*models.Post) response {
 	return response{
-		"totalCount": len(posts),
-		"posts":      posts,
+		"total_count": len(posts),
+		"posts":       posts,
 	}
 }
 
@@ -116,7 +129,7 @@ func convertToInt(id string) int64 {
 	return idInt
 }
 
-func bindFormToPost(f *postInsertForm, author string) *db.Post {
+func bindFormToPost(f *PostInsertForm, author string) *db.Post {
 	return &db.Post{
 		Author:   strings.ToLower(author),
 		Doc:      f.Doc,
@@ -126,9 +139,9 @@ func bindFormToPost(f *postInsertForm, author string) *db.Post {
 	}
 }
 
-func bindUpdateFormToPost(f *postUpdateForm, author string) (*db.Post, error) {
+func bindUpdateFormToPost(f *PostUpdateForm, author string) (*db.Post, error) {
 	var post db.Post
-	postID, _ := f.ID.Int64()
+	postID := int64(f.ID)
 	if postID < 0 {
 		return nil, errors.New("ID required.")
 	}
@@ -154,7 +167,7 @@ func bindUpdateFormToPost(f *postUpdateForm, author string) (*db.Post, error) {
 	return &post, nil
 }
 
-func bindFormToUser(f *userInsertForm) *db.User {
+func bindFormToUser(f *UserInsertForm) *db.User {
 	return &db.User{
 		Email:          f.Email,
 		Password:       f.Password,
@@ -163,9 +176,9 @@ func bindFormToUser(f *userInsertForm) *db.User {
 
 }
 
-func bindUpdateFormToUser(b *userUpdateForm) (*db.User, error) {
+func bindUpdateFormToUser(b *UserUpdateForm) (*db.User, error) {
 	var user db.User
-	userID, _ := b.ID.Int64()
+	userID := int64(b.ID)
 	if userID < 0 {
 		return nil, errors.New("ID required.")
 	}

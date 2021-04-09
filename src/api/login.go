@@ -12,14 +12,24 @@ import (
 	"github.com/json9512/mediumclone-backendwithgo/src/db"
 )
 
-// Login validates the user and distributes the tokens
+// Login godoc
+// @Summary Login user
+// @Tags login
+// @Description login user sets access_token in cookie
+// @ID login-user
+// @Accept  json
+// @Param userInfo body api.UserInsertForm true "Login user"
+// @Header 200 {string} Token "access_token"
+// @Success 200 "OK"
+// @Failure 400 {object} api.APIError "Bad Request"
+// @Router /login [post]
 func Login(pool *sql.DB, env *config.EnvVars) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var userCred userInsertForm
+		var userCred UserInsertForm
 		if err := c.BindJSON(&userCred); err != nil {
 			c.JSON(
 				http.StatusBadRequest,
-				&errorResponse{
+				&APIError{
 					Msg: "Invalid data type.",
 				},
 			)
@@ -29,7 +39,7 @@ func Login(pool *sql.DB, env *config.EnvVars) gin.HandlerFunc {
 		if err := validateStruct(&userCred); err != nil {
 			c.JSON(
 				http.StatusBadRequest,
-				&errorResponse{
+				&APIError{
 					Msg: "Invalid data type.",
 				},
 			)
@@ -40,7 +50,7 @@ func Login(pool *sql.DB, env *config.EnvVars) gin.HandlerFunc {
 		if err != nil {
 			c.JSON(
 				http.StatusBadRequest,
-				&errorResponse{
+				&APIError{
 					Msg: "User does not exist.",
 				},
 			)
@@ -50,7 +60,7 @@ func Login(pool *sql.DB, env *config.EnvVars) gin.HandlerFunc {
 		if user.PWD.String != userCred.Password {
 			c.JSON(
 				http.StatusBadRequest,
-				&errorResponse{
+				&APIError{
 					Msg: "Wrong password.",
 				},
 			)
@@ -61,9 +71,9 @@ func Login(pool *sql.DB, env *config.EnvVars) gin.HandlerFunc {
 		user, err = db.UpdateTokenExpiresIn(c, pool, user, expiresIn)
 		if err != nil {
 			c.JSON(
-				http.StatusInternalServerError,
-				&errorResponse{
-					Msg: "Authentication failed. Update failed.",
+				http.StatusBadRequest,
+				&APIError{
+					Msg: "Update failed.",
 				},
 			)
 			return
@@ -71,7 +81,7 @@ func Login(pool *sql.DB, env *config.EnvVars) gin.HandlerFunc {
 
 		at, err := CreateAccessToken(user.Email.String, env.JWTSecret, expiresIn)
 		if err != nil {
-			HandleError(c, http.StatusInternalServerError, "Login failed. Unable to create token.")
+			HandleError(c, http.StatusBadRequest, "Unable to create token.")
 		}
 
 		c.SetCookie("access_token", at, 10, "/", "", false, true)

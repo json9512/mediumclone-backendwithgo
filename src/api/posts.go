@@ -18,8 +18,18 @@ type queryChecker struct {
 	authorExists bool
 }
 
-// GetPosts returns all posts
-// optional: with tags or/and author
+// GetPosts godoc
+// @Summary Get posts
+// @Tags posts
+// @Description Retrieve posts from db
+// @ID get-posts
+// @Accept  json
+// @Produce  json
+// @Param tags query string false "tags"
+// @Param author query string false "author"
+// @Success 200 {object} api.SwaggerPosts
+// @Failure 400 {object} api.APIError "Bad Request"
+// @Router /posts [get]
 func GetPosts(pool *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		queryChecker := &queryChecker{false, false}
@@ -36,7 +46,17 @@ func GetPosts(pool *sql.DB) gin.HandlerFunc {
 	}
 }
 
-// GetPost returns a post with given ID
+// GetPost godoc
+// @Summary Get post
+// @Description Retrieve a post by its ID
+// @Tags posts
+// @ID get-post
+// @Accept  json
+// @Produce  json
+// @Param id path string true "Post ID"
+// @Success 200 {string} string	"ok"
+// @Failure 400 {object} api.APIError "Bad Request"
+// @Router /posts/:id [get]
 func GetPost(pool *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		idStr := c.Param("id")
@@ -54,8 +74,17 @@ func GetPost(pool *sql.DB) gin.HandlerFunc {
 	}
 }
 
-// GetLikesForPost returns the total like count
-// of a post with given ID
+// GetLikesForPost godoc
+// @Summary Get likes of a post
+// @Description Get like count of a post by its ID
+// @Tags posts
+// @ID get-post-likes
+// @Accept  json
+// @Produce  json
+// @Param id path string true "Post ID"
+// @Success 200 {string} string	"ok"
+// @Failure 400 {object} api.APIError "Bad Request"
+// @Router /posts/:id/like [get]
 func GetLikesForPost(pool *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		idStr := c.Param("id")
@@ -73,10 +102,21 @@ func GetLikesForPost(pool *sql.DB) gin.HandlerFunc {
 	}
 }
 
-// CreatePost creates a post in db
+// CreatePost godoc
+// @Summary Create a new post
+// @Description Creates a new post in DB
+// @Tags posts
+// @ID create-post
+// @Accept  json
+// @Produce  json
+// @Param post body api.PostInsertForm true "Add Post"
+// @Success 200 {string} string	"ok"
+// @Failure 400 {object} api.APIError "Bad Request"
+// @Failure 401 {object} api.APIError "Unauthorized"
+// @Router /posts [post]
 func CreatePost(pool *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var reqBody postInsertForm
+		var reqBody PostInsertForm
 		if err := extractData(c, &reqBody); err != nil {
 			HandleError(c, http.StatusBadRequest, "Invalid request data.")
 			return
@@ -102,10 +142,21 @@ func CreatePost(pool *sql.DB) gin.HandlerFunc {
 	}
 }
 
-// UpdatePost updates a post in db
+// UpdatePost godoc
+// @Summary Update a post
+// @Description Updates a post by the provided data
+// @Tags posts
+// @ID update-post
+// @Accept  json
+// @Produce  json
+// @Param post body api.PostUpdateForm true "Update Post"
+// @Success 200 {string} string	"ok"
+// @Failure 400 {object} api.APIError "Bad Request"
+// @Failure 401 {object} api.APIError "Unauthorized"
+// @Router /posts [put]
 func UpdatePost(pool *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var reqBody postUpdateForm
+		var reqBody PostUpdateForm
 		if err := extractData(c, &reqBody); err != nil {
 			HandleError(c, http.StatusBadRequest, "Invalid request data.")
 			return
@@ -115,7 +166,7 @@ func UpdatePost(pool *sql.DB) gin.HandlerFunc {
 			HandleError(c, http.StatusBadRequest, "ID required.")
 			return
 		}
-		postID, _ := reqBody.ID.Int64()
+		postID := int64(reqBody.ID)
 		queriedPost, err := db.GetPostByID(c, pool, postID)
 		if err != nil {
 			HandleError(c, http.StatusBadRequest, "Post not found.")
@@ -141,7 +192,18 @@ func UpdatePost(pool *sql.DB) gin.HandlerFunc {
 	}
 }
 
-// DeletePost deletes a post with given ID in db
+// DeletePost godoc
+// @Summary Delete a post
+// @Description Deletes a post by its ID
+// @Tags posts
+// @ID delete-post
+// @Accept  json
+// @Produce  json
+// @Param id path int true "Post ID"
+// @Success 200 {string} string	"ok"
+// @Failure 400 {object} api.APIError "Bad Request"
+// @Failure 401 {object} api.APIError "Unauthorized"
+// @Router /posts/:id [delete]
 func DeletePost(pool *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		idStr := c.Param("id")

@@ -12,22 +12,23 @@ import (
 
 // AddRoutes adds available routes to the provided router
 func AddRoutes(router *gin.Engine, db *sql.DB, env *config.EnvVars) {
+	apiGroup := router.Group("/api/v1")
+	{
+		apiGroup.POST("/login", api.Login(db, env))
+		apiGroup.POST("/logout", middlewares.VerifyUser(db), api.Logout(db))
 
-	router.POST("/login", api.Login(db, env))
-	router.POST("/logout", middlewares.VerifyUser(db), api.Logout(db))
+		posts := apiGroup.Group("/posts")
+		posts.GET("", api.GetPosts(db))
+		posts.GET(":id", api.GetPost(db))
+		posts.GET(":id/like", api.GetLikesForPost(db))
+		posts.POST("", middlewares.VerifyUser(db), api.CreatePost(db))
+		posts.PUT("", middlewares.VerifyUser(db), api.UpdatePost(db))
+		posts.DELETE(":id", middlewares.VerifyUser(db), api.DeletePost(db))
 
-	postsRouter := router.Group("/posts")
-	postsRouter.GET("", api.GetPosts(db))
-	postsRouter.GET("/:id", api.GetPost(db))
-	postsRouter.GET("/:id/like", api.GetLikesForPost(db))
-	postsRouter.POST("", middlewares.VerifyUser(db), api.CreatePost(db))
-	postsRouter.PUT("", middlewares.VerifyUser(db), api.UpdatePost(db))
-	postsRouter.DELETE("/:id", middlewares.VerifyUser(db), api.DeletePost(db))
-
-	usersRouter := router.Group("/users")
-	usersRouter.GET("/:id", api.RetrieveUser(db))
-	usersRouter.POST("", api.RegisterUser(db))
-	usersRouter.PUT("", middlewares.VerifyUser(db), api.UpdateUser(db))
-	usersRouter.DELETE("/:id", middlewares.VerifyUser(db), api.DeleteUser(db))
-
+		users := apiGroup.Group("/users")
+		users.GET(":id", api.RetrieveUser(db))
+		users.POST("", api.RegisterUser(db))
+		users.PUT("", middlewares.VerifyUser(db), api.UpdateUser(db))
+		users.DELETE(":id", middlewares.VerifyUser(db), api.DeleteUser(db))
+	}
 }
