@@ -1,7 +1,8 @@
 # mediumclone-backendwithgo
 [미디엄클론](https://github.com/json9512/mediumclone)의 백엔드를 Go로 재개발 하는 프로젝트입니다.
 
-개발 과정과 의사 결정은 [블로그](https://json9512.github.io/blog/%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8-Medium-%ED%81%B4%EB%A1%A0-%EB%B0%B1%EC%97%94%EB%93%9C%EB%A5%BC-%EB%A7%8C%EB%93%A4%EC%96%B4%EB%B3%B4%EC%9E%90-1/)에 기록중입니다.
+
+개발 중 배운 것을 [노션](https://www.notion.so/2021-04-08-Medium-06392aa469874185aa3408a668d1eb70)에 기록했습니다.
 
 완료: [링크](http://13.209.10.141:3005/swagger/index.html)
 
